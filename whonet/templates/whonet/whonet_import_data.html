@@ -1,0 +1,535 @@
+{% extends 'whonet/base.html' %}
+
+{% block title %}
+ARSP-DMU | ARSEN | Whonet Import | Data | {{ file_name }}
+{% endblock title %}
+
+
+{% block breadcrumb %}
+    <div class="page-breadcrumb">
+                <div class="row">
+                    <div class="col-12 d-flex no-block align-items-center">
+                        <h4 class="page-title">Import Raw Data</h4>
+                        <div class="ml-auto text-right">
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="{% url 'whonet_landing' %}">Dashboard</a></li>
+                                    <li class="breadcrumb-item" aria-current="page"> <a href="{% url 'whonet_import' %} ">Import Raw Data</a></li>
+                                    <li class="breadcrumb-item active" aria-current="page">{{ file_name }}</li>
+                                </ol>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+{% endblock breadcrumb %}
+
+
+
+{% block content %}
+  <div class="row">
+    <div class="mx-auto col-md-9 col-lg-9 col-xlg-9">
+       <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">{{ file_name }}</h4>
+                <h4 class="card-title p-b-10">ORIGIN DETAILS</h4>
+                <div class="table-responsive">
+                    <table id="zero_config_origin" class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Patient ID</th>
+                                <th>Country</th>
+                                <th>Region</th>
+                                <th>Island</th>
+                                <th>Laboratory</th>
+                                <th>First Name</th>
+                                <th>Middle Name</th>
+                                <th>Last Name</th>
+                                <th>Sex</th>
+                                <th>Age</th>
+                                <th>Date Birth</th>
+                                <th>Age Group</th>
+                                <th>PAT Type</th>
+                                <th>Date Data</th>
+                                <th>X_Referred</th>
+                                <th>X_Recnum</th>
+                                <th>Date of Admission</th>
+                                <th>Nosocomial</th>
+                                <th>Diagnosis</th>
+                                <th>Stock Number</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for org in origin  %}
+                            <tr>
+                                <td>{{ org.patient_id }}</td>
+                                <td>{{ org.country_a }}</td>
+                                <td>{{ org.region }}</td>
+                                <td>{{ org.island }}</td>
+                                <td>{{ org.laboratory }}</td>
+                                <td>{{ org.first_name }}</td>
+                                <td>{{ org.mid_name }}</td>
+                                <td>{{ org.last_name }}</td>
+                                <td>{{ org.sex }}</td>
+                                <td>{{ org.age }}</td>
+                                <td>{{ org.date_birth }}</td>
+                                <td>{{ org.grp }}</td>
+                                <td>{{ org.pat_type }}</td>
+                                <td>{{ org.date_data }}</td>
+                                <td>{{ org.x_referred }}</td>
+                                <td>{{ org.x_recnum }}</td>
+                                <td>{{ org.date_admis }}</td>
+                                <td>{{ org.nosocomial }}</td>
+                                <td>{{ org.diagnosis }}</td>
+                                <td>{{ org.stock_num }}</td>
+
+                                
+
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+
+
+
+  <div class="row">
+    <div class="mx-auto col-md-9 col-lg-9 col-xlg-9">
+       <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">{{ file_name }}</h4>
+                <h4 class="card-title p-b-10">LOCATION DETAILS</h4>
+                <div class="table-responsive">
+                    <table id="zero_config_location" class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Patient ID</th>
+                                <th>Ward</th>
+                                <th>Institute</th>
+                                <th>Department</th>
+                                <th>Ward Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            
+                            {% for loc in origin  %}
+                            <tr>
+                                <td>{{ loc.patient_id }} </td>
+                                <td>{{ loc.location.ward }}</td>
+                                <td>{{ loc.location.institut }}</td>
+                                <td>{{ loc.location.department }}</td>
+                                <td>{{ loc.location.ward_type }}</td>
+                            
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+
+
+  <div class="row">
+    <div class="mx-auto col-md-9 col-lg-9 col-xlg-9">
+       <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">{{ file_name }}</h4>
+                <h4 class="card-title p-b-10">MICROBIOLOGY DETAILS</h4>
+                <div class="table-responsive">
+                    <table id="zero_config_micro" class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Patient ID</th>
+                                <th>Organism</th>
+                                <th>Org Type</th>
+                                <th>Beta Lactamase</th>
+                                <th>Comment</th>
+                                <th>MRSA</th>
+                                <th>Induc CLI</th>
+                                <th>MECA</th>
+                                <th>AMPC</th>
+                                <th>X_MRSE</th>
+                                <th>X_CARB</th>
+                                <th>ESBL</th>
+                                <th>URINE COUNT</th>
+                                <th>SEROTYPE</th>
+                                <th>CARBAPENEM</th>
+                                <th>MBL</th>
+                                <th>GROWTH</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mic in origin  %}
+                            <tr>
+                                <td> {{ mic.patient_id }} </td>
+                                <td>{{ mic.rawmicrobiology.organism }}</td>
+                                <td>{{ mic.rawmicrobiology.org_type }}</td>
+                                <td>{{ mic.rawmicrobiology.beta_lact }}</td>
+                                <td>{{ mic.rawmicrobiology.comment }}</td>
+                                <td>{{ mic.rawmicrobiology.mrsa }}</td>
+                                <td>{{ mic.rawmicrobiology.induc_cli }}</td>
+                                <td>{{ mic.rawmicrobiology.meca }}</td>
+                                <td>{{ mic.rawmicrobiology.ampc }}</td>
+                                <td>{{ mic.rawmicrobiology.x_mrse }}</td>
+                                <td>{{ mic.rawmicrobiology.x_carb }}</td>
+                                <td>{{ mic.rawmicrobiology.esbl }}</td>
+                                <td>{{ mic.rawmicrobiology.urine_count }}</td>
+                                <td>{{ mic.rawmicrobiology.serotype }}</td>
+                                <td>{{ mic.rawmicrobiology.carbapenem }}</td>
+                                <td>{{ mic.rawmicrobiology.mbl }}</td>
+                                <td>{{ mic.rawmicrobiology.growth }}</td>
+                            
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+
+
+
+  <div class="row">
+    <div class="mx-auto col-md-9 col-lg-9 col-xlg-9">
+       <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">{{ file_name }}</h4>
+                <h4 class="card-title p-b-10">SPECIMEN DETAILS</h4>
+                <div class="table-responsive">
+                    <table id="zero_config_specimen" class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Patient ID</th>
+                                <th>Specimen Number</th>
+                                <th>Specimen Date</th>
+                                <th>Specimen Type</th>
+                                <th>Specimen Code</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for spec in origin  %}
+                            <tr>
+                                <td> {{ spec.patient_id }} </td>
+                                <td>{{ spec.rawspecimen.spec_num }}</td>
+                                <td>{{ spec.rawspecimen.spec_date }}</td>
+                                <td>{{ spec.rawspecimen.spec_type }}</td>
+                                <td>{{ spec.rawspecimen.spec_code }}</td>
+                            
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+
+
+
+  <div class="row">
+    <div class="mx-auto col-md-9 col-lg-9 col-xlg-9">
+       <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">{{ file_name }}</h4>
+                <h4 class="card-title p-b-10">ANTIBIOTIC DISK DETAILS</h4>
+                <div class="table-responsive">
+                    <table id="zero_config_antdisk" class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Patient ID</th>
+                                <th>AMK_ND30</th>
+                                <th>AMC_ND20</th>
+                                <th>AMP_ND10</th>
+                                <th>SAM_ND10</th>
+                                <th>AZM_ND15</th>
+                                <th>ATM_ND30</th>
+                                <th>CEC_ND30</th>
+                                <th>MAN_ND30</th>
+                                <th>CZO_ND30</th>
+                                <th>FEP_ND30</th>
+                                <th>CFM_ND5</th>
+                                <th>CFP_ND75</th>
+                                <th>CTX_ND30</th>
+                                <th>FOX_ND30</th>
+                                <th>CAZ_ND30</th>
+                                <th>CRO_ND30</th>
+                                <th>CXM_ND30</th>
+                                <th>CXA_ND30</th>
+                                <th>CEP_ND30</th>
+                                <th>CHL_ND30</th>
+                                <th>CIP_ND5</th>
+                                <th>CLR_ND15</th>
+                                <th>CLI_ND2</th>
+                                <th>COL_ND10</th>
+                                <th>SXT_ND1_2</th>
+                                <th>DAP_ND30</th>
+                                <th>DOR_ND10</th>
+                                <th>ETP_ND10</th>
+                                <th>ERY_ND15</th>
+                                <th>GEN_ND10</th>
+                                <th>GEH_ND120</th>
+                                <th>IPM_ND10</th>
+                                <th>KAN_ND30</th>
+                                <th>LVX_ND5</th>
+                                <th>LNZ_ND30</th>
+                                <th>MEM_ND10</th>
+                                <th>MNO_ND30</th>
+                                <th>MFX_ND5</th>
+                                <th>NAL_ND30</th>
+                                <th>NET_ND30</th>
+                                <th>NIT_ND300</th>
+                                <th>NOR_ND10</th>
+                                <th>NOV_ND5</th>
+                                <th>OFX_ND5</th>
+                                <th>OXA_ND1</th>
+                                <th>PEN_ND10</th>
+                                <th>PIP_ND100</th>
+                                <th>TZP_ND100</th>
+                                <th>POL_ND300</th>
+                                <th>QDA_ND15</th>
+                                <th>RIF_ND5</th>
+                                <th>SPT_ND100</th>
+                                <th>STR_ND10</th>
+                                <th>STH_ND300</th>
+                                <th>TCY_ND30</th>
+                                <th>TIC_ND75</th>
+                                <th>TCC_ND75</th>
+                                <th>TGC_ND15</th>
+                                <th>TOB_ND10</th>
+                                <th>VAN_ND30</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dsk in origin  %}
+                            <tr>
+                                <td>{{ dsk.patient_id }} </td>
+                                <td>{{ dsk.rawantidisk.amk_nd30 }}</td>
+                                <td>{{ dsk.rawantidisk.amc_nd20 }}</td>
+                                <td>{{ dsk.rawantidisk.amp_nd10 }}</td>
+                                <td>{{ dsk.rawantidisk.sam_nd10 }}</td>
+                                <td>{{ dsk.rawantidisk.azm_nd15 }}</td>
+                                <td>{{ dsk.rawantidisk.atm_nd30 }}</td>
+                                <td>{{ dsk.rawantidisk.cec_nd30 }}</td>
+                                <td>{{ dsk.rawantidisk.man_nd30 }}</td>
+                                <td>{{ dsk.rawantidisk.czo_nd30 }}</td>
+                                <td>{{ dsk.rawantidisk.fep_nd30 }}</td>
+                                <td>{{ dsk.rawantidisk.cfm_nd5 }}</td>
+                                <td>{{ dsk.rawantidisk.cfp_nd75 }}</td>
+                                <td>{{ dsk.rawantidisk.ctx_nd30 }}</td>
+                                <td>{{ dsk.rawantidisk.fox_nd30 }}</td>
+                                <td>{{ dsk.rawantidisk.caz_nd30 }}</td>
+                                <td>{{ dsk.rawantidisk.cro_nd30 }}</td>
+                                <td>{{ dsk.rawantidisk.cxm_nd30 }}</td>
+                                <td>{{ dsk.rawantidisk.cxa_nd30 }}</td>
+                                <td>{{ dsk.rawantidisk.cep_nd30 }}</td>
+                                <td>{{ dsk.rawantidisk.chl_nd30 }}</td>
+                                <td>{{ dsk.rawantidisk.cip_nd5 }}</td>
+                                <td>{{ dsk.rawantidisk.clr_nd15 }}</td>
+                                <td>{{ dsk.rawantidisk.cli_nd2 }}</td>
+                                <td>{{ dsk.rawantidisk.col_nd10 }}</td>
+                                <td>{{ dsk.rawantidisk.sxt_nd1_2 }}</td>
+                                <td>{{ dsk.rawantidisk.dap_nd30 }}</td>
+                                <td>{{ dsk.rawantidisk.dor_nd10 }}</td>
+                                <td>{{ dsk.rawantidisk.etp_nd10 }}</td>
+                                <td>{{ dsk.rawantidisk.ery_nd15 }}</td>
+                                <td>{{ dsk.rawantidisk.gen_nd10 }}</td>
+                                <td>{{ dsk.rawantidisk.geh_nd120 }}</td>
+                                <td>{{ dsk.rawantidisk.ipm_nd10 }}</td>
+                                <td>{{ dsk.rawantidisk.kan_nd30 }}</td>
+                                <td>{{ dsk.rawantidisk.lvx_nd5 }}</td>
+                                <td>{{ dsk.rawantidisk.lnz_nd30 }}</td>
+                                <td>{{ dsk.rawantidisk.mem_nd10 }}</td>
+                                <td>{{ dsk.rawantidisk.mno_nd30 }}</td>
+                                <td>{{ dsk.rawantidisk.mfx_nd5 }}</td>
+                                <td>{{ dsk.rawantidisk.nal_nd30 }}</td>
+                                <td>{{ dsk.rawantidisk.net_nd30 }}</td>
+                                <td>{{ dsk.rawantidisk.nit_nd300 }}</td>
+                                <td>{{ dsk.rawantidisk.nor_nd10 }}</td>
+                                <td>{{ dsk.rawantidisk.nov_nd5 }}</td>
+                                <td>{{ dsk.rawantidisk.ofx_nd5 }}</td>
+                                <td>{{ dsk.rawantidisk.oxa_nd1 }}</td>
+                                <td>{{ dsk.rawantidisk.pen_nd10 }}</td>
+                                <td>{{ dsk.rawantidisk.pip_nd100 }}</td>
+                                <td>{{ dsk.rawantidisk.tzp_nd100 }}</td>
+                                <td>{{ dsk.rawantidisk.pol_nd300 }}</td>
+                                <td>{{ dsk.rawantidisk.qda_nd15 }}</td>
+                                <td>{{ dsk.rawantidisk.rif_nd5 }}</td>
+                                <td>{{ dsk.rawantidisk.spt_nd100 }}</td>
+                                <td>{{ dsk.rawantidisk.str_nd10 }}</td>
+                                <td>{{ dsk.rawantidisk.sth_nd300 }}</td>
+                                <td>{{ dsk.rawantidisk.tcy_nd30 }}</td>
+                                <td>{{ dsk.rawantidisk.tic_nd75 }}</td>
+                                <td>{{ dsk.rawantidisk.tcc_nd75 }}</td>
+                                <td>{{ dsk.rawantidisk.tgc_nd15 }}</td>
+                                <td>{{ dsk.rawantidisk.tob_nd10 }}</td>
+                                <td>{{ dsk.rawantidisk.van_nd30 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+
+
+
+  <div class="row">
+    <div class="mx-auto col-md-9 col-lg-9 col-xlg-9">
+       <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">{{ file_name }}</h4>
+                <h4 class="card-title p-b-10">ANTIBIOTIC MIC DETAILS</h4>
+                <div class="table-responsive">
+                    <table id="zero_config_antmic" class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Patient ID</th>
+                                <th>AMK_NM</th>
+                                <th>AMC_NM</th>
+                                <th>AMP_NM</th>
+                                <th>SAM_NM</th>
+                                <th>AZM_NM</th>
+                                <th>ATM_NM</th>
+                                <th>CEC_NM</th>
+                                <th>MAN_NM</th>
+                                <th>CZO_NM</th>
+                                <th>FEP_NM</th>
+                                <th>CFM_NM</th>
+                                <th>CFP_NM</th>
+                                <th>CTX_NM</th>
+                                <th>FOX_NM</th>
+                                <th>CAZ_NM</th>
+                                <th>CRO_NM</th>
+                                <th>CXM_NM</th>
+                                <th>CXA_NM</th>
+                                <th>CEP_NM</th>
+                                <th>CHL_NM</th>
+                                <th>CIP_NM</th>
+                                <th>CLR_NM</th>
+                                <th>CLI_NM</th>
+                                <th>COL_NM</th>
+                                <th>SXT_NM</th>
+                                <th>DAP_NM</th>
+                                <th>DOR_NM</th>
+                                <th>ETP_NM</th>
+                                <th>ERY_NM</th>
+                                <th>GEN_NM</th>
+                                <th>GEH_NM</th>
+                                <th>IPM_NM</th>
+                                <th>KAN_NM</th>
+                                <th>LVX_NM</th>
+                                <th>LNZ_NM</th>
+                                <th>MEM_NM</th>
+                                <th>MNO_NM</th>
+                                <th>MFX_NM</th>
+                                <th>NAL_NM</th>
+                                <th>NET_NM</th>
+                                <th>NIT_NM</th>
+                                <th>NOR_NM</th>
+                                <th>NOV_NM</th>
+                                <th>OFX_NM</th>
+                                <th>OXA_NM</th>
+                                <th>PEN_NM</th>
+                                <th>PIP_NM</th>
+                                <th>TZP_NM</th>
+                                <th>POL_NM</th>
+                                <th>QDA_NM</th>
+                                <th>RIF_NM</th>
+                                <th>SPT_NM</th>
+                                <th>STR_NM</th>
+                                <th>STH_NM</th>
+                                <th>TCY_NM</th>
+                                <th>TIC_NM</th>
+                                <th>TCC_NM</th>
+                                <th>TGC_NM</th>
+                                <th>TOB_NM</th>
+                                <th>VAN_NM</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dsk in origin  %}
+                            <tr>
+                                <td>{{ dsk.patient_id }} </td>
+                                <td>{{ dsk.rawantimic.amk_nm }}</td>
+                                <td>{{ dsk.rawantimic.amc_nm }}</td>
+                                <td>{{ dsk.rawantimic.amp_nm }}</td>
+                                <td>{{ dsk.rawantimic.sam_nm }}</td>
+                                <td>{{ dsk.rawantimic.azm_nm }}</td>
+                                <td>{{ dsk.rawantimic.atm_nm }}</td>
+                                <td>{{ dsk.rawantimic.cec_nm }}</td>
+                                <td>{{ dsk.rawantimic.man_nm }}</td>
+                                <td>{{ dsk.rawantimic.czo_nm }}</td>
+                                <td>{{ dsk.rawantimic.fep_nm }}</td>
+                                <td>{{ dsk.rawantimic.cfm_nm }}</td>
+                                <td>{{ dsk.rawantimic.cfp_nm }}</td>
+                                <td>{{ dsk.rawantimic.ctx_nm }}</td>
+                                <td>{{ dsk.rawantimic.fox_nm }}</td>
+                                <td>{{ dsk.rawantimic.caz_nm }}</td>
+                                <td>{{ dsk.rawantimic.cro_nm }}</td>
+                                <td>{{ dsk.rawantimic.cxm_nm }}</td>
+                                <td>{{ dsk.rawantimic.cxa_nm }}</td>
+                                <td>{{ dsk.rawantimic.cep_nm }}</td>
+                                <td>{{ dsk.rawantimic.chl_nm }}</td>
+                                <td>{{ dsk.rawantimic.cip_nm }}</td>
+                                <td>{{ dsk.rawantimic.clr_nm }}</td>
+                                <td>{{ dsk.rawantimic.cli_nm }}</td>
+                                <td>{{ dsk.rawantimic.col_nm }}</td>
+                                <td>{{ dsk.rawantimic.sxt_nm }}</td>
+                                <td>{{ dsk.rawantimic.dap_nm }}</td>
+                                <td>{{ dsk.rawantimic.dor_nm }}</td>
+                                <td>{{ dsk.rawantimic.etp_nm }}</td>
+                                <td>{{ dsk.rawantimic.ery_nm }}</td>
+                                <td>{{ dsk.rawantimic.gen_nm }}</td>
+                                <td>{{ dsk.rawantimic.geh_nm }}</td>
+                                <td>{{ dsk.rawantimic.ipm_nm }}</td>
+                                <td>{{ dsk.rawantimic.kan_nm }}</td>
+                                <td>{{ dsk.rawantimic.lvx_nm }}</td>
+                                <td>{{ dsk.rawantimic.lnz_nm }}</td>
+                                <td>{{ dsk.rawantimic.mem_nm }}</td>
+                                <td>{{ dsk.rawantimic.mno_nm }}</td>
+                                <td>{{ dsk.rawantimic.mfx_nm }}</td>
+                                <td>{{ dsk.rawantimic.nal_nm }}</td>
+                                <td>{{ dsk.rawantimic.net_nm }}</td>
+                                <td>{{ dsk.rawantimic.nit_nm }}</td>
+                                <td>{{ dsk.rawantimic.nor_nm }}</td>
+                                <td>{{ dsk.rawantimic.nov_nm }}</td>
+                                <td>{{ dsk.rawantimic.ofx_nm }}</td>
+                                <td>{{ dsk.rawantimic.oxa_nm }}</td>
+                                <td>{{ dsk.rawantimic.pen_nm }}</td>
+                                <td>{{ dsk.rawantimic.pip_nm }}</td>
+                                <td>{{ dsk.rawantimic.tzp_nm }}</td>
+                                <td>{{ dsk.rawantimic.pol_nm }}</td>
+                                <td>{{ dsk.rawantimic.qda_nm }}</td>
+                                <td>{{ dsk.rawantimic.rif_nm }}</td>
+                                <td>{{ dsk.rawantimic.spt_nm }}</td>
+                                <td>{{ dsk.rawantimic.str_nm }}</td>
+                                <td>{{ dsk.rawantimic.sth_nm }}</td>
+                                <td>{{ dsk.rawantimic.tcy_nm }}</td>
+                                <td>{{ dsk.rawantimic.tic_nm }}</td>
+                                <td>{{ dsk.rawantimic.tcc_nm }}</td>
+                                <td>{{ dsk.rawantimic.tgc_nm }}</td>
+                                <td>{{ dsk.rawantimic.tob_nm }}</td>
+                                <td>{{ dsk.rawantimic.van_nm }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+                      
+{% endblock content %}
+

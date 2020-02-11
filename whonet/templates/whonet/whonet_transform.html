@@ -1,0 +1,130 @@
+{% extends 'whonet/base.html' %}
+
+{% block title %}
+ARSP-DMU | ARSEN | Whonet Transform
+{% endblock title %}
+
+
+{% block breadcrumb %}
+    <div class="page-breadcrumb">
+                <div class="row">
+                    <div class="col-12 d-flex no-block align-items-center">
+                        <h4 class="page-title">Transform</h4>
+                        <div class="ml-auto text-right">
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="{% url 'whonet_landing' %}">Dashboard</a></li>
+                                    <li class="breadcrumb-item active" aria-current="page">Transform Data</li>
+                                </ol>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+{% endblock breadcrumb %}
+
+
+
+{% block content %}
+  <div class="row">
+    <div class="col-md-7 col-lg-7 col-xlg-7 mx-auto">
+        <div class="card">
+           <div class="card-body">
+               <h4 class="card-title">Yearly Transform Data</h4>
+               <div class="row">
+
+               
+                   
+               <div class="col-md-8">
+                <form method="POST" action="{% url 'whonet_transform_year' %}" >
+                    {% csrf_token %}
+                <div class="form-group row">
+                    <label class="col-md-2 m-t-15">Sentinel Site</label>
+                    <div class="col-md-8">
+                        <select id="sentinel_site" onchange="sentiChange()" name="sentinel_site" class="select2 form-control custom-select" style="width: 100%; height:36px;">
+                            <option> </option>
+                           
+                                {% for fnames in f_names  %}
+                                <option value="{{ fnames }}">{{ fnames }}</option>
+                                {% endfor %}
+                           
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-md-2 m-t-15">Year</label>
+                    <div class="col-md-8">
+                        <select id="yearGet" name="year" class="select2 form-control custom-select" style="width: 100%; height:36px;">
+                            <option> </option>
+                            <!-- {% for yr in year  %}
+                            <option value="{{ yr }}">{{ yr }}</option>
+                            {% endfor %} -->
+                           
+                        </select>
+                    </div>
+                </div>
+               </div>
+               <div class="col-md-4">
+                    <div class="custom-control custom-checkbox mr-sm-2">
+                        <input value="Origin" name="options" type="checkbox" class="custom-control-input" id="customControlAutosizing1{{ fnames.id }}">
+                        <label class="custom-control-label" for="customControlAutosizing1{{ fnames.id }}">Origin</label>
+                    </div>
+                    <div class="custom-control custom-checkbox mr-sm-2">
+                        <input value="Diagnosis"  name="options" type="checkbox" class="custom-control-input" id="customControlAutosizing2{{ fnames.id }}">
+                        <label class="custom-control-label" for="customControlAutosizing2{{ fnames.id }}">Diagnosis</label>
+                    </div>
+                    <div class="custom-control custom-checkbox mr-sm-2">
+                        <input value="Location" name="options" type="checkbox" class="custom-control-input" id="customControlAutosizing3{{ fnames.id }}">
+                        <label class="custom-control-label" for="customControlAutosizing3{{ fnames.id }}">Location</label>
+                    </div>
+                    <div class="custom-control custom-checkbox mr-sm-2">
+                        <input value="Specimen" name="options" type="checkbox" class="custom-control-input" id="customControlAutosizing4{{ fnames.id }}">
+                        <label class="custom-control-label" for="customControlAutosizing4{{ fnames.id }}">Specimen</label>
+                    </div>
+                    <div class="custom-control custom-checkbox mr-sm-2">
+                        <input value="Nosocomial" name="options" type="checkbox" class="custom-control-input" id="customControlAutosizing5{{ fnames.id }}">
+                        <label class="custom-control-label" for="customControlAutosizing5{{ fnames.id }}">Nosocomial</label>
+                    </div>
+                    <div class="custom-control custom-checkbox mr-sm-2">
+                        <input value="MRSA" name="options" type="checkbox" class="custom-control-input" id="customControlAutosizing6{{ fnames.id }}">
+                        <label class="custom-control-label" for="customControlAutosizing6{{ fnames.id }}">MRSA</label>
+                    </div>
+                    <div class="custom-control custom-checkbox mr-sm-2">
+                        <input value="SPN" name="options" type="checkbox" class="custom-control-input" id="customControlAutosizing7{{ fnames.id }}">
+                        <label class="custom-control-label" for="customControlAutosizing7{{ fnames.id }}">SPN</label>
+                    </div>
+                   
+                </div>
+            </div>
+            <button id="id_submit{{ fnames.id }}" type="submit" class="btn btn-success btn-block m-t-15">Transform <i id="submit_loading{{ fnames.id }}"  class="fas fa-cog fa-spin"></i></button>
+            </form>
+               <!-- <div class="table-responsive">
+                <table id="zero_config" class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th>File Name</th>
+                            <th>Date Uploaded</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fnames in f_names  %}
+                        <tr>
+                            <td>{{ fnames }}</td>
+                            <td>{{ fnames.created_at }}</td>
+                            <td>                   
+                                <a href="/arsp_dmu/whonet_transform/data/{{ fnames.id }}" class="btn btn-success btn-sm">Transform</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div> -->
+           </div>
+        </div>
+    </div>
+  </div>
+
+                      
+{% endblock content %}
+

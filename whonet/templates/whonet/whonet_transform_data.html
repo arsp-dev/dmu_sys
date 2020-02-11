@@ -1,0 +1,443 @@
+{% extends 'whonet/base.html' %}
+
+{% block title %}
+ARSP-DMU | ARSEN | Whonet Transform | Data | {{ file_name }}
+{% endblock title %}
+
+
+{% block breadcrumb %}
+    <div class="page-breadcrumb">
+                <div class="row">
+                    <div class="col-12 d-flex no-block align-items-center">
+                        <h4 class="page-title">Transform Raw Data</h4>
+                        <div class="ml-auto text-right">
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="{% url 'whonet_landing' %}">Dashboard</a></li>
+                                    <li class="breadcrumb-item" aria-current="page"> <a href="{% url 'whonet_transform' %} ">Transform Data</a></li>
+                                    <li class="breadcrumb-item active" aria-current="page">{{ file_name }}</li>
+                                </ol>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+{% endblock breadcrumb %}
+
+
+
+{% block content %}
+  <div class="row">
+    <div class="mx-auto col-md-9 col-lg-9 col-xlg-9">
+       <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">{{ file_name }}</h4>
+                <h4 class="card-title p-b-10">ORIGIN DETAILS</h4>
+                <div class="table-responsive">
+                    <table id="zero_export_excel" class="table table-striped table-bordered">
+                        <thead>
+                            <tr>
+                                <!-- ORIGIN -->
+                                <th class="exclude">ID</th>
+                                <th>PATIENT_ID</th>
+                                <th>COUNTRY_A</th>
+                                <th>REGION</th>
+                                <th>ISLAND</th>
+                                <th>LABORATORY</th>
+                                <th>FIRST_NAME</th>
+                                <th>MIDDLE_NAME</th>
+                                <th>LAST_NAME</th>
+                                <th>SEX</th>
+                                <th>AGE</th>
+                                <th>DATE_BIRTH</th>
+                                <th>AGE_GRP</th>
+                                <th>PAT_TYPE</th>
+                                <th>DATE_DATA</th>
+                                <th>X_REFERRED</th>
+                                <th>X_RECNUM</th>
+                                <th>DATE_ADMIS</th>
+                                <th>NOSOCOMIAL</th>
+                                <th>DIAGNOSIS</th>
+                                <th>STOCK_NUM</th>
+                                 <!--END ORIGIN -->
+
+                                 <!-- LOCATION -->
+                                 <th>WARD</th>
+                                 <th>INSTITUT</th>
+                                 <th>DEPARTMENT</th>
+                                 <th>WARD_TYPE</th>
+                                 <!--END LOCATION -->
+
+                                 <!-- MICROBIOLOGY -->
+                                 <th>ORGANISM</th>
+                                 <th>ORG_TYPE</th>
+                                 <th>BETA_LACT</th>
+                                 <th>COMMENT</th>
+                                 <th>MRSA</th>
+                                 <th>INDUC_CLI</th>
+                                 <th>MECA</th>
+                                 <th>AMPC</th>
+                                 <th>X_MRSE</th>
+                                 <th>X_CARB</th>
+                                 <th>ESBL</th>
+                                 <th>URINE_COUNT</th>
+                                 <th>SEROTYPE</th>
+                                 <th>CARBAPENEM</th>
+                                 <th>MBL</th>
+                                 <th>GROWTH</th>
+                                 <!--END MICROBIOLOGY -->
+
+                                 <!-- SPECIMEN -->
+                                 <th>SPEC_NUM</th>
+                                 <th>SPEC_DATE</th>
+                                 <th>SPEC_TYPE</th>
+                                 <th>SPEC_CODE</th>
+                                 <!--END SPECIMEN -->
+
+
+                                 <!-- ANTIDISK -->
+                                 <th>AMK_ND30</th>
+                                 <th>AMC_ND20</th>
+                                 <th>AMP_ND10</th>
+                                 <th>SAM_ND10</th>
+                                 <th>AZM_ND15</th>
+                                 <th>ATM_ND30</th>
+                                 <th>CEC_ND30</th>
+                                 <th>MAN_ND30</th>
+                                 <th>CZO_ND30</th>
+                                 <th>FEP_ND30</th>
+                                 <th>CFM_ND5</th>
+                                 <th>CFP_ND75</th>
+                                 <th>CTX_ND30</th>
+                                 <th>FOX_ND30</th>
+                                 <th>CAZ_ND30</th>
+                                 <th>CRO_ND30</th>
+                                 <th>CXM_ND30</th>
+                                 <th>CXA_ND30</th>
+                                 <th>CEP_ND30</th>
+                                 <TH>CHL_ND30</TH>
+                                 <TH>CIP_ND5</TH>
+                                 <TH>CLR_ND15</TH>
+                                 <TH>CLI_ND2</TH>
+                                 <TH>COL_ND10</TH>
+                                 <TH>SXT_ND1_2</TH>
+                                 <TH>DAP_ND30</TH>
+                                 <TH>DOR_ND10</TH>
+                                 <TH>ETP_ND10</TH>
+                                 <TH>ERY_ND15</TH>
+                                 <TH>GEN_ND10</TH>
+                                 <TH>GEH_ND120</TH>
+                                 <TH>IPM_ND10</TH>
+                                 <TH>KAN_ND30</TH>
+                                 <TH>LVX_ND5</TH>
+                                 <TH>LNZ_ND30</TH>
+                                 <TH>MEM_ND10</TH>
+                                 <TH>MNO_ND30</TH>
+                                 <TH>MFX_ND5</TH>
+                                 <TH>NAL_ND30</TH>
+                                 <TH>NET_ND30</TH>
+                                 <TH>NIT_ND300</TH>
+                                 <TH>NOR_ND10</TH>
+                                 <TH>NOV_ND5</TH>
+                                 <TH>OFX_ND5</TH>
+                                 <TH>OXA_ND1</TH>
+                                 <TH>PEN_ND10</TH>
+                                 <TH>PIP_ND100</TH>
+                                 <TH>TZP_ND100</TH>
+                                 <TH>POL_ND300</TH>
+                                 <TH>QDA_ND15</TH>
+                                 <TH>RIF_ND5</TH>
+                                 <TH>SPT_ND100</TH>
+                                 <TH>STR_ND10</TH>
+                                 <TH>STH_ND300</TH>
+                                 <TH>TCY_ND30</TH>
+                                 <TH>TIC_ND75</TH>
+                                 <TH>TCC_ND75</TH>
+                                 <TH>TGC_ND15</TH>
+                                 <TH>TOB_ND10</TH>
+                                 <TH>VAN_ND30</TH>
+                                 <!--END ANTIDISK -->
+
+
+                                 <!-- ANTIMIC -->
+                                 <TH>AMK_NM</TH>
+                                 <TH>AMC_NM</TH>
+                                 <TH>AMP_NM</TH>
+                                 <TH>SAM_NM</TH>
+                                 <TH>AZM_NM</TH>
+                                 <TH>ATM_NM</TH>
+                                 <TH>CEC_NM</TH>
+                                 <TH>MAN_NM</TH>
+                                 <TH>CZO_NM</TH>
+                                 <TH>FEP_NM</TH>
+                                 <TH>CFM_NM</TH>
+                                 <TH>CFP_NM</TH>
+                                 <TH>CTX_NM</TH>
+                                 <TH>FOX_NM</TH>
+                                 <TH>CAZ_NM</TH>
+                                 <TH>CRO_NM</TH>
+                                 <TH>CXM_NM</TH>
+                                 <TH>CXA_NM</TH>
+                                 <TH>CEP_NM</TH>
+                                 <TH>CHL_NM</TH>
+                                 <TH>CIP_NM</TH>
+                                 <TH>CLR_NM</TH>
+                                 <TH>CLI_NM</TH>
+                                 <TH>COL_NM</TH>
+                                 <TH>SXT_NM</TH>
+                                 <TH>DAP_NM</TH>
+                                 <TH>DOR_NM</TH>
+                                 <TH>ETP_NM</TH>
+                                 <TH>ERY_NM</TH>
+                                 <TH>GEN_NM</TH>
+                                 <TH>GEH_NM</TH>
+                                 <TH>IPM_NM</TH>
+                                 <TH>KAN_NM</TH>
+                                 <TH>LVX_NM</TH>
+                                 <TH>LNZ_NM</TH>
+                                 <TH>MEM_NM</TH>
+                                 <TH>MNO_NM</TH>
+                                 <TH>MFX_NM</TH>
+                                 <TH>NAL_NM</TH>
+                                 <TH>NET_NM</TH>
+                                 <TH>NIT_NM</TH>
+                                 <TH>NOR_NM</TH>
+                                 <TH>NOV_NM</TH>
+                                 <TH>OFX_NM</TH>
+                                 <TH>OXA_NM</TH>
+                                 <TH>PEN_NM</TH>
+                                 <TH>PIP_NM</TH>
+                                 <TH>TZP_NM</TH>
+                                 <TH>POL_NM</TH>
+                                 <TH>QDA_NM</TH>
+                                 <TH>RIF_NM</TH>
+                                 <TH>SPT_NM</TH>
+                                 <TH>STR_NM</TH>
+                                 <TH>STH_NM</TH>
+                                 <TH>TCY_NM</TH>
+                                 <TH>TIC_NM</TH>
+                                 <TH>TCC_NM</TH>
+                                 <TH>TGC_NM</TH>
+                                 <TH>TOB_NM</TH>
+                                 <TH>VAN_NM</TH>
+                               
+                                 <!--END ANTIMIC -->
+
+
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for index,row in origin.iterrows  %}
+                            <tr>
+                                 <!-- ORIGIN -->
+                                <td></td>
+                                <td>{{ row.patient_id }}</td>
+                                <td>{{ row.country_a }}</td>
+                                <td>{{ row.region }}</td>
+                                <td>{{ row.island }}</td>
+                                <td>{{ row.laboratory }}</td>
+                                <td>{{ row.first_name }}</td>
+                                <td>{{ row.mid_name }}</td>
+                                <td>{{ row.last_name }}</td>
+                                <td>{{ row.sex }}</td>
+                                <td>{{ row.age }}</td>
+                                <td>{{ row.date_birth }}</td>
+                                <td>{{ row.age_grp }}</td>
+                                <td>{{ row.pat_type }}</td>
+                                <td>{{ row.date_data }}</td>
+                                <td>{{ row.x_referred }}</td>
+                                <td>{{ row.x_recnum }}</td>
+                                <td>{{ row.date_admis }}</td>
+                                <td>{{ row.nosocomial }}</td>
+                                <td>{{ row.diagnosis }}</td>
+                                <td>{{ row.stock_num }}</td>
+                                <!--END ORIGIN -->
+
+                                <!-- LOCATION -->
+                                <td>{{ row.ward }}</td>
+                                <td>{{ row.institut }}</td>
+                                <td>{{ row.department }}</td>
+                                <td>{{ row.ward_type }}</td>
+                                <!--END LOCATION -->
+
+
+                                <!-- MICROBIOLOGY -->
+                                <td>{{ row.organism }}</td>
+                                <td>{{ row.org_type }}</td>
+                                <td>{{ row.beta_lact }}</td>
+                                <td>{{ row.comment }}</td>
+                                <td>{{ row.mrsa }}</td>
+                                <td>{{ row.induc_cli }}</td>
+                                <td>{{ row.meca }}</td>
+                                <td>{{ row.ampc }}</td>
+                                <td>{{ row.x_mrse }}</td>
+                                <td>{{ row.x_carb }}</td>
+                                <td>{{ row.esbl }}</td>
+                                <td>{{ row.urine_count }}</td>
+                                <td>{{ row.serotype }}</td>
+                                <td>{{ row.carbapenem }}</td>
+                                <td>{{ row.mbl }}</td>
+                                <td>{{ row.growth }}</td>
+                                 <!--END MICROBIOLOGY -->
+
+
+                                 <!-- SPECIMEN -->
+                                 <td>{{ row.spec_num }}</td>
+                                 <td>{{ row.spec_date }}</td>
+                                 <td>{{ row.spec_type }}</td>
+                                 <td>{{ row.spec_code }}</td>
+                                 <!--END MICROBIOLOGY -->
+
+                                 <!-- ANTIDISK -->
+                                 <td>{{ row.amk_nd30 }}</td>
+                                 <td>{{ row.amc_nd20 }}</td>
+                                 <td>{{ row.amp_nd10 }}</td>
+                                 <td>{{ row.sam_nd10 }}</td>
+                                 <td>{{ row.azm_nd15 }}</td>
+                                 <td>{{ row.atm_nd30 }}</td>
+                                 <td>{{ row.cec_nd30 }}</td>
+                                 <td>{{ row.man_nd30 }}</td>
+                                 <td>{{ row.czo_nd30 }}</td>
+                                 <td>{{ row.fep_nd30 }}</td>
+                                 <td>{{ row.cfm_nd5 }}</td>
+                                 <td>{{ row.cfp_nd75 }}</td>
+                                 <td>{{ row.ctx_nd30 }}</td>
+                                 <td>{{ row.fox_nd30 }}</td>
+                                 <td>{{ row.caz_nd30 }}</td>
+                                 <td>{{ row.cro_nd30 }}</td>
+                                 <td>{{ row.cxm_nd30 }}</td>
+                                 <td>{{ row.cxa_nd30 }}</td>
+                                 <td>{{ row.cep_nd30 }}</td>
+                                 <td>{{ row.chl_nd30 }}</td>
+                                 <td>{{ row.cip_nd5 }}</td>
+                                 <td>{{ row.clr_nd15 }}</td>
+                                 <td>{{ row.cli_nd2 }}</td>
+                                 <td>{{ row.col_nd10 }}</td>
+                                 <td>{{ row.sxt_nd1_2 }}</td>
+                                 <td>{{ row.dap_nd30 }}</td>
+                                 <td>{{ row.dor_nd10 }}</td>
+                                 <td>{{ row.etp_nd10 }}</td>
+                                 <td>{{ row.ery_nd15 }}</td>
+                                 <td>{{ row.gen_nd10 }}</td>
+                                 <td>{{ row.geh_nd120 }}</td>
+                                 <td>{{ row.ipm_nd10 }}</td>
+                                 <td>{{ row.kan_nd30 }}</td>
+                                 <td>{{ row.lvx_nd5 }}</td>
+                                 <td>{{ row.lnz_nd30 }}</td>
+                                 <td>{{ row.mem_nd10 }}</td>
+                                 <td>{{ row.mno_nd30 }}</td>
+                                 <td>{{ row.mfx_nd5 }}</td>
+                                 <td>{{ row.nal_nd30 }}</td>
+                                 <td>{{ row.net_nd30 }}</td>
+                                 <td>{{ row.nit_nd300 }}</td>
+                                 <td>{{ row.nor_nd10 }}</td>
+                                 <td>{{ row.nov_nd5 }}</td>
+                                 <td>{{ row.ofx_nd5 }}</td>
+                                 <td>{{ row.oxa_nd1 }}</td>
+                                 <td>{{ row.pen_nd10 }}</td>
+                                 <td>{{ row.pip_nd100 }}</td>
+                                 <td>{{ row.tzp_nd100 }}</td>
+                                 <td>{{ row.pol_nd300 }}</td>
+                                 <td>{{ row.qda_nd15 }}</td>
+                                 <td>{{ row.rif_nd5 }}</td>
+                                 <td>{{ row.spt_nd100 }}</td>
+                                 <td>{{ row.str_nd10 }}</td>
+                                 <td>{{ row.sth_nd300 }}</td>
+                                 <td>{{ row.tcy_nd30 }}</td>
+                                 <td>{{ row.tic_nd75 }}</td>
+                                 <td>{{ row.tcc_nd75 }}</td>
+                                 <td>{{ row.tgc_nd15 }}</td>
+                                 <td>{{ row.tob_nd10 }}</td>
+                                 <td>{{ row.van_nd30 }}</td>
+                                
+                                 <!--END ANTIDISK -->
+
+
+                                 <!-- ANTIMIC -->
+                                 <td>{{ row.amk_nm }}</td>
+                                 <td>{{ row.amc_nm }}</td>
+                                 <td>{{ row.amp_nm }}</td>
+                                 <td>{{ row.sam_nm }}</td>
+                                 <td>{{ row.azm_nm }}</td>
+                                 <td>{{ row.atm_nm }}</td>
+                                 <td>{{ row.cec_nm }}</td>
+                                 <td>{{ row.man_nm }}</td>
+                                 <td>{{ row.czo_nm }}</td>
+                                 <td>{{ row.fep_nm }}</td>
+                                 <td>{{ row.cfm_nm }}</td>
+                                 <td>{{ row.cfp_nm }}</td>
+                                 <td>{{ row.ctx_nm }}</td>
+                                 <td>{{ row.fox_nm }}</td>
+                                 <td>{{ row.caz_nm }}</td>
+                                 <td>{{ row.cro_nm }}</td>
+                                 <td>{{ row.cxm_nm }}</td>
+                                 <td>{{ row.cxa_nm }}</td>
+                                 <td>{{ row.cep_nm }}</td>
+                                 <td>{{ row.chl_nm }}</td>
+                                 <td>{{ row.cip_nm }}</td>
+                                 <td>{{ row.clr_nm }}</td>
+                                 <td>{{ row.cli_nm }}</td>
+                                 <td>{{ row.col_nm }}</td>
+                                 <td>{{ row.sxt_nm }}</td>
+                                 <td>{{ row.dap_nm }}</td>
+                                 <td>{{ row.dor_nm }}</td>
+                                 <td>{{ row.etp_nm }}</td>
+                                 <td>{{ row.ery_nm }}</td>
+                                 <td>{{ row.gen_nm }}</td>
+                                 <td>{{ row.geh_nm }}</td>
+                                 <td>{{ row.ipm_nm }}</td>
+                                 <td>{{ row.kan_nm }}</td>
+                                 <td>{{ row.lvx_nm }}</td>
+                                 <td>{{ row.lnz_nm }}</td>
+                                 <td>{{ row.mem_nm }}</td>
+                                 <td>{{ row.mno_nm }}</td>
+                                 <td>{{ row.mfx_nm }}</td>
+                                 <td>{{ row.nal_nm }}</td>
+                                 <td>{{ row.net_nm }}</td>
+                                 <td>{{ row.nit_nm }}</td>
+                                 <td>{{ row.nor_nm }}</td>
+                                 <td>{{ row.nov_nm }}</td>
+                                 <td>{{ row.ofx_nm }}</td>
+                                 <td>{{ row.oxa_nm }}</td>
+                                 <td>{{ row.pen_nm }}</td>
+                                 <td>{{ row.pip_nm }}</td>
+                                 <td>{{ row.tzp_nm }}</td>
+                                 <td>{{ row.pol_nm }}</td>
+                                 <td>{{ row.qda_nm }}</td>
+                                 <td>{{ row.rif_nm }}</td>
+                                 <td>{{ row.spt_nm }}</td>
+                                 <td>{{ row.str_nm }}</td>
+                                 <td>{{ row.sth_nm }}</td>
+                                 <td>{{ row.tcy_nm }}</td>
+                                 <td>{{ row.tic_nm }}</td>
+                                 <td>{{ row.tcc_nm }}</td>
+                                 <td>{{ row.tgc_nm }}</td>
+                                 <td>{{ row.tob_nm }}</td>
+                                 <td>{{ row.van_nm }}</td>
+                                 <!--END ANTIMIC -->
+
+                                
+
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+
+
+
+ 
+
+
+
+
+
+
+                      
+{% endblock content %}
+

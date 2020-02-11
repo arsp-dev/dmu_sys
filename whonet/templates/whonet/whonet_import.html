@@ -1,0 +1,151 @@
+{% extends 'whonet/base.html' %}
+
+{% block title %}
+ARSP-DMU | ARSEN | Whonet Import
+{% endblock title %}
+
+
+{% block breadcrumb %}
+    <div class="page-breadcrumb">
+                <div class="row">
+                    <div class="col-12 d-flex no-block align-items-center">
+                        <h4 class="page-title">Import Raw Data</h4>
+                        <div class="ml-auto text-right">
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="{% url 'whonet_landing' %}">Dashboard</a></li>
+                                    <li class="breadcrumb-item active" aria-current="page">Import Raw Data</li>
+                                </ol>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+{% endblock breadcrumb %}
+
+
+
+{% block content %}
+  <div class="row">
+    <div class="mx-auto col-md-9 col-lg-9 col-xlg-9">
+       <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Select WHONET file to import</h4>
+                <h6 class="card-subtitle p-b-10">Import <code>.csv</code> only </h6>
+                <div class="form-group row m-t-10">
+                    <label class="col-md-3">File Upload</label>
+                    <div class="col-md-9">
+                        <div class="custom-file">
+                            <form method="post" enctype="multipart/form-data" action="{% url 'whonet_import' %}">
+                            {% csrf_token %}
+                            <input type="file" class="custom-file-input" id="validatedCustomFile" name="raw_data" accept=".csv" required>
+                            <label class="custom-file-label" for="validatedCustomFile">Choose file...</label>
+                            <div class="invalid-feedback">Example invalid custom file feedback</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="border-top">
+                <div class="card-body">
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                 
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    
+  </div>
+
+  <div class="row">
+    <div class="col-md-9 col-lg-9 col-xlg-9 mx-auto">
+        <div class="card">
+           <div class="card-body">
+               <h4 class="card-title">Uploaded Files</h4>
+               <div class="table-responsive">
+                <table id="zero_config" class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th>File Name</th>
+                            <th>Date Uploaded</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fnames in f_names  %}
+                        <tr>
+                            <td>{{ fnames }}</td>
+                            <td>{{ fnames.created_at }}</td>
+                            <td>
+                                <div class="row mb-3">
+                                    <a href="/arsp_dmu/whonet_import/data/{{ fnames.id }}" class="btn btn-success btn-sm mr-3">Raw data</a>
+                                  
+                                    <!-- <a href="/arsp_dmu/whonet_transform/data/{{ fnames.id }}" class="btn btn-success btn-sm">Transform</a> -->
+                                </div>
+                                <div class="form-group row col-md-12">
+                                    <!-- <label class="">Transform</label> -->
+                                    <form method="POST" action="/arsp_dmu/whonet_transform/data/{{ fnames.id }}/">
+                                    {% csrf_token %}
+                                  
+                                        
+                                            <!-- <div class="col-md-12">
+                                            <select name="options" class="select2 form-control col-md-12 m-t-15" multiple="multiple" style="height: 36px;width: 100%;" required>
+                                            <option>Origin</option>
+                                            <option>Diagnosis</option>
+                                            <option>Location</option>
+                                            <option>Specimen</option>
+                                            </select>
+                                            </div>
+                                            <input type="submit" class="btn btn-success btn-sm m-t-15"> -->
+                                            <div class="col-md-12">
+                                                <div class="custom-control custom-checkbox mr-sm-2">
+                                                    <input value="Origin" name="options" type="checkbox" class="custom-control-input" id="customControlAutosizing1{{ fnames.id }}">
+                                                    <label class="custom-control-label" for="customControlAutosizing1{{ fnames.id }}">Origin</label>
+                                                </div>
+                                                <div class="custom-control custom-checkbox mr-sm-2">
+                                                    <input value="Diagnosis"  name="options" type="checkbox" class="custom-control-input" id="customControlAutosizing2{{ fnames.id }}">
+                                                    <label class="custom-control-label" for="customControlAutosizing2{{ fnames.id }}">Diagnosis</label>
+                                                </div>
+                                                <div class="custom-control custom-checkbox mr-sm-2">
+                                                    <input value="Location" name="options" type="checkbox" class="custom-control-input" id="customControlAutosizing3{{ fnames.id }}">
+                                                    <label class="custom-control-label" for="customControlAutosizing3{{ fnames.id }}">Location</label>
+                                                </div>
+                                                <div class="custom-control custom-checkbox mr-sm-2">
+                                                    <input value="Specimen" name="options" type="checkbox" class="custom-control-input" id="customControlAutosizing4{{ fnames.id }}">
+                                                    <label class="custom-control-label" for="customControlAutosizing4{{ fnames.id }}">Specimen</label>
+                                                </div>
+                                                <div class="custom-control custom-checkbox mr-sm-2">
+                                                    <input value="Nosocomial" name="options" type="checkbox" class="custom-control-input" id="customControlAutosizing5{{ fnames.id }}">
+                                                    <label class="custom-control-label" for="customControlAutosizing5{{ fnames.id }}">Nosocomial</label>
+                                                </div>
+                                                <div class="custom-control custom-checkbox mr-sm-2">
+                                                    <input value="MRSA" name="options" type="checkbox" class="custom-control-input" id="customControlAutosizing6{{ fnames.id }}">
+                                                    <label class="custom-control-label" for="customControlAutosizing6{{ fnames.id }}">MRSA</label>
+                                                </div>
+                                                <div class="custom-control custom-checkbox mr-sm-2">
+                                                    <input value="SPN" name="options" type="checkbox" class="custom-control-input" id="customControlAutosizing7{{ fnames.id }}">
+                                                    <label class="custom-control-label" for="customControlAutosizing7{{ fnames.id }}">SPN</label>
+                                                </div>
+                                                <button id="id_submit{{ fnames.id }}" type="submit" class="btn btn-success btn-sm m-t-15">Transform <i id="submit_loading{{ fnames.id }}"  class="fas fa-cog fa-spin"></i></button>
+                                            </div>
+                                  
+                                    
+                                    </form>
+                                    
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+           </div>
+        </div>
+    </div>
+  </div>
+
+                      
+{% endblock content %}
+
