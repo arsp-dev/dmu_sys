@@ -68,13 +68,19 @@ def whonet_transform_year(request):
         name=query,
     )
     
-    
+    con_df = []
     
     writer = pd.ExcelWriter(response, engine='xlsxwriter')
     
     for val in coll:
         df = bigwork(val.id,val.file_name.split('_'),options)
+        con_df.append(df)
         df.to_excel(writer, sheet_name=val.file_name,index=False)
+    
+    concat_df = pd.concat(con_df)
+    
+    concat_df.to_excel(writer, sheet_name=site + '_' + year,index=False)
+        
     writer.save()
     
     
@@ -579,177 +585,17 @@ def whonet_import(request):
 
 
 
-def set_pd_columns(pd):
-    arr = [
-        'COUNTRY_A',
-        'REGION',
-        'ISLAND',
-        'LABORATORY',
-        'PATIENT_ID',
-        'FIRST_NAME',
-        'MID_NAME',
-        'LAST_NAME',
-        'SEX',
-        'AGE',
-        'DATE_BIRTH',
-        'AGE_GRP',
-        'PAT_TYPE',
-        'WARD',
-        'INSTITUT',
-        'DEPARTMENT',
-        'WARD_TYPE',
-        'SPEC_NUM',
-        'SPEC_DATE',
-        'SPEC_TYPE',
-        'SPEC_CODE',
-        'DATE_DATA',
-        'ORGANISM',
-        'ORG_TYPE',
-        'BETA_LACT',
-        'COMMENT',
-        'X_REFERRED',
-        'MRSA',
-        'X_RECNUM',
-        'INDUC_CLI',
-        'MECA',
-        'AMPC',
-        'X_MRSE',
-        'X_CARB',
-        'ESBL',
-        'NOSOCOMIAL',
-        'URINECOUNT',
-        'DIAGNOSIS',
-        'SEROTYPE',
-        'STOCK_NUM',
-        'CARBAPENEM',
-        'MBL',
-        'GROWTH',
-        'AMK_ND30',
-        'AMK_NM',
-        'AMC_ND20',
-        'AMC_NM',
-        'AMP_ND10',
-        'AMP_NM',
-        'SAM_ND10',
-        'SAM_NM',
-        'AZM_ND15',
-        'AZM_NM',
-        'ATM_ND30',
-        'ATM_NM',
-        'CEC_ND30',
-        'CEC_NM',
-        'MAN_ND30',
-        'MAN_NM',
-        'CZO_ND30',
-        'CZO_NM',
-        'FEP_ND30',
-        'FEP_NM',
-        'CFM_ND5',
-        'CFM_NM',
-        'CFP_ND75',
-        'CFP_NM',
-        'CTX_ND30',
-        'CTX_NM',
-        'FOX_ND30',
-        'FOX_NM',
-        'CAZ_ND30',
-        'CAZ_NM',
-        'CRO_ND30',
-        'CRO_NM',
-        'CXM_ND30',
-        'CXM_NM',
-        'CXA_ND30',
-        'CXA_NM',
-        'CEP_ND30',
-        'CEP_NM',
-        'CHL_ND30',
-        'CHL_NM',
-        'CIP_ND5',
-        'CIP_NM',
-        'CLR_ND15',
-        'CLR_NM',
-        'CLI_ND2',
-        'CLI_NM',
-        'COL_ND10',
-        'COL_NM',
-        'SXT_ND1_2',
-        'SXT_NM',
-        'DAP_ND30',
-        'DAP_NM',
-        'DOR_ND10',
-        'DOR_NM',
-        'ETP_ND10',
-        'ETP_NM',
-        'ERY_ND15',
-        'ERY_NM',
-        'GEN_ND10',
-        'GEN_NM',
-        'GEH_ND120',
-        'GEH_NM',
-        'IPM_ND10',
-        'IPM_NM',
-        'KAN_ND30',
-        'KAN_NM',
-        'LVX_ND5',
-        'LVX_NM',
-        'LNZ_ND30',
-        'LNZ_NM',
-        'MEM_ND10',
-        'MEM_NM',
-        'MNO_ND30',
-        'MNO_NM',
-        'MFX_ND5',
-        'MFX_NM',
-        'NAL_ND30',
-        'NAL_NM',
-        'NET_ND30',
-        'NET_NM',
-        'NIT_ND300',
-        'NIT_NM',
-        'NOR_ND10',
-        'NOR_NM',
-        'NOV_ND5',
-        'NOV_NM',
-        'OFX_ND5',
-        'OFX_NM',
-        'OXA_ND1',
-        'OXA_NM',
-        'PEN_ND10',
-        'PEN_NM',
-        'PIP_ND100',
-        'PIP_NM',
-        'TZP_ND100',
-        'TZP_NM',
-        'POL_ND300',
-        'POL_NM',
-        'QDA_ND15',
-        'QDA_NM',
-        'RIF_ND5',
-        'RIF_NM',
-        'SPT_ND100',
-        'SPT_NM',
-        'STR_ND10',
-        'STR_NM',
-        'STH_ND300',
-        'STH_NM',
-        'TCY_ND30',
-        'TCY_NM',
-        'TIC_ND75',
-        'TIC_NM',
-        'TCC_ND75',
-        'TCC_NM',
-        'TGC_ND15',
-        'TGC_NM',
-        'TOB_ND10',
-        'TOB_NM',
-        'VAN_ND30',
-        'VAN_NM',
-          ]
-    for col in arr:
-        if col not in pd.columns:
-            pd[col] = ''
+def set_pd_columns(clm):
     
-    return pd
+    whonet_data_fields = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_data_fields.xlsx')
+    data_fields = whonet_data_fields['Data fields'].values.tolist()
+    # data_fields = [x.lower() for x in data_fields]
+    
+    for col in data_fields:
+        if col not in clm.columns:
+            clm[col] = ''
+    
+    return clm
 
 
 #helping functions
@@ -763,13 +609,12 @@ def getfloat(strx):
             flt.append(q[1])
         elif '>=' in strx:
             q = strx.split('>=')
+            flt.append(q[1])
         elif '>' in strx:
             q = strx.split('>')
             flt.append(q[1])
         elif '<' in strx:
             q = strx.split('<')
-            flt.append(q[1])
-        
             flt.append(q[1])
         else:
             flt.append(strx)
@@ -841,6 +686,7 @@ def bigwork(file_id,search_file_name,options):
     whonet_organism = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_organism.xlsx')
     whonet_specimen = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_specimen.xlsx')
     whonet_site_location = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_codes_location.xlsx',search_file_name[1])
+    whonet_data_fields = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_data_fields.xlsx')
     
     # return HttpResponse(whonet_site_location)
     
@@ -848,6 +694,7 @@ def bigwork(file_id,search_file_name,options):
     org_chk = whonet_organism['ORGANISM'].values.tolist()
     spec_chk = whonet_specimen['SPEC_TYPE'].values.tolist()
     loc_chk = whonet_site_location['WARD'].values.tolist()
+    data_fields = whonet_data_fields['Data fields'].values.tolist()
     loc_chk = [x.lower() for x in loc_chk]
     
     region = []
@@ -874,6 +721,8 @@ def bigwork(file_id,search_file_name,options):
     new_country = []
     new_lab = []
     
+    x_growth = []
+    
     
     #removing nan strings
     df = df.replace(regex='nan',value='')
@@ -883,6 +732,12 @@ def bigwork(file_id,search_file_name,options):
         
         new_country.append('PHL')
         new_lab.append(search_file_name[1])
+        
+        if 'growth' in row['comment'].lower():
+            x_growth.append(row['comment'])
+        else:
+            x_growth.append('')
+        
         
         if 'Diagnosis' in options:
             if 'dx:' in row['comment']:
@@ -1054,10 +909,12 @@ def bigwork(file_id,search_file_name,options):
     
     if 'Nosocomial' in options:
         df['nosocomial'] = new_noso
+    
 
     
     df['country_a'] = new_country
     df['laboratory'] = new_lab
+    df['growth'] = x_growth
     #df columns to upper
     df.columns = map(str.upper, df.columns)
     
@@ -1066,6 +923,7 @@ def bigwork(file_id,search_file_name,options):
     # df = df.drop(columns=['ID_X', 'ID_Y','ORIGIN_REF','FILE_REF','ID'])
     df = df.drop(columns=['ORIGIN_REF','FILE_REF','ID'])
 
+    df = df.reindex(columns = data_fields)
     return df
     
     
