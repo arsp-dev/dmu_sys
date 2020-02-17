@@ -37,6 +37,22 @@ def whonet_data_summary(request):
     return render(request,'whonet/whonet_data_summary.html',{'f_names': f_names})
 
 
+@login_required(login_url='/arsp_dmu/login')
+@permission_required('auth.can_clean_create_data_summary_report', raise_exception=True)
+def whonet_data_summary_report(request,file_id):
+    options = request.POST.getlist('options')
+    file_name = RawFileName.objects.get(id=file_id)
+    search_file_name = file_name.file_name.split('_')
+    
+    # df = bigwork(file_id,search_file_name,options)
+    df = get_data_summary(file_id,search_file_name,options)
+    
+    
+    response = HttpResponse( df.to_csv(index=False,mode = 'w'),content_type='text/csv')
+    response['Content-Disposition'] = "attachment; filename=DATA_SUMMARY_{}_{}.csv".format(file_name,datetime.now())
+    
+    return response
+
 
 @login_required(login_url='/arsp_dmu/login')
 def whonet_transform(request):
@@ -104,6 +120,8 @@ def whonet_transform_data(request,file_id):
     response['Content-Disposition'] = "attachment; filename=TRANSFORM_{}_{}.csv".format(file_name,datetime.now())
     
     return response
+
+
     
    
 # <! --- staff login and logout --- !>
@@ -133,38 +151,9 @@ def staff_logout(request):
 @permission_required('whonet.view_rawfilename', raise_exception=True)
 def whonet_import_data(request,file_id):
     file_name = RawFileName.objects.get(id=file_id)
-    orig = RawOrigin.objects.select_related('rawlocation','rawmicrobiology','rawspecimen','rawantidisk','rawantimic').filter(file_ref=file_id)
-    pallobjs = [ model_to_dict(pallobj) for pallobj in RawOrigin.objects.select_related('rawlocation','rawmicrobiology','rawspecimen','rawantidisk','rawantimic').filter(file_ref=file_id)] 
-    objs_spec = [model_to_dict(obj.rawspecimen) for obj in orig]
-    objs_location = [model_to_dict(obj.rawlocation) for obj in orig]
-    objs_micro = [model_to_dict(obj.rawmicrobiology) for obj in orig]
-    objs_dsk = [model_to_dict(obj.rawantidisk) for obj in orig]
-    objs_mic = [model_to_dict(obj.rawantimic) for obj in orig]
-    df = pd.DataFrame(pallobjs)
-    df_spec = pd.DataFrame(objs_spec)
-    # df_spec.drop(columns=['id'])
-    df_loc = pd.DataFrame(objs_location)
-    # df_loc.drop(columns=['id'])
-    df_micro = pd.DataFrame(objs_micro)
-    # df_micro.drop(columns=['id'])
-    df_dsk = pd.DataFrame(objs_dsk)
-    # df_dsk.drop(columns=['id'])
-    df_mic = pd.DataFrame(objs_mic)
-    # df_mic.drop(columns=['id'])
-    
-    df2 = pd.merge(df_loc,df_spec,on='origin_ref')
-    df2 = pd.merge(df2,df_micro,on='origin_ref')
-    df2 = pd.merge(df2,df_dsk,on='origin_ref')
-    df2 = pd.merge(df2,df_mic,on='origin_ref')
-    
-    df = pd.merge(df,df2,right_on='origin_ref',left_on='id')
-    # df = pd.concat([df,df2],axis=1,join="outer")
-    df = df.replace('nan',None)
-    
-    df = df.replace(regex='nan',value='')
+    df = concat_all_df(file_id)
     df.columns = map(str.upper, df.columns)
-    
-    
+
     df = df.drop(columns=['ORIGIN_REF','FILE_REF'])
     
     response = HttpResponse(df.to_csv(index=False,mode = 'w'),content_type='text/csv')
@@ -187,11 +176,6 @@ def whonet_import(request):
         
         for p in raw_data:
             results.append(import_raw(p))
-        
-        # pool = mp.Pool(processes=4)
-        
-        
-        # results = [pool.apply(import_raw, args=p) for p in raw_data]
         
     
         return render(request, 'whonet/whonet_import.html',{'multi_import' : results,'f_names': f_names})
@@ -267,36 +251,8 @@ def getYear(site):
 
 
 def bigwork(file_id,search_file_name,options):
-    orig = RawOrigin.objects.select_related('rawlocation','rawmicrobiology','rawspecimen','rawantidisk','rawantimic').filter(file_ref=file_id)
-    pallobjs = [ model_to_dict(pallobj) for pallobj in RawOrigin.objects.select_related('rawlocation','rawmicrobiology','rawspecimen','rawantidisk','rawantimic').filter(file_ref=file_id)] 
-    objs_spec = [model_to_dict(obj.rawspecimen) for obj in orig]
-    objs_location = [model_to_dict(obj.rawlocation) for obj in orig]
-    objs_micro = [model_to_dict(obj.rawmicrobiology) for obj in orig]
-    objs_dsk = [model_to_dict(obj.rawantidisk) for obj in orig]
-    objs_mic = [model_to_dict(obj.rawantimic) for obj in orig]
-    df = pd.DataFrame(pallobjs)
-    df_spec = pd.DataFrame(objs_spec)
-    # df_spec.drop(columns=['id'])
-    df_loc = pd.DataFrame(objs_location)
-    # df_loc.drop(columns=['id'])
-    df_micro = pd.DataFrame(objs_micro)
-    # df_micro.drop(columns=['id'])
-    df_dsk = pd.DataFrame(objs_dsk)
-    # df_dsk.drop(columns=['id'])
-    df_mic = pd.DataFrame(objs_mic)
-    # df_mic.drop(columns=['id'])
-    
-    df2 = pd.merge(df_loc,df_spec,on='origin_ref')
-    df2 = pd.merge(df2,df_micro,on='origin_ref')
-    df2 = pd.merge(df2,df_dsk,on='origin_ref')
-    df2 = pd.merge(df2,df_mic,on='origin_ref')
-    # df = pd.merge(df,df2,on='origin_ref')
-    # return HttpResponse(df.columns)
-    df = pd.merge(df,df2,right_on='origin_ref',left_on='id')
-    # df = pd.merge(df,df2,right_on='origin_ref',left_on='id')
-    # df = pd.concat([df,df2],axis=1,join="inner")
-    df = df.replace('nan',None)
-    
+  
+    df = concat_all_df(file_id)
     #removing rows if x_referred == 1
     if 'X_REFERRED' in options:
         df = df[df['x_referred'] != 1]
@@ -345,7 +301,7 @@ def bigwork(file_id,search_file_name,options):
     
     
     #removing nan strings
-    df = df.replace(regex='nan',value='')
+    # df = df.replace(regex='nan',value='')
     
     for index,row in df.iterrows():
         new_country.append('PHL')
@@ -419,9 +375,6 @@ def bigwork(file_id,search_file_name,options):
             if row['laboratory'].upper() in lab_chk:
                 region.append(whonet_region_island['REGION'][lab_chk.index(row['laboratory'])])
                 island.append(whonet_region_island['ISLAND'][lab_chk.index(row['laboratory'])])
-            # elif row['laboratory'].upper() == 'DMC':
-            #     region.append('XI')
-            #     island.append('MIN')
             else:
                 region.append('')
                 island.append('')
@@ -985,4 +938,96 @@ def import_raw(raw_data):
         # output.put('File ' + tmp_name.split('.')[0] + ' is already uploaded.')
         # time.sleep(0.1)
             # return render(request,'whonet/whonet_import.html',{'danger':e.message,'f_names': f_names})  
+
+
+def concat_all_df(file_id):
+    orig = RawOrigin.objects.select_related('rawlocation','rawmicrobiology','rawspecimen','rawantidisk','rawantimic').filter(file_ref=file_id)
+    pallobjs = [ model_to_dict(pallobj) for pallobj in RawOrigin.objects.select_related('rawlocation','rawmicrobiology','rawspecimen','rawantidisk','rawantimic').filter(file_ref=file_id)] 
+    objs_spec = [model_to_dict(obj.rawspecimen) for obj in orig]
+    objs_location = [model_to_dict(obj.rawlocation) for obj in orig]
+    objs_micro = [model_to_dict(obj.rawmicrobiology) for obj in orig]
+    objs_dsk = [model_to_dict(obj.rawantidisk) for obj in orig]
+    objs_mic = [model_to_dict(obj.rawantimic) for obj in orig]
+    df = pd.DataFrame(pallobjs)
+    df_spec = pd.DataFrame(objs_spec)
+    # df_spec.drop(columns=['id'])
+    df_loc = pd.DataFrame(objs_location)
+    # df_loc.drop(columns=['id'])
+    df_micro = pd.DataFrame(objs_micro)
+    # df_micro.drop(columns=['id'])
+    df_dsk = pd.DataFrame(objs_dsk)
+    # df_dsk.drop(columns=['id'])
+    df_mic = pd.DataFrame(objs_mic)
+    # df_mic.drop(columns=['id'])
+    
+    df2 = pd.merge(df_loc,df_spec,on='origin_ref')
+    df2 = pd.merge(df2,df_micro,on='origin_ref')
+    df2 = pd.merge(df2,df_dsk,on='origin_ref')
+    df2 = pd.merge(df2,df_mic,on='origin_ref')
+    # df = pd.merge(df,df2,on='origin_ref')
+    # return HttpResponse(df.columns)
+    df = pd.merge(df,df2,right_on='origin_ref',left_on='id')
+    # df = pd.merge(df,df2,right_on='origin_ref',left_on='id')
+    # df = pd.concat([df,df2],axis=1,join="inner")
+    df = df.replace('nan','')
+    # df = df.replace(pd.NaN,'')
+    
+    # df = df.drop(columns=['ORIGIN_REF','FILE_REF','ID'])
+    
+    return df
+
+def get_data_summary(file_id,search_file_name,options):
+    df = concat_all_df(file_id)
+    
+    df = df[ df['spec_type'].str.lower() != 'qc' ]
+    df = df[ df['spec_type'].str.lower() != 'en' ]
+    df = df[ df['spec_type'].str.lower() != 'wa' ]
+    df = df[ df['spec_type'].str.lower() != 'fo' ]
+    df = df[ df['spec_type'].str.lower() != 'mi' ]
+    
+
+    totalDf = len(df)
+    
+    xId = len(df[df['patient_id'] != ''])
+    xLn = len(df[df['last_name'] != ''])
+    xSe = len(df[df['sex'] != ''])
+    xAg = len(df[ df['age'] != '' ])
+    xDb = len(df[ df['date_birth'] != '' ])
+    xLo = len(df[ df['ward'] != '' ])
+    xDe = len(df[ df['department'] != '' ])
+    xWt = len(df[ df['ward_type'] != '' ])
+    xSp = len(df[ df['spec_num'] != '' ])
+    xSd = len(df[ df['spec_date'] != '' ])
+    xSt = len(df[ df['spec_type'] != '' ])
+    xOr = len(df[ df['organism'] != '' ])
+    xDa = len(df[ (df['date_admis'] != '') & (df['ward_type'] == 'in') ])
+    # xDa = len(df[df['date_admis'] != '' ])
+    xIn = len(df[ df['ward_type'] == 'in' ])
+    xDi = len(df[ df['diagnosis'] != '' ])
+        
+    
+    yData = [['','Number','Percentage'],
+               ['1. Identification number',xId,str( round(((xId)/(totalDf))*100,2) ) + '%' if totalDf > 0 else '0%'],
+               ['2. Name (Last name)',xLn,str( round(((xLn)/(totalDf))*100,2) ) + '%' if totalDf > 0 else '0%'],
+               ['3. Sex',xSe,str( round(((xSe)/(totalDf))*100,2) ) + '%' if totalDf > 0 else '0%'],
+               ['4. Age',xAg,str( round(((xAg)/(totalDf))*100,2) ) + '%' if totalDf > 0 else '0%'],
+               ['5. Date of birth',xDb,str( round(((xDb)/(totalDf))*100,2) ) + '%' if totalDf > 0 else '0%'],
+               ['6. Location/Ward',xLo,str( round(((xLo)/(totalDf))*100,2) ) + '%' if totalDf > 0 else '0%'],
+               ['7. Department',xDe,str( round(((xDe)/(totalDf))*100,2) ) + '%' if totalDf > 0 else '0%'],
+               ['8. Ward type',xWt,str( round(((xWt)/(totalDf))*100,2) ) + '%' if totalDf > 0 else '0%'],
+               ['9. Specimen number',xSp,str( round(((xSp)/(totalDf))*100,2) ) + '%' if totalDf > 0 else '0%'],
+               ['10. Specimen date',xSd,str( round(((xSd)/(totalDf))*100,2) ) + '%' if totalDf > 0 else '0%'],
+               ['11. Specimen type',xSt,str( round(((xSt)/(totalDf))*100,2) ) + '%' if totalDf > 0 else '0%'],
+               ['12. Organism',xOr,str( round(((xOr)/(totalDf))*100,2) ) + '%' if totalDf > 0 else '0%'],
+               ['13. Date of admission (total inpatient)',str(xDa) + " (" + str(xIn) +")",str( round(((xDa)/(xIn))*100,2) ) + "%" if totalDf > 0 and xIn > 0 else '0%'],
+               ['14. Diagnosis',xDi,str( round(((xDi)/(totalDf))*100,2) ) + '%' if totalDf > 0 else '0%'],
+               ]
+
+    df = pd.DataFrame(data=yData, columns=['Completeness of data','Number',totalDf])
+    
+    return df
+      
+    
+    
+    
     
