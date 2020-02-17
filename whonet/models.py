@@ -82,6 +82,7 @@ class RawSpecimen(models.Model):
     spec_date = models.TextField(null=True,blank=True,default=None)
     spec_type = models.TextField(null=True,blank=True,default=None)
     spec_code = models.TextField(null=True,blank=True,default=None)
+    local_spec = models.TextField(null=True,blank=True,default=None)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

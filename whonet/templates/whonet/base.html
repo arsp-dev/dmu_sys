@@ -16,10 +16,12 @@
     <link href="{% static 'assets/libs/flot/css/float-chart.css' %}" rel="stylesheet">
     <!-- Custom CSS -->
     <link href="{% static 'dist/css/style.min.css' %}" rel="stylesheet">
+    <link href="{% static 'dist/css/dropzone.css' %}" rel="stylesheet">
     <link href="{% static 'assets/libs/toastr/build/toastr.min.css' %}" rel="stylesheet">
     <link href="{% static 'assets/libs/datatables.net-bs4/css/dataTables.bootstrap4.css' %}" rel="stylesheet">
     <link href="{% static 'assets/libs/select2/dist/css/select2.min.css' %}" rel="stylesheet">
     <link href="https://cdn.datatables.net/buttons/1.6.1/css/buttons.dataTables.min.css" rel="stylesheet">
+    
    
     
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -348,6 +350,7 @@
     <script src="{% static 'assets/libs/toastr/build/toastr.min.js' %}"></script>
     <!--Custom JavaScript -->
     <script src="{% static 'dist/js/custom.min.js' %}"></script>
+    <script src="{% static 'dist/js/dropzone.js' %}"></script>
     
     <!--This page JavaScript -->
     <!-- <script src="../../dist/js/pages/dashboards/dashboard1.js"></script> -->
@@ -383,8 +386,6 @@ function sentiChange() {
 
     $.get( "whonet_transform/" + e.value + "/", function( data ) {
    
-    
-
         data.forEach(function(value) {
             // get reference to select element
             var sel = document.getElementById('yearGet');
@@ -407,6 +408,21 @@ function sentiChange() {
     
     
   
+{% if multi_import %}
+<script type="text/javascript">
+   var s = "{{ multi_import | safe }}";
+   var message = ''
+   {% for x in multi_import %}
+   message = message + '<li>{{ x }}</li>'
+   {% endfor %}
+
+   ret = '<ul>' + message + '</ul>'
+
+   toastr.info(ret,'Uploading Report', {timeOut: 0 });
+</script>
+{% endif %}
+
+
 
 {% if success %}
 <script type="text/javascript">

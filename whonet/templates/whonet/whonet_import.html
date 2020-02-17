@@ -38,9 +38,12 @@ ARSP-DMU | ARSEN | Whonet Import
                         <div class="custom-file">
                             <form method="post" enctype="multipart/form-data" action="{% url 'whonet_import' %}">
                             {% csrf_token %}
-                            <input type="file" class="custom-file-input" id="validatedCustomFile" name="raw_data" accept=".csv" required>
-                            <label class="custom-file-label" for="validatedCustomFile">Choose file...</label>
-                            <div class="invalid-feedback">Example invalid custom file feedback</div>
+                            
+                            <input type="file" class="custom-file-input" id="validatedCustomFile" name="raw_data" accept=".csv" required multiple> 
+                            <label class="custom-file-label" for="validatedCustomFile">
+                                <span class="d-inline-block text-truncate w-75">Choose several files</span>
+                            </label>
+                            
                         </div>
                     </div>
                 </div>
@@ -127,6 +130,10 @@ ARSP-DMU | ARSEN | Whonet Import
                                                 <div class="custom-control custom-checkbox mr-sm-2">
                                                     <input value="SPN" name="options" type="checkbox" class="custom-control-input" id="customControlAutosizing7{{ fnames.id }}">
                                                     <label class="custom-control-label" for="customControlAutosizing7{{ fnames.id }}">SPN</label>
+                                                </div>
+                                                <div class="custom-control custom-checkbox mr-sm-2">
+                                                    <input value="X_REFERRED" name="options" type="checkbox" class="custom-control-input" id="customControlAutosizing8{{ fnames.id }}">
+                                                    <label class="custom-control-label" for="customControlAutosizing8{{ fnames.id }}">X_REFERRED</label>
                                                 </div>
                                                 <button id="id_submit{{ fnames.id }}" type="submit" class="btn btn-success btn-sm m-t-15">Transform <i id="submit_loading{{ fnames.id }}"  class="fas fa-cog fa-spin"></i></button>
                                             </div>
