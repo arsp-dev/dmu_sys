@@ -83,28 +83,17 @@ ARSP-DMU | ARSEN | Whonet Data Summary Report
                                     <!-- <a href="#" class="btn btn-success btn-sm mr-3">Create Data Summary Report</a> -->
                                   
                                    <a href="/arsp_dmu/whonet_import/data/{{ fnames.id }}" class="btn btn-success btn-sm mr-3">Raw data</a>
+                                   <a href="/arsp_dmu/whonet_data_summary/data/{{ fnames.id }}/" class="btn btn-success btn-sm mr-3">Generate Report</a>
                                 </div>
-                                <div class="form-group row col-md-12">
-                                    <!-- <label class="">Transform</label> -->
+                                <!-- <div class="form-group row col-md-12">
                                     <form method="POST" action="/arsp_dmu/whonet_data_summary/data/{{ fnames.id }}/">
                                     {% csrf_token %}
-                                  
-                                        
-                                            <!-- <div class="col-md-12">
-                                            <select name="options" class="select2 form-control col-md-12 m-t-15" multiple="multiple" style="height: 36px;width: 100%;" required>
-                                            <option>Origin</option>
-                                            <option>Diagnosis</option>
-                                            <option>Location</option>
-                                            <option>Specimen</option>
-                                            </select>
-                                            </div>
-                                            <input type="submit" class="btn btn-success btn-sm m-t-15"> -->
                                             <div class="col-md-12">
                                                 <div class="custom-control custom-checkbox mr-sm-2">
                                                     <input value="Data Completion" name="options" type="checkbox" class="custom-control-input" id="customControlAutosizing1{{ fnames.id }}">
                                                     <label class="custom-control-label" for="customControlAutosizing1{{ fnames.id }}">Data Completion</label>
                                                 </div>
-                                                <!-- <div class="custom-control custom-checkbox mr-sm-2">
+                                                <div class="custom-control custom-checkbox mr-sm-2">
                                                     <input value="Diagnosis"  name="options" type="checkbox" class="custom-control-input" id="customControlAutosizing2{{ fnames.id }}">
                                                     <label class="custom-control-label" for="customControlAutosizing2{{ fnames.id }}">Diagnosis</label>
                                                 </div>
@@ -127,14 +116,14 @@ ARSP-DMU | ARSEN | Whonet Data Summary Report
                                                 <div class="custom-control custom-checkbox mr-sm-2">
                                                     <input value="SPN" name="options" type="checkbox" class="custom-control-input" id="customControlAutosizing7{{ fnames.id }}">
                                                     <label class="custom-control-label" for="customControlAutosizing7{{ fnames.id }}">SPN</label>
-                                                </div> -->
+                                                </div>
                                                 <button id="id_submit{{ fnames.id }}" type="submit" class="btn btn-success btn-sm m-t-15">Data Summary <i id="submit_loading{{ fnames.id }}"  class="fas fa-cog fa-spin"></i></button>
                                             </div>
                                   
                                     
                                     </form>
                                     
-                                </div>
+                                </div> -->
                             </td>
                         </tr>
                         {% endfor %}

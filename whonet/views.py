@@ -43,13 +43,26 @@ def whonet_data_summary_report(request,file_id):
     options = request.POST.getlist('options')
     file_name = RawFileName.objects.get(id=file_id)
     search_file_name = file_name.file_name.split('_')
+     
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = 'attachment; filename=DATA_SUMMARY_{}_{}.xlsx'.format(file_name,datetime.now()
+    )
     
-    # df = bigwork(file_id,search_file_name,options)
-    df = get_data_summary(file_id,search_file_name,options)
+    
+    df_data_completeness = get_data_completeness(file_id)
+    df_entero = get_data_entero(file_id)
+    df_sal_shi = get_data_sal_shi(file_id)
+    
+    writer = pd.ExcelWriter(response, engine='xlsxwriter')
+    df_data_completeness.to_excel(writer, sheet_name='data_complete',index=False)
+    df_entero.to_excel(writer, sheet_name='ent_xsal_xshi',index=False)
+    df_sal_shi.to_excel(writer, sheet_name='ent_sal_shi', index=False)
+    writer.save()
     
     
-    response = HttpResponse( df.to_csv(index=False,mode = 'w'),content_type='text/csv')
-    response['Content-Disposition'] = "attachment; filename=DATA_SUMMARY_{}_{}.csv".format(file_name,datetime.now())
+    
     
     return response
 
@@ -976,7 +989,7 @@ def concat_all_df(file_id):
     
     return df
 
-def get_data_summary(file_id,search_file_name,options):
+def get_data_completeness(file_id):
     df = concat_all_df(file_id)
     
     df = df[ df['spec_type'].str.lower() != 'qc' ]
@@ -1026,8 +1039,314 @@ def get_data_summary(file_id,search_file_name,options):
     df = pd.DataFrame(data=yData, columns=['Completeness of data','Number',totalDf])
     
     return df
-      
+
+
+def get_data_entero(file_id):
+    df = concat_all_df(file_id)
+    comp = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_org_list.xlsx','entero')
+    df_list = pd.DataFrame(comp, columns=['ORG'])
+    
+    cmp = df_list.to_numpy()
+    
+    df = df[ df['spec_type'].str.lower() != 'qc' ]
+    df = df[ df['spec_type'].str.lower() != 'en' ]
+    df = df[ df['spec_type'].str.lower() != 'wa' ]
+    df = df[ df['spec_type'].str.lower() != 'fo' ]
+    df = df[ df['spec_type'].str.lower() != 'mi' ]
+    
+    df = df[~df['comment'].str.contains('light growth',regex=True,flags=re.IGNORECASE)]
+    df = df[~df['comment'].str.contains('lg',regex=True,flags=re.IGNORECASE)]
+    df = df[~df['growth'].str.contains('lg',regex=True,flags=re.IGNORECASE)]
+    df = df[~df['growth'].str.contains('lcc',regex=True,flags=re.IGNORECASE)]
+    
+    
+    ess_amk = 0
+    ess_amc = 0
+    ess_amp = 0
+    ess_atm = 0
+    ess_czo = 0
+    ess_fep = 0
+    ess_ctx = 0
+    ess_fox = 0
+    ess_caz = 0
+    ess_cro = 0
+    ess_cxa = 0
+    ess_cip = 0
+    ess_etp = 0
+    ess_gen = 0
+    ess_ipm = 0
+    ess_mem = 0
+    ess_tzp = 0
+    ess_sxt = 0
+    ess_fos = 0
+    ess_nit = 0
+    ess_col = 0
+    ess_all = 0
+    ess_ur = 0
+    
+    for index,row in df.iterrows():
+        if row['organism'] in cmp:
+            ess_all += 1
+            if row['amk_nd30'] != '' or row['amk_nm'] != '':
+                ess_amk += 1
+            if row['amc_nd20'] != '' or row['amc_nm'] != '':
+                ess_amc += 1
+            if row['amp_nd10'] != '' or row['amp_nm'] != '':
+                ess_amp += 1
+            if row['atm_nd30'] != '' or row['atm_nm'] != '':
+                ess_atm += 1
+            if row['czo_nd30'] != '' or row['czo_nm'] != '':
+                ess_czo += 1
+            if row['fep_nd30'] != '' or row['fep_nm'] != '':
+                ess_fep += 1
+            if row['ctx_nd30'] != '' or row['ctx_nm'] != '':
+                ess_ctx += 1
+            if row['fox_nd30'] != '' or row['fox_nm'] != '':
+                ess_fox += 1
+            if row['caz_nd30'] != '' or row['caz_nm'] != '':
+                ess_caz += 1
+            if row['cro_nd30'] != '' or row['cro_nm'] != '':
+                ess_cro += 1
+            if row['cxa_nd30'] != '' or row['cxa_nm'] != '':
+                ess_cxa += 1
+            if row['cip_nd5'] != '' or row['cip_nm'] != '':
+                ess_cip += 1
+            if row['etp_nd10'] != '' or row['etp_nm'] != '':
+                ess_etp += 1
+            if row['gen_nd10'] != '' or row['gen_nm'] != '':
+                ess_gen += 1
+            if row['ipm_nd10'] != '' or row['ipm_nm'] != '':
+                ess_ipm += 1
+            if row['mem_nd10'] != '' or row['mem_nm'] != '':
+                ess_mem += 1
+            if row['tzp_nd100'] != '' or row['tzp_nm'] != '':
+                ess_tzp += 1
+            if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '':
+                ess_sxt += 1
+            if row['spec_type'] == 'ur':
+                ess_ur += 1
+            if (row['fos_nd200'] != '' or row['fos_nm'] != '') and (row['spec_type'] == 'ur'):
+                ess_fos += 1
+            if (row['nit_nd300'] != '' or row['nit_nm'] != '') and (row['spec_type'] == 'ur'):
+                ess_nit += 1
+            if row['col_nd10'] != '' or row['col_nm'] != '':
+                ess_col += 1
+            
+            
+    ess_data_ent = [['Antibiotic','Number tested','Percentage'],
+                   ['1. Amikacin',ess_amk,str(  round(((ess_amk)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
+                   ['2. Amoxicillin-Clavulanate',ess_amc, str(  round(((ess_amc)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
+                   ['3. Ampicillin',ess_amp,str(  round(((ess_amp)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
+                   ['4. Aztreonam',ess_atm,str(  round(((ess_atm)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
+                   ['5. Cefazolin',ess_czo,str(  round(((ess_czo)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
+                   ['6. Cefepime',ess_fep,str(  round(((ess_fep)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
+                   ['7. Cefotaxime',ess_ctx,str(  round(((ess_ctx)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
+                   ['8. Cefoxitin',ess_fox,str(  round(((ess_fox)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
+                   ['9. Ceftazidime',ess_caz,str(  round(((ess_caz)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
+                   ['10. Ceftriaxone',ess_cro,str(  round(((ess_cro)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
+                   ['11. Cefuroxime',ess_cxa,str(  round(((ess_cxa)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
+                   ['12. Ciprofloxacin',ess_cip,str(  round(((ess_cip)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
+                   ['13. Ertapenem',ess_etp,str(  round(((ess_etp)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
+                   ['14. Gentamicin',ess_gen,str(  round(((ess_gen)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
+                   ['15. Imipenem',ess_ipm,str(  round(((ess_ipm)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
+                   ['16. Meropenem',ess_mem,str(  round(((ess_mem)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
+                   ['17. Piperacillin-tazobactam',ess_tzp,str(  round(((ess_tzp)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
+                   ['18. Trimethoprim-sulfamethoxazole',ess_sxt,str(  round(((ess_sxt)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
+                   ['19. Colistin',ess_col,str(  round(((ess_col)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
+                   ['','Additional for Urine',ess_ur],
+                   ['1. Fosfomycin',ess_fos,str(  round(((ess_fos)/(ess_ur))*100,2) ) + "%" if ess_ur > 0 else '0%'],
+                   ['2. Nitrofurantoin',ess_nit,str(  round(((ess_nit)/(ess_ur))*100,2) ) + "%" if ess_ur > 0 else '0%']]
+              
+    
+    df = pd.DataFrame(data=ess_data_ent, columns=['ENTEROBACTERIACEAE','Number',ess_all])  
+    
+    return df
+
+
+def get_data_non_ent(file_id):
+    df = concat_all_df(file_id)
+    comp = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_org_list.xlsx','non_ent')
+    df_list = pd.DataFrame(comp, columns=['ORG'])
+    
+    cmp = df_list.to_numpy()
+    
+    df = df[ df['spec_type'].str.lower() != 'qc' ]
+    df = df[ df['spec_type'].str.lower() != 'en' ]
+    df = df[ df['spec_type'].str.lower() != 'wa' ]
+    df = df[ df['spec_type'].str.lower() != 'fo' ]
+    df = df[ df['spec_type'].str.lower() != 'mi' ]
+    
+    df = df[~df['comment'].str.contains('light growth',regex=True,flags=re.IGNORECASE)]
+    df = df[~df['comment'].str.contains('lg',regex=True,flags=re.IGNORECASE)]
+    df = df[~df['growth'].str.contains('lg',regex=True,flags=re.IGNORECASE)]
+    df = df[~df['growth'].str.contains('lcc',regex=True,flags=re.IGNORECASE)]
     
     
     
+    non_ent_all = 0
+    non_ent_amk = 0
+    non_ent_sam = 0
+    non_ent_fep = 0
+    non_ent_caz = 0
+    non_ent_cip = 0
+    non_ent_col = 0
+    non_ent_ipm = 0
+    non_ent_mem = 0
+    non_ent_mno = 0
+    non_ent_gen = 0
+    non_ent_tzp = 0
+    non_ent_sxt = 0
+    non_ent_tet = 0
+    non_ent_ur = 0 
+    
+    for index,row in df.iterrows():
+            if row['organism'] in cmp:
+                  non_ent_all += 1
+                  if row['amk_nd30'] != '' or row['amk_nm'] != '':
+                        non_ent_amk += 1
+                  if row['sam_nd10'] != '' or row['sam_nm'] != '':
+                        non_ent_sam += 1
+                  if row['fep_nd30'] != '' or row['fep_nm'] != '':
+                        non_ent_fep += 1
+                  if row['caz_nd30'] != '' or row['caz_nm'] != '':
+                        non_ent_caz += 1
+                  if row['cip_nd5'] != '' or row['cip_nm'] != '':
+                        non_ent_cip += 1
+                  if row['col_nd10'] != '' or row['col_nm'] != '':
+                        non_ent_col += 1
+                  if row['ipm_nd10'] != '' or row['ipm_nm'] != '':
+                        non_ent_ipm += 1
+                  if row['mem_nd10'] != '' or row['mem_nm'] != '':
+                        non_ent_mem += 1
+                  if row['mno_nd30'] != '' or row['mno_nm'] != '':
+                        non_ent_mno += 1
+                  if row['gen_nd10'] != '' or row['gen_nm'] != '':
+                        non_ent_gen += 1
+                  if row['tzp_nd100'] != '' or row['tzp_nm'] != '':
+                        non_ent_tzp += 1
+                  if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '':
+                        non_ent_sxt += 1
+                  if row['tcy_nd30'] != '' and row['spec_type'] == 'ur':
+                        non_ent_tet += 1
+                  if row['spec_type'] == 'ur':
+                        non_ent_ur += 1
+    
+    non_ent_data = [['Antibiotic','Number tested','Percentage'],
+                      ['1. Amikacin',non_ent_amk,str(  round(((non_ent_amk)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
+                      ['2. Amipicillin-Sulbactam',non_ent_sam,str(  round(((non_ent_sam)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
+                      ['3. Cefepime',non_ent_fep,str(  round(((non_ent_fep)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
+                      ['4. Ceftazidime',non_ent_caz,str(  round(((non_ent_caz)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
+                      ['5. Ciprofloxacin',non_ent_cip,str(  round(((non_ent_cip)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
+                      ['6. Colistin',non_ent_col,str(  round(((non_ent_col)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
+                      ['7. Imipenem',non_ent_ipm,str(  round(((non_ent_ipm)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
+                      ['8. Meropenem',non_ent_mem,str(  round(((non_ent_mem)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
+                      ['9. Minocycline',non_ent_mno,str(  round(((non_ent_mno)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
+                      ['10. Gentamicin',non_ent_gen,str(  round(((non_ent_gen)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
+                      ['11. Piperacillin-tazobactam',non_ent_tzp,str(  round(((non_ent_tzp)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
+                      ['12. Trimethoprim-Sulfamethoxazole',non_ent_sxt,str(  round(((non_ent_sxt)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
+                      ['','Additional for Urine',non_ent_ur],
+                      ['1. Tetracycline',non_ent_tet,str(  round(((non_ent_tet)/(non_ent_ur))*100,2) ) + "%" if non_ent_ur > 0 else '0%']
+                      ]
+    
+    
+    df = pd.DataFrame(data=non_ent_data, columns=['Acinetobacter sp.','Number', non_ent_all])
+    
+    return df
+
+
+
+def get_data_sal_shi(file_id):
+    df = concat_all_df(file_id)
+    comp = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_org_list.xlsx','sal_shi')
+    comp_add = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_org_list.xlsx','sal_shi_add')
+    df_list = pd.DataFrame(comp, columns=['ORG'])
+    df_list_add = pd.DataFrame(comp_add, columns=['ORG'])
+    
+    cmp = df_list.to_numpy()
+    cmp_add = df_list_add.to_numpy()
+    
+    df = df[ df['spec_type'].str.lower() != 'qc' ]
+    df = df[ df['spec_type'].str.lower() != 'en' ]
+    df = df[ df['spec_type'].str.lower() != 'wa' ]
+    df = df[ df['spec_type'].str.lower() != 'fo' ]
+    df = df[ df['spec_type'].str.lower() != 'mi' ]
+    
+    df = df[~df['comment'].str.contains('light growth',regex=True,flags=re.IGNORECASE)]
+    df = df[~df['comment'].str.contains('lg',regex=True,flags=re.IGNORECASE)]
+    df = df[~df['growth'].str.contains('lg',regex=True,flags=re.IGNORECASE)]
+    df = df[~df['growth'].str.contains('lcc',regex=True,flags=re.IGNORECASE)]
+
+
+    ent_amc = 0
+    ent_amp = 0
+    ent_atm = 0
+    ent_fep = 0
+    ent_ctx = 0
+    ent_fox = 0
+    ent_cro = 0
+    ent_chl = 0
+    ent_cip = 0
+    ent_etp = 0
+    ent_ipm = 0
+    ent_sxt = 0
+    ent_azm = 0
+    ent_azm_all = 0
+    ent_all = 0
+    
+    for index,row in df.iterrows():
+             if row['organism'] in cmp:
+                  ent_all += 1
+                  if row['amc_nd20'] != '' or row['amc_nm'] != '':
+                        ent_amc += 1
+                  if row['amp_nd10'] != '' or row['amp_nm'] != '':
+                        ent_amp += 1
+                  if row['atm_nd30'] != '' or row['atm_nm'] != '':
+                        ent_atm += 1
+                  if row['fep_nd30'] != '' or row['fep_nm'] != '':
+                        ent_fep += 1
+                  if row['ctx_nd30'] != '' or row['ctx_nm'] != '':
+                        ent_ctx += 1
+                  if row['fox_nd30'] != '' or row['fox_nm'] != '':
+                        ent_fox += 1
+                  if row['cro_nd30'] != '' or row['cro_nm'] != '':
+                        ent_cro += 1
+                  if row['chl_nd30'] != '' or row['chl_nm'] != '':
+                        ent_chl += 1
+                  if row['cip_nd5'] != '' or row['cip_nm'] != '':
+                        ent_cip += 1
+                  if row['etp_nd10'] != '' or row['etp_nm'] != '':
+                        ent_etp += 1
+                  if row['ipm_nd10'] != '' or row['ipm_nm'] != '':
+                        ent_ipm += 1
+                  if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '':
+                        ent_sxt += 1
+    
+    for index,row in df.iterrows():
+            if row['organism'] in cmp_add:
+                  ent_azm_all += 1
+                  if row['azm_nd15'] != '' or row['azm_nm']:
+                        ent_azm += 1
+    
+    ent_data_sal_shi = [['Antibiotic','Number tested','Percentage'],
+                          ['1. Amoxicillin-Clavulanate',ent_amc, str(  round(((ent_amc)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
+                          ['2. Ampicillin',ent_amp,str(  round(((ent_amp)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
+                          ['3. Aztreonam',ent_atm,str(  round(((ent_atm)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
+                          ['4. Cefepime',ent_fep,str(  round(((ent_fep)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
+                          ['5. Cefotaxime',ent_ctx,str(  round(((ent_ctx)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
+                          ['6. Cefoxitin',ent_fox,str(  round(((ent_fox)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
+                          ['7. Ceftriaxone',ent_cro,str(  round(((ent_cro)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
+                          ['8. Chloramphenicol',ent_chl,str(  round(((ent_chl)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
+                          ['9. Ciprofloxacin',ent_cip,str(  round(((ent_cip)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
+                          ['10. Ertapenem',ent_etp,str(  round(((ent_etp)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
+                          ['11. Imipenem',ent_ipm,str(  round(((ent_ipm)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
+                          ['12. Trimethoprim-sulfamethoxazole',ent_sxt,str(  round(((ent_sxt)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
+                          ['','Additional Antibiotics',''],
+                          ['1. Azithromycin',ent_azm,str(  round(((ent_azm)/(ent_azm_all))*100,2) ) + "%" if ent_azm_all > 0 else '0%']
+                          ]
+
+    
+    df = pd.DataFrame(data=ent_data_sal_shi, columns=['Salmonella & Shigella sp.','Number',ent_all])
+    
+    
+    return df
     

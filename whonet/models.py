@@ -153,6 +153,7 @@ class RawAntidisk(models.Model):
     tgc_nd15 = models.TextField(null=True,blank=True,default=None)
     tob_nd10 = models.TextField(null=True,blank=True,default=None)
     van_nd30 = models.TextField(null=True,blank=True,default=None)
+    fos_nd200 = models.TextField(null=True,blank=True,default=None)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -222,6 +223,7 @@ class RawAntimic(models.Model):
     tgc_nm = models.TextField(null=True,blank=True,default=None)
     tob_nm = models.TextField(null=True,blank=True,default=None)
     van_nm = models.TextField(null=True,blank=True,default=None)
+    fos_nm = models.TextField(null=True,blank=True,default=None)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
