@@ -35,7 +35,7 @@ class RawOrigin(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.patient_id
+        return self.file_ref
 
 class RawLocation(models.Model):
     origin_ref = models.OneToOneField(RawOrigin,  on_delete = models.CASCADE, primary_key = True) 
@@ -154,6 +154,8 @@ class RawAntidisk(models.Model):
     tob_nd10 = models.TextField(null=True,blank=True,default=None)
     van_nd30 = models.TextField(null=True,blank=True,default=None)
     fos_nd200 = models.TextField(null=True,blank=True,default=None)
+    dox_nd30 = models.TextField(null=True,blank=True,default=None)
+    sss_nd200 = models.TextField(null=True,blank=True,default=None)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -224,6 +226,8 @@ class RawAntimic(models.Model):
     tob_nm = models.TextField(null=True,blank=True,default=None)
     van_nm = models.TextField(null=True,blank=True,default=None)
     fos_nm = models.TextField(null=True,blank=True,default=None)
+    dox_nm = models.TextField(null=True,blank=True,default=None)
+    sss_nm = models.TextField(null=True,blank=True,default=None)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
