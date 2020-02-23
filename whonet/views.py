@@ -307,6 +307,13 @@ def whonet_import(request):
 
 #helping functions
 
+def check_str_to_date(date):
+    try:
+       datetime.strptime(date)
+       return True
+    except:
+        return False
+
 def set_pd_columns(clm):
     
     whonet_data_fields = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_data_fields.xlsx')
@@ -598,12 +605,15 @@ def bigwork(file_id,search_file_name,options):
         
         if 'Nosocomial' in options:
                 if row['ward_type'] == 'in' or row['ward_type'] == 'eme':
-                    if row['date_admis'] != '':
+                    if row['date_admis'] != '' and row['spec_date'] != '':
+                        # if check_str_to_date(row['spec_date']) and check_str_to_date(row['date_admis']):
                         x = datetime.strptime(row['spec_date'],'%m/%d/%Y') - datetime.strptime(row['date_admis'],'%m/%d/%Y')
                         if x.days > 2:
                             new_noso.append('Y')
                         else:
                             new_noso.append('N')
+                        # else:
+                        #     new_noso.append('')   
                     else:
                         new_noso.append('X')
                 elif row['ward_type'] == 'out':
@@ -759,7 +769,7 @@ def import_raw(raw_data):
                 
                 induc_cli = row['INDUC_CLI'],
                 
-                meca = row['MECA'],
+                x_meca = row['X_MECA'],
                 
                 ampc = row['AMPC'],
                 
@@ -1095,6 +1105,70 @@ def concat_all_df(file_id):
     # df = df.replace(pd.NaN,'')
     
     # df = df.drop(columns=['ORIGIN_REF','FILE_REF','ID'])
+    
+    df['amk_nd30'] = df['amk_nd30'].str.replace('.0', '', regex=False)
+    df['amc_nd20'] = df['amc_nd20'].str.replace('.0', '', regex=False)
+    df['amp_nd10'] = df['amp_nd10'].str.replace('.0', '', regex=False)
+    df['sam_nd10'] = df['sam_nd10'].str.replace('.0', '', regex=False)
+    df['azm_nd15'] = df['azm_nd15'].str.replace('.0', '', regex=False)
+    df['atm_nd30'] = df['atm_nd30'].str.replace('.0', '', regex=False)
+    df['cec_nd30'] = df['cec_nd30'].str.replace('.0', '', regex=False)
+    df['man_nd30'] = df['man_nd30'].str.replace('.0', '', regex=False)
+    df['czo_nd30'] = df['czo_nd30'].str.replace('.0', '', regex=False)
+    df['fep_nd30'] = df['fep_nd30'].str.replace('.0', '', regex=False)
+    df['cfm_nd5'] = df['cfm_nd5'].str.replace('.0', '', regex=False)
+    df['cfp_nd75'] = df['cfp_nd75'].str.replace('.0', '', regex=False)
+    df['ctx_nd30'] = df['ctx_nd30'].str.replace('.0', '', regex=False)
+    df['fox_nd30'] = df['fox_nd30'].str.replace('.0', '', regex=False)
+    df['caz_nd30'] = df['caz_nd30'].str.replace('.0', '', regex=False)
+    df['cro_nd30'] = df['cro_nd30'].str.replace('.0', '', regex=False)
+    df['cxm_nd30'] = df['cxm_nd30'].str.replace('.0', '', regex=False)
+    df['cxa_nd30'] = df['cxa_nd30'].str.replace('.0', '', regex=False)
+    df['cep_nd30'] = df['cep_nd30'].str.replace('.0', '', regex=False)
+    df['chl_nd30'] = df['chl_nd30'].str.replace('.0', '', regex=False)
+    df['cip_nd5'] = df['cip_nd5'].str.replace('.0', '', regex=False)
+    df['clr_nd15'] = df['clr_nd15'].str.replace('.0', '', regex=False)
+    df['cli_nd2'] = df['cli_nd2'].str.replace('.0', '', regex=False)
+    df['col_nd10'] = df['col_nd10'].str.replace('.0', '', regex=False)
+    df['sxt_nd1_2'] = df['sxt_nd1_2'].str.replace('.0', '', regex=False)
+    df['dap_nd30'] = df['dap_nd30'].str.replace('.0', '', regex=False)
+    df['dor_nd10'] = df['dor_nd10'].str.replace('.0', '', regex=False)
+    df['etp_nd10'] = df['etp_nd10'].str.replace('.0', '', regex=False)
+    df['ery_nd15'] = df['ery_nd15'].str.replace('.0', '', regex=False)
+    df['gen_nd10'] = df['gen_nd10'].str.replace('.0', '', regex=False)
+    df['geh_nd120'] = df['geh_nd120'].str.replace('.0', '', regex=False)
+    df['ipm_nd10'] = df['ipm_nd10'].str.replace('.0', '', regex=False)
+    df['kan_nd30'] = df['kan_nd30'].str.replace('.0', '', regex=False)
+    df['lvx_nd5'] = df['lvx_nd5'].str.replace('.0', '', regex=False)
+    df['lnz_nd30'] = df['lnz_nd30'].str.replace('.0', '', regex=False)
+    df['mem_nd10'] = df['mem_nd10'].str.replace('.0', '', regex=False)
+    df['mno_nd30'] = df['mno_nd30'].str.replace('.0', '', regex=False)
+    df['mfx_nd5'] = df['mfx_nd5'].str.replace('.0', '', regex=False)
+    df['nal_nd30'] = df['nal_nd30'].str.replace('.0', '', regex=False)
+    df['net_nd30'] = df['net_nd30'].str.replace('.0', '', regex=False)
+    df['nit_nd300'] = df['nit_nd300'].str.replace('.0', '', regex=False)
+    df['nor_nd10'] = df['nor_nd10'].str.replace('.0', '', regex=False)
+    df['nov_nd5'] = df['nov_nd5'].str.replace('.0', '', regex=False)
+    df['ofx_nd5'] = df['ofx_nd5'].str.replace('.0', '', regex=False)
+    df['oxa_nd1'] = df['oxa_nd1'].str.replace('.0', '', regex=False)
+    df['pen_nd10'] = df['pen_nd10'].str.replace('.0', '', regex=False)
+    df['pip_nd100'] = df['pip_nd100'].str.replace('.0', '', regex=False)
+    df['tzp_nd100'] = df['tzp_nd100'].str.replace('.0', '', regex=False)
+    df['pol_nd300'] = df['pol_nd300'].str.replace('.0', '', regex=False)
+    df['qda_nd15'] = df['qda_nd15'].str.replace('.0', '', regex=False)
+    df['rif_nd5'] = df['rif_nd5'].str.replace('.0', '', regex=False)
+    df['spt_nd100'] = df['spt_nd100'].str.replace('.0', '', regex=False)
+    df['str_nd10'] = df['str_nd10'].str.replace('.0', '', regex=False)
+    df['sth_nd300'] = df['sth_nd300'].str.replace('.0', '', regex=False)
+    df['tcy_nd30'] = df['tcy_nd30'].str.replace('.0', '', regex=False)
+    df['tic_nd75'] = df['tic_nd75'].str.replace('.0', '', regex=False)
+    df['tcc_nd75'] = df['tcc_nd75'].str.replace('.0', '', regex=False)
+    df['tgc_nd15'] = df['tgc_nd15'].str.replace('.0', '', regex=False)
+    df['tob_nd10'] = df['tob_nd10'].str.replace('.0', '', regex=False)
+    df['van_nd30'] = df['van_nd30'].str.replace('.0', '', regex=False)
+    df['fos_nd200'] = df['fos_nd200'].str.replace('.0', '', regex=False)
+    df['dox_nd30'] = df['dox_nd30'].str.replace('.0', '', regex=False)
+    df['sss_nd200'] = df['sss_nd200'].str.replace('.0', '', regex=False)
     
     return df
 

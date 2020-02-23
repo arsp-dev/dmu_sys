@@ -41,7 +41,7 @@ ARSP-DMU | ARSEN | Whonet Transform
                 <div class="form-group row">
                     <label class="col-md-2 m-t-15">Sentinel Site</label>
                     <div class="col-md-8">
-                        <select id="sentinel_site" onchange="sentiChange()" name="sentinel_site" class="select2 form-control custom-select" style="width: 100%; height:36px;">
+                        <select id="sentinel_site" onchange="sentiChange()" name="sentinel_site" class="select2 form-control custom-select" style="width: 100%; height:36px;" required>
                             <option> </option>
                            
                                 {% for fnames in f_names  %}
@@ -54,7 +54,7 @@ ARSP-DMU | ARSEN | Whonet Transform
                 <div class="form-group row">
                     <label class="col-md-2 m-t-15">Year</label>
                     <div class="col-md-8">
-                        <select id="yearGet" name="year" class="select2 form-control custom-select" style="width: 100%; height:36px;">
+                        <select id="yearGet" name="year" class="select2 form-control custom-select" style="width: 100%; height:36px;" required>
                             <option> </option>
                             <!-- {% for yr in year  %}
                             <option value="{{ yr }}">{{ yr }}</option>
@@ -93,7 +93,10 @@ ARSP-DMU | ARSEN | Whonet Transform
                         <input value="SPN" name="options" type="checkbox" class="custom-control-input" id="customControlAutosizing7{{ fnames.id }}">
                         <label class="custom-control-label" for="customControlAutosizing7{{ fnames.id }}">SPN</label>
                     </div>
-                   
+                    <div class="custom-control custom-checkbox mr-sm-2">
+                        <input value="X_REFERRED" name="options" type="checkbox" class="custom-control-input" id="customControlAutosizing8{{ fnames.id }}">
+                        <label class="custom-control-label" for="customControlAutosizing8{{ fnames.id }}">X_REFERRED</label>
+                    </div>
                 </div>
             </div>
             <button id="id_submit{{ fnames.id }}" type="submit" class="btn btn-success btn-block m-t-15">Transform <i id="submit_loading{{ fnames.id }}"  class="fas fa-cog fa-spin"></i></button>

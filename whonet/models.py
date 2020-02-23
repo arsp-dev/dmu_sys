@@ -59,7 +59,7 @@ class RawMicrobiology(models.Model):
     comment = models.TextField(null=True,blank=True,default=None)
     mrsa = models.TextField(null=True,blank=True,default=None)
     induc_cli = models.TextField(null=True,blank=True,default=None)
-    meca = models.TextField(null=True,blank=True,default=None)
+    x_meca = models.TextField(null=True,blank=True,default=None)
     ampc = models.TextField(null=True,blank=True,default=None)
     x_mrse = models.TextField(null=True,blank=True,default=None)
     x_carb = models.TextField(null=True,blank=True,default=None)
