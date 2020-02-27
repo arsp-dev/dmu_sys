@@ -187,6 +187,7 @@ def whonet_transform(request):
         retArray.append(ret.split('_')[1])
           
     f_names = list(dict.fromkeys(retArray))
+    f_names.sort()
     
     return render(request,'whonet/whonet_transform.html',{'f_names': f_names})
 
@@ -289,7 +290,7 @@ def whonet_import_data(request,file_id):
 @permission_required('whonet.add_rawfilename', raise_exception=True)
 def whonet_import(request):
     f_names = RawFileName.objects.all()
-    output = mp.Queue()
+    # output = mp.Queue()
     
     if request.method == 'POST':
         raw_data = request.FILES.getlist('raw_data')           
@@ -356,6 +357,8 @@ def spn_def(spn):
         return ''
     elif spn == 'S':
         return 'S'
+    elif spn == 'NS':
+        return 'NS'
     elif float(spn) >= 20:
         return 'S'
     else:
@@ -435,8 +438,10 @@ def bigwork(file_id,search_file_name,options):
     for index,row in df.iterrows():
         new_country.append('PHL')
         new_lab.append(search_file_name[1])
+        new_institut.append(search_file_name[1])
     df['country_a'] = new_country
     df['laboratory'] = new_lab
+    df['institut'] = new_institut
     
     for index,row in df.iterrows():
         
@@ -474,11 +479,9 @@ def bigwork(file_id,search_file_name,options):
         
         if 'Location' in options:
             if row['ward'] in loc_chk:
-                new_institut.append(whonet_site_location['INSTITUT'][loc_chk.index(row['ward'])])
                 new_department.append(whonet_site_location['DEPARTMENT'][loc_chk.index(row['ward'])])
                 new_ward_type.append(whonet_site_location['WARD_TYPE'][loc_chk.index(row['ward'])])
             else:
-                new_institut.append('unknown')
                 new_department.append('unknown')
                 new_ward_type.append('unknown')
         
@@ -513,21 +516,20 @@ def bigwork(file_id,search_file_name,options):
                     age.append('U')
                 
             elif 'w' in str(row['age']) or 'W' in str(row['age']) or 'd' in str(row['age']) or 'D' in str(row['age']) or 'm' in str(row['age']) or 'M' in str(row['age']) or 'nb' in str(row['age']) or 'NB' in str(row['age']):
-                
                     age.append('A')
             elif row['age'] == 'nan':
                     age.append('U')  
                 
-            elif int(row['age']) >= 0 and int(row['age']) <= 5:
+            elif float(row['age']) >= 0 and float(row['age']) <= 5:
                     age.append('A')
                 
-            elif int(row['age']) >= 6 and int(row['age']) <= 17:
+            elif float(row['age']) >= 6 and float(row['age']) <= 17:
                     age.append('B')
                 
-            elif int(row['age']) > 17 and int(row['age']) <= 64:
+            elif float(row['age']) > 17 and float(row['age']) <= 64:
                     age.append('C')
                 
-            elif int(row['age']) > 64:
+            elif float(row['age']) > 64:
                     age.append('D')
                 
             else:
@@ -567,8 +569,6 @@ def bigwork(file_id,search_file_name,options):
         df['spec_code'] = new_spec_code
     
     if 'Location' in options:
-        new_institut = [x.upper() for x in new_institut]
-        df['institut'] = new_institut
         df['department'] = new_department
         df['ward_type'] = new_ward_type
     
@@ -590,6 +590,8 @@ def bigwork(file_id,search_file_name,options):
             if row['organism'] == 'sau':
                 if row['fox_nd30'] == 'R' or row['oxa_nm'] == 'R' or row['fox_nm'] == 'R':
                     new_mrsa.append('+')
+                elif row['fox_nd30'] == 'I' or row['oxa_nm'] == 'I' or row['fox_nm'] == 'I':
+                    new_mrsa.append('+')   
                 elif row['fox_nd30'] == 'S' or row['oxa_nm'] == 'S' or row['fox_nm'] == 'S':
                     new_mrsa.append('-')
                 elif ( row['fox_nd30'] != '' and float(getfloat(row['fox_nd30'])) <= 21) or (row['oxa_nm'] != '' and float(getfloat(row['oxa_nm'])) >= 4)  or (row['fox_nm'] != '' and float(getfloat(row['fox_nm'])) >= 8):
@@ -605,7 +607,7 @@ def bigwork(file_id,search_file_name,options):
         
         if 'Nosocomial' in options:
                 if row['ward_type'] == 'in' or row['ward_type'] == 'eme':
-                    if row['date_admis'] != '' and row['spec_date'] != '':
+                    if (row['date_admis'] != '' and row['spec_date'] != '') and ('/' in row['date_admis'] and '/' in row['spec_date']):
                         # if check_str_to_date(row['spec_date']) and check_str_to_date(row['date_admis']):
                         x = datetime.strptime(row['spec_date'],'%m/%d/%Y') - datetime.strptime(row['date_admis'],'%m/%d/%Y')
                         if x.days > 2:
@@ -675,401 +677,23 @@ def import_raw(raw_data):
     tmp_name = raw_data.name
 
     file_name = RawFileName(file_name=tmp_name.split('.')[0])
+    df = set_pd_columns(df)
+    row_iter = df.iterrows()
     try:
         file_name.save()
     except IntegrityError as e:
-        # output.put('File ' + tmp_name.split('.')[0] + ' is already uploaded.')
-        # time.sleep(0.1)
-        return 'File ' + tmp_name.split('.')[0] + ' is already uploaded.'
-            # return render(request,'whonet/whonet_import.html',{'danger':e.args,'f_names': f_names})
-
-    df = set_pd_columns(df)
-    row_iter = df.iterrows()
+        file_name = RawFileName.objects.get(file_name=tmp_name.split('.')[0])
+        RawOrigin.objects.select_related('rawlocation','rawmicrobiology','rawspecimen','rawantidisk','rawantimic').filter(file_ref=file_name).delete()
+        # RawFileName.objects.get(file_name=tmp_name.split('.')[0]).delete()
+        import_raw_data(row_iter,file_name)
+        return 'File ' + tmp_name.split('.')[0] + ' is already uploaded. System updated the file.'
 
     try:
-        for index, row in  row_iter:
-
-            origin = RawOrigin(
-            
-            file_ref = file_name,
-
-            country_a = row['COUNTRY_A'],
-
-            region  = row['REGION'],
-
-            island  = row['ISLAND'],
-
-            laboratory  = row['LABORATORY'],
-
-            patient_id = row['PATIENT_ID'],
-
-            first_name = row['FIRST_NAME'],
-
-            mid_name = row['MID_NAME'],
-
-            last_name = row['LAST_NAME'],
-
-            sex = row['SEX'],
-
-            age = row['AGE'],
-
-            date_birth = row['DATE_BIRTH'],
-
-            age_grp = row['AGE_GRP'],
-
-            pat_type = row['PAT_TYPE'],
-
-            date_data = row['DATE_DATA'],
-
-            x_referred = row['X_REFERRED'],
-
-            x_recnum = row['X_RECNUM'],
-
-            date_admis = row['DATE_ADMIS'],
-
-            nosocomial = row['NOSOCOMIAL'],
-
-            diagnosis = row['DIAGNOSIS'],
-
-            stock_num = row['STOCK_NUM'],
-
-            )
-
-            origin.save()
-
-
-            loc = RawLocation(
-
-                origin_ref = origin,
-
-                ward = row['WARD'],
-
-                institut = row['INSTITUT'],
-
-                department = row['DEPARTMENT'],
-
-                ward_type = row['WARD_TYPE'],
-
-            )
-
-            loc.save()
-            
-            mic = RawMicrobiology(
-                origin_ref = origin,
-                
-                organism = row['ORGANISM'],
-                
-                org_type = row['ORG_TYPE'],
-                
-                beta_lact = row['BETA_LACT'],
-                
-                comment = row['COMMENT'],
-                
-                mrsa = row['MRSA'],
-                
-                induc_cli = row['INDUC_CLI'],
-                
-                x_meca = row['X_MECA'],
-                
-                ampc = row['AMPC'],
-                
-                x_mrse = row['X_MRSE'],
-                
-                x_carb = row['X_CARB'],
-                
-                esbl = row['ESBL'],
-                
-                urine_count = row['URINECOUNT'],
-                
-                serotype = row['SEROTYPE'],
-                
-                carbapenem = row['CARBAPENEM'],
-                
-                mbl = row['MBL'],
-                
-                growth = row['GROWTH'], 
-            )
-            
-            mic.save()
-            
-            spec = RawSpecimen(
-                origin_ref = origin,
-                
-                spec_num = row['SPEC_NUM'],
-                
-                spec_date = row['SPEC_DATE'],
-                
-                spec_type = row['SPEC_TYPE'],
-                
-                spec_code = row['SPEC_CODE'],
-                
-                local_spec = row['LOCAL_SPEC'],
-            )
-            
-            spec.save()
-            
-            ant_disk = RawAntidisk(
-                origin_ref = origin,
-                
-                amk_nd30 = row['AMK_ND30'],
-                
-                amc_nd20 = row['AMC_ND20'],
-                
-                amp_nd10 = row['AMP_ND10'],
-                
-                sam_nd10 = row['SAM_ND10'],
-                
-                azm_nd15 = row['AZM_ND15'],
-                
-                atm_nd30 = row['ATM_ND30'],
-                
-                cec_nd30 = row['CEC_ND30'],
-                
-                man_nd30 = row['MAN_ND30'],
-                
-                czo_nd30 = row['CZO_ND30'],
-                
-                fep_nd30 = row['FEP_ND30'],
-                
-                cfm_nd5 = row['CFM_ND5'],
-                
-                cfp_nd75 = row['CFP_ND75'],
-                
-                ctx_nd30 = row['CTX_ND30'],
-                
-                fox_nd30 = row['FOX_ND30'],
-                
-                caz_nd30 = row['CAZ_ND30'],
-                
-                cro_nd30 = row['CRO_ND30'],
-                
-                cxm_nd30 = row['CXM_ND30'],
-                
-                cxa_nd30 = row['CXA_ND30'],
-                
-                cep_nd30 = row['CEP_ND30'],
-                
-                chl_nd30 = row['CHL_ND30'],
-                
-                cip_nd5 = row['CIP_ND5'],
-                
-                clr_nd15 = row['CLR_ND15'],
-                
-                cli_nd2 = row['CLI_ND2'],
-                
-                col_nd10 = row['COL_ND10'],
-                
-                sxt_nd1_2 = row['SXT_ND1_2'],
-                
-                dap_nd30 = row['DAP_ND30'],
-                
-                dor_nd10 = row['DOR_ND10'],
-                
-                etp_nd10 = row['ETP_ND10'],
-                
-                ery_nd15 = row['ERY_ND15'],
-                
-                gen_nd10 = row['GEN_ND10'],
-                
-                geh_nd120 = row['GEH_ND120'],
-                
-                ipm_nd10 = row['IPM_ND10'],
-                
-                kan_nd30 = row['KAN_ND30'],
-                
-                lvx_nd5 = row['LVX_ND5'],
-                
-                lnz_nd30 = row['LNZ_ND30'],
-                
-                mem_nd10 = row['MEM_ND10'],
-                
-                mno_nd30 = row['MNO_ND30'],
-                
-                mfx_nd5 = row['MFX_ND5'],
-                
-                nal_nd30 = row['NAL_ND30'],
-                
-                net_nd30 = row['NET_ND30'],
-                
-                nit_nd300 = row['NIT_ND300'],
-                
-                nor_nd10 = row['NOR_ND10'],
-                
-                nov_nd5 = row['NOV_ND5'],
-                
-                ofx_nd5 = row['OFX_ND5'],
-                
-                oxa_nd1 = row['OXA_ND1'],
-                
-                pen_nd10 = row['PEN_ND10'],
-                
-                pip_nd100 = row['PIP_ND100'],
-                
-                tzp_nd100 = row['TZP_ND100'],
-                
-                pol_nd300 = row['POL_ND300'],
-                
-                qda_nd15 = row['QDA_ND15'],
-                
-                rif_nd5 = row['RIF_ND5'],
-                
-                spt_nd100 = row['SPT_ND100'],
-                
-                str_nd10 = row['STR_ND10'],
-                
-                sth_nd300 = row['STH_ND300'],
-                
-                tcy_nd30 = row['TCY_ND30'],
-                
-                tic_nd75 = row['TIC_ND75'],
-                
-                tcc_nd75 = row['TCC_ND75'],
-                
-                tgc_nd15 = row['TGC_ND15'],
-                
-                tob_nd10 = row['TOB_ND10'],
-                
-                van_nd30 = row['VAN_ND30'],
-                
-            )
-            
-            ant_disk.save()
-            
-            ant_mic = RawAntimic(
-                origin_ref = origin,
-                
-                amk_nm = row['AMK_NM'],
-                
-                amc_nm = row['AMC_NM'],
-                
-                amp_nm = row['AMP_NM'],
-                
-                sam_nm = row['SAM_NM'],
-                
-                azm_nm = row['AZM_NM'],
-                
-                atm_nm = row['ATM_NM'],
-                
-                cec_nm = row['CEC_NM'],
-                
-                man_nm = row['MAN_NM'],
-                
-                czo_nm = row['CZO_NM'],
-                
-                fep_nm = row['FEP_NM'],
-                
-                cfm_nm = row['CFM_NM'],
-                
-                cfp_nm = row['CFP_NM'],
-                
-                ctx_nm = row['CTX_NM'],
-                
-                fox_nm = row['FOX_NM'],
-                
-                caz_nm = row['CAZ_NM'],
-                
-                cro_nm = row['CRO_NM'],
-                
-                cxm_nm = row['CXM_NM'],
-                
-                cxa_nm = row['CXA_NM'],
-                
-                cep_nm = row['CEP_NM'],
-                
-                chl_nm = row['CHL_NM'],
-                
-                cip_nm = row['CIP_NM'],
-                
-                clr_nm = row['CLR_NM'],
-                
-                cli_nm = row['CLI_NM'],
-                
-                col_nm = row['COL_NM'],
-                
-                sxt_nm = row['SXT_NM'],
-                
-                dap_nm = row['DAP_NM'],
-                
-                dor_nm = row['DOR_NM'],
-                
-                etp_nm = row['ETP_NM'],
-                
-                ery_nm = row['ERY_NM'],
-                
-                gen_nm = row['GEN_NM'],
-                
-                geh_nm = row['GEH_NM'],
-                
-                ipm_nm = row['IPM_NM'],
-                
-                kan_nm = row['KAN_NM'],
-                
-                lvx_nm = row['LVX_NM'],
-                
-                lnz_nm = row['LNZ_NM'],
-                
-                mem_nm = row['MEM_NM'],
-                
-                mno_nm = row['MNO_NM'],
-                
-                mfx_nm = row['MFX_NM'],
-                
-                nal_nm = row['NAL_NM'],
-                
-                net_nm = row['NET_NM'],
-                
-                nit_nm = row['NIT_NM'],
-                
-                nor_nm = row['NOR_NM'],
-                
-                nov_nm = row['NOV_NM'],
-                
-                ofx_nm = row['OFX_NM'],
-                
-                oxa_nm = row['OXA_NM'],
-                
-                pen_nm = row['PEN_NM'],
-                
-                pip_nm = row['PIP_NM'],
-                
-                tzp_nm = row['TZP_NM'],
-                
-                pol_nm = row['POL_NM'],
-                
-                qda_nm = row['QDA_NM'],
-                
-                rif_nm = row['RIF_NM'],
-                
-                spt_nm = row['SPT_NM'],
-                
-                str_nm = row['STR_NM'],
-                
-                sth_nm = row['STH_NM'],
-                
-                tcy_nm = row['TCY_NM'],
-                
-                tic_nm = row['TIC_NM'],
-                
-                tcc_nm = row['TCC_NM'],
-                
-                tgc_nm = row['TGC_NM'],
-                
-                tob_nm = row['TOB_NM'],
-                
-                van_nm = row['VAN_NM']
-            )
-            
-            ant_mic.save()
-            
-        # return render(request,'whonet/whonet_import.html',{'success':'File '+ tmp_name.split('.')[0]  +' successfully uploaded.','f_names': f_names})
+        import_raw_data(row_iter,file_name)
         return 'File ' + tmp_name.split('.')[0]  +' successfully uploaded.'
-        # output.put('File ' + tmp_name.split('.')[0]  +' successfully uploaded.')
-        # time.sleep(0.1)
+     
     except IntegrityError as e:
         return 'File ' + tmp_name.split('.')[0] + ' is already uploaded.'
-        # output.put('File ' + tmp_name.split('.')[0] + ' is already uploaded.')
-        # time.sleep(0.1)
-            # return render(request,'whonet/whonet_import.html',{'danger':e.message,'f_names': f_names})  
 
 
 def concat_all_df(file_id):
@@ -2693,3 +2317,377 @@ def get_mrsa_esbl(file_id):
     
     return ret
 
+def import_raw_data(row_iter,file_name):
+    for index, row in  row_iter:
+
+        origin = RawOrigin(
+        
+        file_ref = file_name,
+
+        country_a = row['COUNTRY_A'],
+
+        region  = row['REGION'],
+
+        island  = row['ISLAND'],
+
+        laboratory  = row['LABORATORY'],
+
+        patient_id = row['PATIENT_ID'],
+
+        first_name = row['FIRST_NAME'],
+
+        mid_name = row['MID_NAME'],
+
+        last_name = row['LAST_NAME'],
+
+        sex = row['SEX'],
+
+        age = row['AGE'],
+
+        date_birth = row['DATE_BIRTH'],
+
+        age_grp = row['AGE_GRP'],
+
+        pat_type = row['PAT_TYPE'],
+
+        date_data = row['DATE_DATA'],
+
+        x_referred = row['X_REFERRED'],
+
+        x_recnum = row['X_RECNUM'],
+
+        date_admis = row['DATE_ADMIS'],
+
+        nosocomial = row['NOSOCOMIAL'],
+
+        diagnosis = row['DIAGNOSIS'],
+
+        stock_num = row['STOCK_NUM'],
+
+        )
+
+        origin.save()
+
+
+        loc = RawLocation(
+
+            origin_ref = origin,
+
+            ward = row['WARD'],
+
+            institut = row['INSTITUT'],
+
+            department = row['DEPARTMENT'],
+
+            ward_type = row['WARD_TYPE'],
+
+        )
+
+        loc.save()
+        
+        mic = RawMicrobiology(
+            origin_ref = origin,
+            
+            organism = row['ORGANISM'],
+            
+            org_type = row['ORG_TYPE'],
+            
+            beta_lact = row['BETA_LACT'],
+            
+            comment = row['COMMENT'],
+            
+            mrsa = row['MRSA'],
+            
+            induc_cli = row['INDUC_CLI'],
+            
+            x_meca = row['X_MECA'],
+            
+            ampc = row['AMPC'],
+            
+            x_mrse = row['X_MRSE'],
+            
+            x_carb = row['X_CARB'],
+            
+            esbl = row['ESBL'],
+            
+            urine_count = row['URINECOUNT'],
+            
+            serotype = row['SEROTYPE'],
+            
+            carbapenem = row['CARBAPENEM'],
+            
+            mbl = row['MBL'],
+            
+            growth = row['GROWTH'], 
+        )
+        
+        mic.save()
+        
+        spec = RawSpecimen(
+            origin_ref = origin,
+            
+            spec_num = row['SPEC_NUM'],
+            
+            spec_date = row['SPEC_DATE'],
+            
+            spec_type = row['SPEC_TYPE'],
+            
+            spec_code = row['SPEC_CODE'],
+            
+            local_spec = row['LOCAL_SPEC'],
+        )
+        
+        spec.save()
+        
+        ant_disk = RawAntidisk(
+            origin_ref = origin,
+            
+            amk_nd30 = row['AMK_ND30'],
+            
+            amc_nd20 = row['AMC_ND20'],
+            
+            amp_nd10 = row['AMP_ND10'],
+            
+            sam_nd10 = row['SAM_ND10'],
+            
+            azm_nd15 = row['AZM_ND15'],
+            
+            atm_nd30 = row['ATM_ND30'],
+            
+            cec_nd30 = row['CEC_ND30'],
+            
+            man_nd30 = row['MAN_ND30'],
+            
+            czo_nd30 = row['CZO_ND30'],
+            
+            fep_nd30 = row['FEP_ND30'],
+            
+            cfm_nd5 = row['CFM_ND5'],
+            
+            cfp_nd75 = row['CFP_ND75'],
+            
+            ctx_nd30 = row['CTX_ND30'],
+            
+            fox_nd30 = row['FOX_ND30'],
+            
+            caz_nd30 = row['CAZ_ND30'],
+            
+            cro_nd30 = row['CRO_ND30'],
+            
+            cxm_nd30 = row['CXM_ND30'],
+            
+            cxa_nd30 = row['CXA_ND30'],
+            
+            cep_nd30 = row['CEP_ND30'],
+            
+            chl_nd30 = row['CHL_ND30'],
+            
+            cip_nd5 = row['CIP_ND5'],
+            
+            clr_nd15 = row['CLR_ND15'],
+            
+            cli_nd2 = row['CLI_ND2'],
+            
+            col_nd10 = row['COL_ND10'],
+            
+            sxt_nd1_2 = row['SXT_ND1_2'],
+            
+            dap_nd30 = row['DAP_ND30'],
+            
+            dor_nd10 = row['DOR_ND10'],
+            
+            etp_nd10 = row['ETP_ND10'],
+            
+            ery_nd15 = row['ERY_ND15'],
+            
+            gen_nd10 = row['GEN_ND10'],
+            
+            geh_nd120 = row['GEH_ND120'],
+            
+            ipm_nd10 = row['IPM_ND10'],
+            
+            kan_nd30 = row['KAN_ND30'],
+            
+            lvx_nd5 = row['LVX_ND5'],
+            
+            lnz_nd30 = row['LNZ_ND30'],
+            
+            mem_nd10 = row['MEM_ND10'],
+            
+            mno_nd30 = row['MNO_ND30'],
+            
+            mfx_nd5 = row['MFX_ND5'],
+            
+            nal_nd30 = row['NAL_ND30'],
+            
+            net_nd30 = row['NET_ND30'],
+            
+            nit_nd300 = row['NIT_ND300'],
+            
+            nor_nd10 = row['NOR_ND10'],
+            
+            nov_nd5 = row['NOV_ND5'],
+            
+            ofx_nd5 = row['OFX_ND5'],
+            
+            oxa_nd1 = row['OXA_ND1'],
+            
+            pen_nd10 = row['PEN_ND10'],
+            
+            pip_nd100 = row['PIP_ND100'],
+            
+            tzp_nd100 = row['TZP_ND100'],
+            
+            pol_nd300 = row['POL_ND300'],
+            
+            qda_nd15 = row['QDA_ND15'],
+            
+            rif_nd5 = row['RIF_ND5'],
+            
+            spt_nd100 = row['SPT_ND100'],
+            
+            str_nd10 = row['STR_ND10'],
+            
+            sth_nd300 = row['STH_ND300'],
+            
+            tcy_nd30 = row['TCY_ND30'],
+            
+            tic_nd75 = row['TIC_ND75'],
+            
+            tcc_nd75 = row['TCC_ND75'],
+            
+            tgc_nd15 = row['TGC_ND15'],
+            
+            tob_nd10 = row['TOB_ND10'],
+            
+            van_nd30 = row['VAN_ND30'],
+            
+        )
+        
+        ant_disk.save()
+        
+        ant_mic = RawAntimic(
+            origin_ref = origin,
+            
+            amk_nm = row['AMK_NM'],
+            
+            amc_nm = row['AMC_NM'],
+            
+            amp_nm = row['AMP_NM'],
+            
+            sam_nm = row['SAM_NM'],
+            
+            azm_nm = row['AZM_NM'],
+            
+            atm_nm = row['ATM_NM'],
+            
+            cec_nm = row['CEC_NM'],
+            
+            man_nm = row['MAN_NM'],
+            
+            czo_nm = row['CZO_NM'],
+            
+            fep_nm = row['FEP_NM'],
+            
+            cfm_nm = row['CFM_NM'],
+            
+            cfp_nm = row['CFP_NM'],
+            
+            ctx_nm = row['CTX_NM'],
+            
+            fox_nm = row['FOX_NM'],
+            
+            caz_nm = row['CAZ_NM'],
+            
+            cro_nm = row['CRO_NM'],
+            
+            cxm_nm = row['CXM_NM'],
+            
+            cxa_nm = row['CXA_NM'],
+            
+            cep_nm = row['CEP_NM'],
+            
+            chl_nm = row['CHL_NM'],
+            
+            cip_nm = row['CIP_NM'],
+            
+            clr_nm = row['CLR_NM'],
+            
+            cli_nm = row['CLI_NM'],
+            
+            col_nm = row['COL_NM'],
+            
+            sxt_nm = row['SXT_NM'],
+            
+            dap_nm = row['DAP_NM'],
+            
+            dor_nm = row['DOR_NM'],
+            
+            etp_nm = row['ETP_NM'],
+            
+            ery_nm = row['ERY_NM'],
+            
+            gen_nm = row['GEN_NM'],
+            
+            geh_nm = row['GEH_NM'],
+            
+            ipm_nm = row['IPM_NM'],
+            
+            kan_nm = row['KAN_NM'],
+            
+            lvx_nm = row['LVX_NM'],
+            
+            lnz_nm = row['LNZ_NM'],
+            
+            mem_nm = row['MEM_NM'],
+            
+            mno_nm = row['MNO_NM'],
+            
+            mfx_nm = row['MFX_NM'],
+            
+            nal_nm = row['NAL_NM'],
+            
+            net_nm = row['NET_NM'],
+            
+            nit_nm = row['NIT_NM'],
+            
+            nor_nm = row['NOR_NM'],
+            
+            nov_nm = row['NOV_NM'],
+            
+            ofx_nm = row['OFX_NM'],
+            
+            oxa_nm = row['OXA_NM'],
+            
+            pen_nm = row['PEN_NM'],
+            
+            pip_nm = row['PIP_NM'],
+            
+            tzp_nm = row['TZP_NM'],
+            
+            pol_nm = row['POL_NM'],
+            
+            qda_nm = row['QDA_NM'],
+            
+            rif_nm = row['RIF_NM'],
+            
+            spt_nm = row['SPT_NM'],
+            
+            str_nm = row['STR_NM'],
+            
+            sth_nm = row['STH_NM'],
+            
+            tcy_nm = row['TCY_NM'],
+            
+            tic_nm = row['TIC_NM'],
+            
+            tcc_nm = row['TCC_NM'],
+            
+            tgc_nm = row['TGC_NM'],
+            
+            tob_nm = row['TOB_NM'],
+            
+            van_nm = row['VAN_NM']
+        )
+        
+        ant_mic.save()
