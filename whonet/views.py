@@ -13,7 +13,10 @@ import re
 from django.db import IntegrityError
 import multiprocessing as mp
 import time
+import os
 
+
+dirpath = os.getcwd()
 
 # GET : view for landing page
 @login_required(login_url='/arsp_dmu/login')
@@ -317,7 +320,7 @@ def check_str_to_date(date):
 
 def set_pd_columns(clm):
     
-    whonet_data_fields = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_data_fields.xlsx')
+    whonet_data_fields = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_fields.xlsx')
     data_fields = whonet_data_fields['Data fields'].values.tolist()
     # data_fields = [x.lower() for x in data_fields]
     
@@ -390,11 +393,11 @@ def bigwork(file_id,search_file_name,options):
         df = df[df['x_referred'] != 1]
 
 
-    whonet_region_island = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_region_island.xlsx')
-    whonet_organism = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_organism.xlsx')
-    whonet_specimen = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_specimen.xlsx')
-    whonet_site_location = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_codes_location.xlsx',search_file_name[1])
-    whonet_data_fields = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_data_fields.xlsx')
+    whonet_region_island = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_region_island.xlsx')
+    whonet_organism = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_organism.xlsx')
+    whonet_specimen = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_specimen.xlsx')
+    whonet_site_location = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_codes_location.xlsx',search_file_name[1])
+    whonet_data_fields = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_fields.xlsx')
     
     # return HttpResponse(whonet_site_location)
     
@@ -850,7 +853,7 @@ def get_data_completeness(file_id):
 
 def get_data_entero(file_id):
     df = concat_all_df(file_id)
-    comp = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_org_list.xlsx','entero')
+    comp = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','entero')
     df_list = pd.DataFrame(comp, columns=['ORG'])
     
     cmp = df_list.to_numpy()
@@ -993,7 +996,7 @@ def get_data_entero(file_id):
 
 def get_data_non_ent(file_id):
     df = concat_all_df(file_id)
-    comp = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_org_list.xlsx','non_ent')
+    comp = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','non_ent')
     df_list = pd.DataFrame(comp, columns=['ORG'])
     
     cmp = df_list.to_numpy()
@@ -1101,8 +1104,8 @@ def get_data_non_ent(file_id):
 
 def get_data_sal_shi(file_id):
     df = concat_all_df(file_id)
-    comp = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_org_list.xlsx','sal_shi')
-    comp_add = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_org_list.xlsx','sal_shi_add')
+    comp = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','sal_shi')
+    comp_add = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','sal_shi_add')
     df_list = pd.DataFrame(comp, columns=['ORG'])
     df_list_add = pd.DataFrame(comp_add, columns=['ORG'])
     
@@ -1210,7 +1213,7 @@ def get_data_sal_shi(file_id):
 
 def get_data_ent_vic(file_id):
     df = concat_all_df(file_id)
-    comp = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_org_list.xlsx','ent_vic')
+    comp = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','ent_vic')
     df_list = pd.DataFrame(comp, columns=['ORG'])
   
     
@@ -1499,7 +1502,7 @@ def get_data_bca(file_id):
 
 def get_data_nme(file_id):
     df = concat_all_df(file_id)
-    comp = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_org_list.xlsx','nme')
+    comp = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','nme')
     df_list = pd.DataFrame(comp, columns=['ORG'])
   
     
@@ -1705,7 +1708,7 @@ def get_data_spn(file_id):
 
 def get_data_ent_positive(file_id):
     df = concat_all_df(file_id)
-    comp = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_org_list.xlsx','ent_positive')
+    comp = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','ent_positive')
     df_list = pd.DataFrame(comp, columns=['ORG'])
   
     
@@ -1791,7 +1794,7 @@ def get_data_ent_positive(file_id):
 
 def get_data_sta(file_id):
     df = concat_all_df(file_id)
-    comp = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_org_list.xlsx','sta')
+    comp = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','sta')
     df_list = pd.DataFrame(comp, columns=['ORG'])
   
     
@@ -2009,7 +2012,7 @@ def get_data_pma(file_id):
 
 def get_data_other_non_ent(file_id):
     df = concat_all_df(file_id)
-    comp = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_org_list.xlsx','other_non_ent')
+    comp = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','other_non_ent')
     df_list = pd.DataFrame(comp, columns=['ORG'])
   
     
@@ -2091,7 +2094,7 @@ def get_data_other_non_ent(file_id):
 
 def get_data_svi(file_id):
     df = concat_all_df(file_id)
-    comp = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_org_list.xlsx','svi')
+    comp = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','svi')
     df_list = pd.DataFrame(comp, columns=['ORG'])
   
     
@@ -2172,7 +2175,7 @@ def get_data_svi(file_id):
 
 def get_data_bsn(file_id):
     df = concat_all_df(file_id)
-    comp = pd.read_excel('D:\PROJECT\dmu_sys\whonet\static\whonet_xl\whonet_org_list.xlsx','bsn')
+    comp = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','bsn')
     df_list = pd.DataFrame(comp, columns=['ORG'])
   
     
