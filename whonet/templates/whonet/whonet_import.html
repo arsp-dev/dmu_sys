@@ -80,7 +80,7 @@ ARSP-DMU | ARSEN | Whonet Import
                         {% for fnames in f_names  %}
                         <tr>
                             <td>{{ fnames }}</td>
-                            <td>{{ fnames.created_at }}</td>
+                            <td>{{ fnames.updated_at }}</td>
                             <td>
                                 <div class="row mb-3">
                                     <a href="/arsp_dmu/whonet_import/data/{{ fnames.id }}" class="btn btn-success btn-sm mr-3">Raw data</a>
@@ -134,6 +134,10 @@ ARSP-DMU | ARSEN | Whonet Import
                                                 <div class="custom-control custom-checkbox mr-sm-2">
                                                     <input value="X_REFERRED" name="options" type="checkbox" class="custom-control-input" id="customControlAutosizing8{{ fnames.id }}">
                                                     <label class="custom-control-label" for="customControlAutosizing8{{ fnames.id }}">X_REFERRED</label>
+                                                </div>
+                                                <div class="custom-control custom-checkbox mr-sm-2">
+                                                    <input value="NE_NM" name="options" type="checkbox" class="custom-control-input" id="customControlAutosizing9{{ fnames.id }}">
+                                                    <label class="custom-control-label" for="customControlAutosizing9{{ fnames.id }}">NE -> NM</label>
                                                 </div>
                                                 <button id="id_submit{{ fnames.id }}" type="submit" class="btn btn-success btn-sm m-t-15">Transform <i id="submit_loading{{ fnames.id }}"  class="fas fa-cog fa-spin"></i></button>
                                             </div>

@@ -2,7 +2,7 @@ from django.shortcuts import render,redirect
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.utils.datastructures import MultiValueDictKeyError
 import pandas as pd
-from whonet.models import RawFileName,RawOrigin,RawLocation,RawMicrobiology,RawSpecimen,RawAntidisk,RawAntimic
+from whonet.models import RawFileName,RawOrigin,RawLocation,RawMicrobiology,RawSpecimen,RawAntidisk,RawAntimic,RawAntietest
 from django.core import serializers
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User
@@ -213,16 +213,32 @@ def whonet_transform_year(request):
     )
     
     con_df = []
+    tmp_year_df = []
     
     writer = pd.ExcelWriter(response, engine='xlsxwriter')
     
     for val in coll:
         df = bigwork(val.id,val.file_name.split('_'),options)
+        tmp_year_df.append(df)
+        df['SPEC_DATE'] = pd.to_datetime(df['SPEC_DATE'],errors='ignore')
+        df = df[df['SPEC_DATE'].dt.year == int(year)]
+        df =  df[df['SPEC_DATE'] != '']
         con_df.append(df)
         df.to_excel(writer, sheet_name=val.file_name,index=False)
-    
+        
     concat_df = pd.concat(con_df)
+    tmp_df  = pd.concat(tmp_year_df)
     
+    crt_year = tmp_df
+    tmp_year = []
+    if 'CORRECT_YEAR' in options:
+        crt_year['SPEC_DATE'] = pd.to_datetime(crt_year['SPEC_DATE'],errors='ignore')
+        tmp_year.append(crt_year[crt_year['SPEC_DATE'].dt.year != int(year) ])
+        tmp_year.append(crt_year[(crt_year['SPEC_DATE'] == '')])
+        
+        df_year = pd.concat(tmp_year)
+        df_year.to_excel(writer,sheet_name='INCORRECT_DATE',index=False)
+ 
     concat_df.to_excel(writer, sheet_name=site + '_' + year,index=False)
         
     writer.save()
@@ -321,12 +337,15 @@ def check_str_to_date(date):
 def set_pd_columns(clm):
     
     whonet_data_fields = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_fields.xlsx')
+    # whonet_data_fields_etest = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_fields.xlsx','etest')
     data_fields = whonet_data_fields['Data fields'].values.tolist()
-    # data_fields = [x.lower() for x in data_fields]
+    # etest = whonet_data_fields_etest['Data fields'].values.tolist()
+    # etest = [x.lower() for x in etest]
     
     for col in data_fields:
         if col not in clm.columns:
             clm[col] = ''
+
     
     return clm
 
@@ -385,9 +404,10 @@ def getYear(site):
         
 
 
-def bigwork(file_id,search_file_name,options):
+def bigwork(file_id,search_file_name,options, year = ''):
   
     df = concat_all_df(file_id)
+  
     #removing rows if x_referred == 1
     if 'X_REFERRED' in options:
         df = df[df['x_referred'] != 1]
@@ -398,15 +418,17 @@ def bigwork(file_id,search_file_name,options):
     whonet_specimen = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_specimen.xlsx')
     whonet_site_location = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_codes_location.xlsx',search_file_name[1])
     whonet_data_fields = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_fields.xlsx')
-    
-    # return HttpResponse(whonet_site_location)
+    whonet_data_fields_mic = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_fields.xlsx','mic')
+    whonet_data_fields_etest = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_fields.xlsx','etest')
     
     lab_chk = whonet_region_island['LABORATORY'].values.tolist()
     org_chk = whonet_organism['ORGANISM'].values.tolist()
     spec_chk = whonet_specimen['SPEC_TYPE'].values.tolist()
     loc_chk = whonet_site_location['WARD'].values.tolist()
     data_fields = whonet_data_fields['Data fields'].values.tolist()
-    loc_chk = [x.lower() for x in loc_chk]
+    data_fields_mic = whonet_data_fields_mic['Data fields'].values.tolist()
+    data_fields_etest = whonet_data_fields_etest['Data fields'].values.tolist()
+    # loc_chk = [x.lower() for x in loc_chk]
     
     region = []
     island = []
@@ -419,6 +441,7 @@ def bigwork(file_id,search_file_name,options):
     new_institut = []
     new_department = []
     new_ward_type = []
+    new_ward = []
     
     new_diag = []
     
@@ -435,13 +458,20 @@ def bigwork(file_id,search_file_name,options):
     x_growth = []
     
     
-    #removing nan strings
-    # df = df.replace(regex='nan',value='')
+    
     
     for index,row in df.iterrows():
         new_country.append('PHL')
         new_lab.append(search_file_name[1])
         new_institut.append(search_file_name[1])
+        if 'NE_NM' in options:
+            for atx in data_fields_mic:
+                atx_name = atx.split('_')
+                if row[atx.lower()] == '' and row[atx_name[0].lower() + '_ne'] != '':
+                    df.at[index,atx.lower()] = row[atx_name[0].lower() + '_ne']
+                else:
+                    df.at[index,atx.lower()] = row[atx.lower()]
+        
     df['country_a'] = new_country
     df['laboratory'] = new_lab
     df['institut'] = new_institut
@@ -484,9 +514,11 @@ def bigwork(file_id,search_file_name,options):
             if row['ward'] in loc_chk:
                 new_department.append(whonet_site_location['DEPARTMENT'][loc_chk.index(row['ward'])])
                 new_ward_type.append(whonet_site_location['WARD_TYPE'][loc_chk.index(row['ward'])])
+                new_ward.append(whonet_site_location['S_WARD'][loc_chk.index(row['ward'])])
             else:
-                new_department.append('unknown')
-                new_ward_type.append('unknown')
+                new_department.append('unk')
+                new_ward_type.append('unk')
+                new_ward.append('unk')
         
         
         if 'Specimen' in options:
@@ -574,6 +606,7 @@ def bigwork(file_id,search_file_name,options):
     if 'Location' in options:
         df['department'] = new_department
         df['ward_type'] = new_ward_type
+        df['ward'] = new_ward
     
     if 'Diagnosis' in options:
         df['diagnosis'] = new_diag
@@ -646,13 +679,11 @@ def bigwork(file_id,search_file_name,options):
     
     if 'Nosocomial' in options:
         df['nosocomial'] = new_noso
-    
-    
-    
+        
 
-    
-    
+
     df['growth'] = x_growth
+    
     #df columns to upper
     df.columns = map(str.upper, df.columns)
     
@@ -660,8 +691,10 @@ def bigwork(file_id,search_file_name,options):
     #removing excess columns
     # df = df.drop(columns=['ID_X', 'ID_Y','ORIGIN_REF','FILE_REF','ID'])
     df = df.drop(columns=['ORIGIN_REF','FILE_REF','ID'])
-
+    
     df = df.reindex(columns = data_fields)
+    df = df.drop(columns=data_fields_etest)
+    
     return df
 
 
@@ -686,9 +719,12 @@ def import_raw(raw_data):
         file_name.save()
     except IntegrityError as e:
         file_name = RawFileName.objects.get(file_name=tmp_name.split('.')[0])
-        RawOrigin.objects.select_related('rawlocation','rawmicrobiology','rawspecimen','rawantidisk','rawantimic').filter(file_ref=file_name).delete()
+        file_name.updated_at = datetime.now()
+        file_name.save()
+        RawOrigin.objects.select_related('rawlocation','rawmicrobiology','rawspecimen','rawantidisk','rawantimic','rawantietest').filter(file_ref=file_name).delete()
         # RawFileName.objects.get(file_name=tmp_name.split('.')[0]).delete()
         import_raw_data(row_iter,file_name)
+        
         return 'File ' + tmp_name.split('.')[0] + ' is already uploaded. System updated the file.'
 
     try:
@@ -700,13 +736,14 @@ def import_raw(raw_data):
 
 
 def concat_all_df(file_id):
-    orig = RawOrigin.objects.select_related('rawlocation','rawmicrobiology','rawspecimen','rawantidisk','rawantimic').filter(file_ref=file_id)
-    pallobjs = [ model_to_dict(pallobj) for pallobj in RawOrigin.objects.select_related('rawlocation','rawmicrobiology','rawspecimen','rawantidisk','rawantimic').filter(file_ref=file_id)] 
+    orig = RawOrigin.objects.select_related('rawlocation','rawmicrobiology','rawspecimen','rawantidisk','rawantimic','rawantietest').filter(file_ref=file_id)
+    pallobjs = [ model_to_dict(pallobj) for pallobj in RawOrigin.objects.select_related('rawlocation','rawmicrobiology','rawspecimen','rawantidisk','rawantimic','rawantietest').filter(file_ref=file_id)] 
     objs_spec = [model_to_dict(obj.rawspecimen) for obj in orig]
     objs_location = [model_to_dict(obj.rawlocation) for obj in orig]
     objs_micro = [model_to_dict(obj.rawmicrobiology) for obj in orig]
     objs_dsk = [model_to_dict(obj.rawantidisk) for obj in orig]
     objs_mic = [model_to_dict(obj.rawantimic) for obj in orig]
+    objs_etest = [model_to_dict(obj.rawantietest) for obj in orig]
     df = pd.DataFrame(pallobjs)
     df_spec = pd.DataFrame(objs_spec)
     # df_spec.drop(columns=['id'])
@@ -718,11 +755,13 @@ def concat_all_df(file_id):
     # df_dsk.drop(columns=['id'])
     df_mic = pd.DataFrame(objs_mic)
     # df_mic.drop(columns=['id'])
+    df_etest = pd.DataFrame(objs_etest)
     
     df2 = pd.merge(df_loc,df_spec,on='origin_ref')
     df2 = pd.merge(df2,df_micro,on='origin_ref')
     df2 = pd.merge(df2,df_dsk,on='origin_ref')
     df2 = pd.merge(df2,df_mic,on='origin_ref')
+    df2 = pd.merge(df2,df_etest,on='origin_ref')
     # df = pd.merge(df,df2,on='origin_ref')
     # return HttpResponse(df.columns)
     df = pd.merge(df,df2,right_on='origin_ref',left_on='id')
@@ -796,6 +835,8 @@ def concat_all_df(file_id):
     df['fos_nd200'] = df['fos_nd200'].str.replace('.0', '', regex=False)
     df['dox_nd30'] = df['dox_nd30'].str.replace('.0', '', regex=False)
     df['sss_nd200'] = df['sss_nd200'].str.replace('.0', '', regex=False)
+    
+    
     
     return df
 
@@ -2565,6 +2606,14 @@ def import_raw_data(row_iter,file_name):
             
             van_nd30 = row['VAN_ND30'],
             
+            fos_nd200 = row['FOS_ND200'],
+            
+            dox_nd30 = row['DOX_ND30'],
+            
+            sss_nd200 = row['SSS_ND200'],
+            
+            
+            
         )
         
         ant_disk.save()
@@ -2690,7 +2739,145 @@ def import_raw_data(row_iter,file_name):
             
             tob_nm = row['TOB_NM'],
             
-            van_nm = row['VAN_NM']
+            van_nm = row['VAN_NM'],
+            
+            fos_nm = row['FOS_NM'],
+            
+            dox_nm = row['DOX_NM'],
+            
+            sss_nm = row['SSS_NM'],
         )
         
         ant_mic.save()
+        
+        ant_est = RawAntietest(
+            origin_ref = origin,
+            
+            amk_ne = row['AMK_NE'],
+            
+            amc_ne = row['AMC_NE'],
+            
+            amp_ne = row['AMP_NE'],
+            
+            sam_ne = row['SAM_NE'],
+            
+            azm_ne = row['AZM_NE'],
+            
+            atm_ne = row['ATM_NE'],
+            
+            cec_ne = row['CEC_NE'],
+            
+            man_ne = row['MAN_NE'],
+            
+            czo_ne = row['CZO_NE'],
+            
+            fep_ne = row['FEP_NE'],
+            
+            cfm_ne = row['CFM_NE'],
+            
+            cfp_ne = row['CFP_NE'],
+            
+            ctx_ne = row['CTX_NE'],
+            
+            fox_ne = row['FOX_NE'],
+            
+            caz_ne = row['CAZ_NE'],
+            
+            cro_ne = row['CRO_NE'],
+            
+            cxm_ne = row['CXM_NE'],
+            
+            cxa_ne = row['CXA_NE'],
+            
+            cep_ne = row['CEP_NE'],
+            
+            chl_ne = row['CHL_NE'],
+            
+            cip_ne = row['CIP_NE'],
+            
+            clr_ne = row['CLR_NE'],
+            
+            cli_ne = row['CLI_NE'],
+            
+            col_ne = row['COL_NE'],
+            
+            sxt_ne = row['SXT_NE'],
+            
+            dap_ne = row['DAP_NE'],
+            
+            dor_ne = row['DOR_NE'],
+            
+            etp_ne = row['ETP_NE'],
+            
+            ery_ne = row['ERY_NE'],
+            
+            gen_ne = row['GEN_NE'],
+            
+            geh_ne = row['GEH_NE'],
+            
+            ipm_ne = row['IPM_NE'],
+            
+            kan_ne = row['KAN_NE'],
+            
+            lvx_ne = row['LVX_NE'],
+            
+            lnz_ne = row['LNZ_NE'],
+            
+            mem_ne = row['MEM_NE'],
+            
+            mno_ne = row['MNO_NE'],
+            
+            mfx_ne = row['MFX_NE'],
+            
+            nal_ne = row['NAL_NE'],
+            
+            net_ne = row['NET_NE'],
+            
+            nit_ne = row['NIT_NE'],
+            
+            nor_ne = row['NOR_NE'],
+            
+            nov_ne = row['NOV_NE'],
+            
+            ofx_ne = row['OFX_NE'],
+            
+            oxa_ne = row['OXA_NE'],
+            
+            pen_ne = row['PEN_NE'],
+            
+            pip_ne = row['PIP_NE'],
+            
+            tzp_ne = row['TZP_NE'],
+            
+            pol_ne = row['POL_NE'],
+            
+            qda_ne = row['QDA_NE'],
+            
+            rif_ne = row['RIF_NE'],
+            
+            spt_ne = row['SPT_NE'],
+            
+            str_ne = row['STR_NE'],
+            
+            sth_ne = row['STH_NE'],
+            
+            tcy_ne = row['TCY_NE'],
+            
+            tic_ne = row['TIC_NE'],
+            
+            tcc_ne = row['TCC_NE'],
+            
+            tgc_ne = row['TGC_NE'],
+            
+            tob_ne = row['TOB_NE'],
+            
+            van_ne = row['VAN_NE'],
+            
+            fos_ne = row['FOS_NE'],
+            
+            dox_ne = row['DOX_NE'],
+            
+            sss_ne = row['SSS_NE'],
+        )
+        
+        ant_est.save()
