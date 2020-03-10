@@ -17,7 +17,23 @@ import os
 
 
 dirpath = os.getcwd()
+start_time = datetime.now() 
+whonet_region_island = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_region_island.xlsx')
+whonet_organism = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_organism.xlsx')
+whonet_specimen = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_specimen.xlsx')
 
+whonet_data_fields = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_fields.xlsx')
+whonet_data_fields_mic = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_fields.xlsx','mic')
+whonet_data_fields_etest = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_fields.xlsx','etest')
+
+lab_chk = whonet_region_island['LABORATORY'].values.tolist()
+org_chk = whonet_organism['ORGANISM'].values.tolist()
+spec_chk = whonet_specimen['SPEC_TYPE'].values.tolist()
+data_fields = whonet_data_fields['Data fields'].values.tolist()
+data_fields_mic = whonet_data_fields_mic['Data fields'].values.tolist()
+data_fields_etest = whonet_data_fields_etest['Data fields'].values.tolist()
+time_elapsed = datetime.now() - start_time 
+print('Time elapsed taas (hh:mm:ss.ms) {}'.format(time_elapsed))
 # GET : view for landing page
 @login_required(login_url='/arsp_dmu/login')
 def whonet_landing(request):
@@ -197,6 +213,7 @@ def whonet_transform(request):
 
 @login_required(login_url='/arsp_dmu/login')
 def whonet_transform_year(request):
+    start_time = datetime.now() 
     site = request.POST['sentinel_site']
     year = request.POST['year']
     options = request.POST.getlist('options')
@@ -243,7 +260,8 @@ def whonet_transform_year(request):
         
     writer.save()
     
-    
+    time_elapsed = datetime.now() - start_time
+    print('Time elapsed (hh:mm:ss.ms) {}'.format(time_elapsed))
     return response
 
 
@@ -251,18 +269,24 @@ def whonet_transform_year(request):
 
 @login_required(login_url='/arsp_dmu/login')
 def whonet_transform_data(request,file_id):
+    start_time = datetime.now()
     options = request.POST.getlist('options')
     file_name = RawFileName.objects.get(id=file_id)
     search_file_name = file_name.file_name.split('_')
     
+   
     df = bigwork(file_id,search_file_name,options)
+    
     
     
     response = HttpResponse( df.to_csv(index=False,mode = 'w'),content_type='text/csv')
     response['Content-Disposition'] = "attachment; filename=TRANSFORM_{}_{}.csv".format(file_name,datetime.now())
     
+    
+    time_elapsed = datetime.now() - start_time
+    print('Time elapsed (hh:mm:ss.ms) {}'.format(time_elapsed))
     return response
-
+    
 
     
    
@@ -405,31 +429,22 @@ def getYear(site):
 
 
 def bigwork(file_id,search_file_name,options, year = ''):
-  
+    start_time = datetime.now() 
     df = concat_all_df(file_id)
+    
   
     #removing rows if x_referred == 1
     if 'X_REFERRED' in options:
         df = df[df['x_referred'] != 1]
 
-
-    whonet_region_island = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_region_island.xlsx')
-    whonet_organism = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_organism.xlsx')
-    whonet_specimen = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_specimen.xlsx')
-    whonet_site_location = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_codes_location.xlsx',search_file_name[1])
-    whonet_data_fields = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_fields.xlsx')
-    whonet_data_fields_mic = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_fields.xlsx','mic')
-    whonet_data_fields_etest = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_fields.xlsx','etest')
     
-    lab_chk = whonet_region_island['LABORATORY'].values.tolist()
-    org_chk = whonet_organism['ORGANISM'].values.tolist()
-    spec_chk = whonet_specimen['SPEC_TYPE'].values.tolist()
-    loc_chk = whonet_site_location['WARD'].values.tolist()
-    data_fields = whonet_data_fields['Data fields'].values.tolist()
-    data_fields_mic = whonet_data_fields_mic['Data fields'].values.tolist()
-    data_fields_etest = whonet_data_fields_etest['Data fields'].values.tolist()
+    
     # loc_chk = [x.lower() for x in loc_chk]
+ 
     
+    whonet_site_location = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_codes_location.xlsx',search_file_name[1])
+    loc_chk = whonet_site_location['WARD'].values.tolist()
+
     region = []
     island = []
     age = []
@@ -457,6 +472,10 @@ def bigwork(file_id,search_file_name,options, year = ''):
     
     x_growth = []
     
+    
+    start_time = datetime.now() 
+    if 'Origin' in options:
+        df = df.apply(lambda row: origin_transform(row,lab_chk,whonet_region_island), axis = 1)
     
     
     
@@ -538,37 +557,37 @@ def bigwork(file_id,search_file_name,options, year = ''):
                 new_org_type.append('o')
         
         
-        if 'Origin' in options:
-            if row['laboratory'].upper() in lab_chk:
-                region.append(whonet_region_island['REGION'][lab_chk.index(row['laboratory'])])
-                island.append(whonet_region_island['ISLAND'][lab_chk.index(row['laboratory'])])
-            else:
-                region.append('')
-                island.append('')
+        # if 'Origin' in options:
+        #     if row['laboratory'].upper() in lab_chk:
+        #         region.append(whonet_region_island['REGION'][lab_chk.index(row['laboratory'])])
+        #         island.append(whonet_region_island['ISLAND'][lab_chk.index(row['laboratory'])])
+        #     else:
+        #         region.append('')
+        #         island.append('')
         
                 
-            if pd.isna(row['age']) == True or row['age'] == '':
-                    age.append('U')
+        #     if pd.isna(row['age']) == True or row['age'] == '':
+        #             age.append('U')
                 
-            elif 'w' in str(row['age']) or 'W' in str(row['age']) or 'd' in str(row['age']) or 'D' in str(row['age']) or 'm' in str(row['age']) or 'M' in str(row['age']) or 'nb' in str(row['age']) or 'NB' in str(row['age']):
-                    age.append('A')
-            elif row['age'] == 'nan':
-                    age.append('U')  
+        #     elif 'w' in str(row['age']) or 'W' in str(row['age']) or 'd' in str(row['age']) or 'D' in str(row['age']) or 'm' in str(row['age']) or 'M' in str(row['age']) or 'nb' in str(row['age']) or 'NB' in str(row['age']):
+        #             age.append('A')
+        #     elif row['age'] == 'nan':
+        #             age.append('U')  
                 
-            elif float(row['age']) >= 0 and float(row['age']) <= 5:
-                    age.append('A')
+        #     elif float(row['age']) >= 0 and float(row['age']) <= 5:
+        #             age.append('A')
                 
-            elif float(row['age']) >= 6 and float(row['age']) <= 17:
-                    age.append('B')
+        #     elif float(row['age']) >= 6 and float(row['age']) <= 17:
+        #             age.append('B')
                 
-            elif float(row['age']) > 17 and float(row['age']) <= 64:
-                    age.append('C')
+        #     elif float(row['age']) > 17 and float(row['age']) <= 64:
+        #             age.append('C')
                 
-            elif float(row['age']) > 64:
-                    age.append('D')
+        #     elif float(row['age']) > 64:
+        #             age.append('D')
                 
-            else:
-                    age.append('U')  
+        #     else:
+        #             age.append('U')  
         
         
         if 'SPN' in options:
@@ -592,10 +611,10 @@ def bigwork(file_id,search_file_name,options, year = ''):
         
     
  
-    if 'Origin' in options:
-        df['region'] = region
-        df['island'] = island
-        df['age_grp'] = age
+    # if 'Origin' in options:
+    #     df['region'] = region
+    #     df['island'] = island
+    #     df['age_grp'] = age
     
     if 'Specimen' in options:
         df['organism'] = new_org
@@ -684,6 +703,7 @@ def bigwork(file_id,search_file_name,options, year = ''):
 
     df['growth'] = x_growth
     
+    
     #df columns to upper
     df.columns = map(str.upper, df.columns)
     
@@ -694,7 +714,8 @@ def bigwork(file_id,search_file_name,options, year = ''):
     
     df = df.reindex(columns = data_fields)
     df = df.drop(columns=data_fields_etest)
-    
+    time_elapsed = datetime.now() - start_time 
+    print('Time elapsed zzz (hh:mm:ss.ms) {}'.format(time_elapsed))
     return df
 
 
@@ -738,6 +759,7 @@ def import_raw(raw_data):
 def concat_all_df(file_id):
     orig = RawOrigin.objects.select_related('rawlocation','rawmicrobiology','rawspecimen','rawantidisk','rawantimic','rawantietest').filter(file_ref=file_id)
     pallobjs = [ model_to_dict(pallobj) for pallobj in RawOrigin.objects.select_related('rawlocation','rawmicrobiology','rawspecimen','rawantidisk','rawantimic','rawantietest').filter(file_ref=file_id)] 
+    # objs_spec = [model_to_dict(obj.rawspecimen) for obj in orig]
     objs_spec = [model_to_dict(obj.rawspecimen) for obj in orig]
     objs_location = [model_to_dict(obj.rawlocation) for obj in orig]
     objs_micro = [model_to_dict(obj.rawmicrobiology) for obj in orig]
@@ -2881,3 +2903,44 @@ def import_raw_data(row_iter,file_name):
         )
         
         ant_est.save()
+
+
+
+# functions that will be used on lambda
+# lambda function for origin
+def origin_transform(row,lab_chk,whonet_region_island):
+    
+    if row['laboratory'].upper() in lab_chk:
+        row['region'] = whonet_region_island['REGION'][lab_chk.index(row['laboratory'])]
+        row['island'] = whonet_region_island['ISLAND'][lab_chk.index(row['laboratory'])]
+    else:
+        row['region'] = ''
+        row['island'] = ''
+    
+    
+    
+    return row
+
+        
+    # if pd.isna(row['age']) == True or row['age'] == '':
+    #         age.append('U')
+        
+    # elif 'w' in str(row['age']) or 'W' in str(row['age']) or 'd' in str(row['age']) or 'D' in str(row['age']) or 'm' in str(row['age']) or 'M' in str(row['age']) or 'nb' in str(row['age']) or 'NB' in str(row['age']):
+    #         age.append('A')
+    # elif row['age'] == 'nan':
+    #         age.append('U')  
+        
+    # elif float(row['age']) >= 0 and float(row['age']) <= 5:
+    #         age.append('A')
+        
+    # elif float(row['age']) >= 6 and float(row['age']) <= 17:
+    #         age.append('B')
+        
+    # elif float(row['age']) > 17 and float(row['age']) <= 64:
+    #         age.append('C')
+        
+    # elif float(row['age']) > 64:
+    #         age.append('D')
+        
+    # else:
+    #         age.append('U')  
