@@ -21,7 +21,6 @@ start_time = datetime.now()
 whonet_region_island = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_region_island.xlsx')
 whonet_organism = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_organism.xlsx')
 whonet_specimen = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_specimen.xlsx')
-
 whonet_data_fields = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_fields.xlsx')
 whonet_data_fields_mic = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_fields.xlsx','mic')
 whonet_data_fields_etest = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_fields.xlsx','etest')
@@ -431,6 +430,15 @@ def getYear(site):
 def bigwork(file_id,search_file_name,options, year = ''):
     start_time = datetime.now() 
     df = concat_all_df(file_id)
+
+    df['comment'] = df['comment'].str.replace('=', '', regex=False)
+    df['comment'] = df['comment'].str.replace('-', '', regex=False)
+    
+    
+    
+    #changing patient_id if 7777777 seven(7)
+    if 'PATIENT_ID' in options:
+        df = df.apply(lambda row: patient_id_transform(row), axis=1)
     
   
     #removing rows if x_referred == 1
@@ -442,7 +450,7 @@ def bigwork(file_id,search_file_name,options, year = ''):
     # loc_chk = [x.lower() for x in loc_chk]
  
     
-    whonet_site_location = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_codes_location.xlsx',search_file_name[1])
+    whonet_site_location = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_codes_location.xlsx',search_file_name[1].lower())
     loc_chk = whonet_site_location['WARD'].values.tolist()
 
     region = []
@@ -857,6 +865,14 @@ def concat_all_df(file_id):
     df['fos_nd200'] = df['fos_nd200'].str.replace('.0', '', regex=False)
     df['dox_nd30'] = df['dox_nd30'].str.replace('.0', '', regex=False)
     df['sss_nd200'] = df['sss_nd200'].str.replace('.0', '', regex=False)
+    
+    
+    
+    df['comment'] = df['comment'].str.replace('/^=/', '', regex=True)
+    # df['mbl'] = df['mbl'].str.replace('=', '', regex=False)
+    # df['diagnosis'] = df['diagnosis'].str.replace('=', '', regex=False)
+    # df['comment'] = df['comment'].str.replace('=', '', regex=False)
+    # df['comment'] = df['comment'].str.replace('=-', '', regex=False)
     
     
     
@@ -2917,30 +2933,41 @@ def origin_transform(row,lab_chk,whonet_region_island):
         row['region'] = ''
         row['island'] = ''
     
+    if pd.isna(row['age']) == True or row['age'] == '':
+            # age.append('U')
+            row['age_grp'] = 'U'
+        
+    elif 'w' in str(row['age']) or 'W' in str(row['age']) or 'd' in str(row['age']) or 'D' in str(row['age']) or 'm' in str(row['age']) or 'M' in str(row['age']) or 'nb' in str(row['age']) or 'NB' in str(row['age']):
+            # age.append('A')
+            row['age_grp'] = 'A'
+    elif row['age'] == 'nan':
+            row['age_grp'] = 'U'  
+        
+    elif float(row['age']) >= 0 and float(row['age']) <= 5:
+            row['age_grp'] = 'A'
+        
+    elif float(row['age']) >= 6 and float(row['age']) <= 17:
+            row['age_grp'] = 'B'
+        
+    elif float(row['age']) > 17 and float(row['age']) <= 64:
+            row['age_grp'] = 'C'
+        
+    elif float(row['age']) > 64:
+            row['age_grp'] = 'D'
+        
+    else:
+            row['age_grp'] = 'U'
     
     
     return row
 
+
+def patient_id_transform(row):
+    if row['patient_id'] == '7777777' or row['patient_id'] == 7777777:
+        row['patient_id'] = ''
         
-    # if pd.isna(row['age']) == True or row['age'] == '':
-    #         age.append('U')
+    
+    return row
+
         
-    # elif 'w' in str(row['age']) or 'W' in str(row['age']) or 'd' in str(row['age']) or 'D' in str(row['age']) or 'm' in str(row['age']) or 'M' in str(row['age']) or 'nb' in str(row['age']) or 'NB' in str(row['age']):
-    #         age.append('A')
-    # elif row['age'] == 'nan':
-    #         age.append('U')  
-        
-    # elif float(row['age']) >= 0 and float(row['age']) <= 5:
-    #         age.append('A')
-        
-    # elif float(row['age']) >= 6 and float(row['age']) <= 17:
-    #         age.append('B')
-        
-    # elif float(row['age']) > 17 and float(row['age']) <= 64:
-    #         age.append('C')
-        
-    # elif float(row['age']) > 64:
-    #         age.append('D')
-        
-    # else:
-    #         age.append('U')  
+    
