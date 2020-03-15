@@ -2,7 +2,7 @@ from django.shortcuts import render,redirect
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.utils.datastructures import MultiValueDictKeyError
 import pandas as pd
-from whonet.models import RawFileName,RawOrigin,RawLocation,RawMicrobiology,RawSpecimen,RawAntidisk,RawAntimic,RawAntietest
+from whonet.models import *
 from django.core import serializers
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User
@@ -14,10 +14,11 @@ from django.db import IntegrityError
 import multiprocessing as mp
 import time
 import os
+import zipfile
+from io import BytesIO
 
 
 dirpath = os.getcwd()
-start_time = datetime.now() 
 whonet_region_island = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_region_island.xlsx')
 whonet_organism = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_organism.xlsx')
 whonet_specimen = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_specimen.xlsx')
@@ -31,8 +32,7 @@ spec_chk = whonet_specimen['SPEC_TYPE'].values.tolist()
 data_fields = whonet_data_fields['Data fields'].values.tolist()
 data_fields_mic = whonet_data_fields_mic['Data fields'].values.tolist()
 data_fields_etest = whonet_data_fields_etest['Data fields'].values.tolist()
-time_elapsed = datetime.now() - start_time 
-print('Time elapsed taas (hh:mm:ss.ms) {}'.format(time_elapsed))
+
 # GET : view for landing page
 @login_required(login_url='/arsp_dmu/login')
 def whonet_landing(request):
@@ -62,136 +62,22 @@ def whonet_data_summary_report(request,file_id):
     file_name = RawFileName.objects.get(id=file_id)
     search_file_name = file_name.file_name.split('_')
      
-    response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    )
-    response['Content-Disposition'] = 'attachment; filename=DATA_SUMMARY_{}_{}.xlsx'.format(file_name,datetime.now()
-    )
-    
-    
-    df_data_completeness = get_data_completeness(file_id)
-    df_entero = get_data_entero(file_id)
-    df_sal_shi = get_data_sal_shi(file_id)
-    df_ent_vic = get_data_ent_vic(file_id)
-    df_non_ent = get_data_non_ent(file_id)
-    df_pae = get_data_pae(file_id)
-    df_hin = get_data_hin(file_id)
-    df_bca = get_data_bca(file_id)
-    df_ngo_nko = get_data_ngo_nko(file_id)
-    df_spn = get_data_spn(file_id)
-    df_ent_positive = get_data_ent_positive(file_id)
-    df_sta = get_data_sta(file_id)
-    df_pce = get_data_pce(file_id)
-    df_pma = get_data_pma(file_id)
-    # df_other_non_ent = get_data_other_non_ent(file_id)
-    df_svi = get_data_svi(file_id)
-    df_bsn = get_data_bsn(file_id)
-    
-    
-    summary = []
-    ave = 0
-    
-    
-    mrsa_esbl = get_mrsa_esbl(file_id)
-    
-    # df_esbl = pd.DataFrame(data=[df_entero[1]], columns=['Organism','Number','Percent'])
-    
-    if len(df_entero) == 3:
-        summary.append(df_entero[1])
-        ave += df_entero[2]
-    
-    if len(df_sal_shi) == 3:
-        summary.append(df_sal_shi[1])
-        ave += df_sal_shi[2]
-        
-    if len(df_ent_vic) == 3:
-        summary.append(df_ent_vic[1])
-        ave += df_ent_vic[2]
-    
-    if len(df_non_ent) == 3:
-        summary.append(df_non_ent[1])
-        ave += df_non_ent[2]
-        
-    if len(df_pae) == 3:
-        summary.append(df_pae[1])
-        ave += df_pae[2]
-        
-    if len(df_hin) == 3:
-        summary.append(df_hin[1])
-        ave += df_hin[2]
-    
-    if len(df_bca) == 3:
-        summary.append(df_bca[1])
-        ave += df_bca[2]
-        
-    if len(df_ngo_nko) == 3:
-        summary.append(df_ngo_nko[1])
-        ave += df_ngo_nko[2]
-    
-    if len(df_spn) == 3:
-        summary.append(df_spn[1])
-        ave += df_spn[2]
-    
-    if len(df_ent_positive) == 3:
-        summary.append(df_ent_positive[1])
-        ave += df_ent_positive[2]
 
+    response = HttpResponse(content_type='application/zip')
+    zf = zipfile.ZipFile(response, 'w')
     
-    if len(df_sta) == 3:
-        summary.append(df_sta[1])
-        ave += df_sta[2]
+    summary_report = compute_summary_report(file_name,file_id)
     
-    if len(df_pce) == 3:
-        summary.append(df_pce[1])
-        ave += df_pce[2]
+    zf.write(summary_report)
     
-    if len(df_pma) == 3:
-        summary.append(df_pma[1])
-        ave += df_pma[2]
+    zf.close()
     
-    if len(df_svi) == 3:
-        summary.append(df_svi[1])
-        ave += df_svi[2]
-    
-    if len(df_bsn) == 3:
-        summary.append(df_bsn[1])
-        ave += df_bsn[2]
-    
-    
-        
-    summary.append(['','Average',str( round(ave / len(summary),2) ) + '%'])
-    summary.append(['','',''])
-    summary.append(['Other Phenotypic Test','Number','Percent'])
-    summary.append(mrsa_esbl[0])
-    summary.append(mrsa_esbl[1])
-    
-    final = pd.DataFrame(data=summary, columns=['Organism','Number','Percent'])
-    
-    writer = pd.ExcelWriter(response, engine='xlsxwriter')
-    df_data_completeness.to_excel(writer, sheet_name='data_complete',index=False)
-    df_entero[0].to_excel(writer, sheet_name='ent_xsal_xshi',index=False)
-    df_sal_shi[0].to_excel(writer, sheet_name='ent_sal_shi', index=False)
-    df_ent_vic[0].to_excel(writer, sheet_name='ent_vic', index=False)
-    df_non_ent[0].to_excel(writer, sheet_name='non_ent_acs', index=False)
-    df_pae[0].to_excel(writer, sheet_name='pae', index=False)
-    df_hin[0].to_excel(writer, sheet_name='hin', index=False)
-    df_bca[0].to_excel(writer, sheet_name='bca', index=False)
-    df_ngo_nko[0].to_excel(writer, sheet_name='ngo_nko', index=False)
-    df_spn[0].to_excel(writer, sheet_name='spn', index=False)
-    df_ent_positive[0].to_excel(writer, sheet_name='ent sp.', index=False)
-    df_sta[0].to_excel(writer, sheet_name='STA sp.', index=False)
-    df_pce[0].to_excel(writer, sheet_name='pce', index=False)
-    df_pma[0].to_excel(writer, sheet_name='pma', index=False)
-    # df_other_non_ent.to_excel(writer, sheet_name='other non ent', index=False)
-    df_svi[0].to_excel(writer, sheet_name='svi', index=False)
-    df_bsn[0].to_excel(writer, sheet_name='bsn', index=False)
-    # df_esbl.to_excel(writer, sheet_name='esbl', index=False)
-    final.to_excel(writer, sheet_name='summary', index=False)
-    
-    writer.save()
-    
-
+    response['Content-Disposition'] = 'attachment; filename=SUMMARY_REPORT_{}.zip'.format(file_name)
     return response
+
+
+
+
 
 
 @login_required(login_url='/arsp_dmu/login')
@@ -730,7 +616,6 @@ def bigwork(file_id,search_file_name,options, year = ''):
 def import_raw(raw_data):
     try:
         df = pd.read_csv(raw_data,encoding='iso-8859-1')
-        
     except:
         return 'File ' + raw_data.name + ' is invalid format'
         # output.put('File ' + raw_data.name + ' is invalid format')
@@ -865,18 +750,141 @@ def concat_all_df(file_id):
     df['fos_nd200'] = df['fos_nd200'].str.replace('.0', '', regex=False)
     df['dox_nd30'] = df['dox_nd30'].str.replace('.0', '', regex=False)
     df['sss_nd200'] = df['sss_nd200'].str.replace('.0', '', regex=False)
-    
-    
-    
+      
     df['comment'] = df['comment'].str.replace('/^=/', '', regex=True)
-    # df['mbl'] = df['mbl'].str.replace('=', '', regex=False)
-    # df['diagnosis'] = df['diagnosis'].str.replace('=', '', regex=False)
-    # df['comment'] = df['comment'].str.replace('=', '', regex=False)
-    # df['comment'] = df['comment'].str.replace('=-', '', regex=False)
-    
-    
-    
+
     return df
+
+'''
+FUNCTIONS BELOW ARE FOR DATA SUMMARY REPORT
+'''
+def compute_summary_report(file_name,file_id):
+    df_data_completeness = get_data_completeness(file_id)
+    df_entero = get_data_entero(file_id)
+    df_sal_shi = get_data_sal_shi(file_id)
+    df_ent_vic = get_data_ent_vic(file_id)
+    df_non_ent = get_data_non_ent(file_id)
+    df_pae = get_data_pae(file_id)
+    df_hin = get_data_hin(file_id)
+    df_bca = get_data_bca(file_id)
+    df_ngo_nko = get_data_ngo_nko(file_id)
+    df_spn = get_data_spn(file_id)
+    df_ent_positive = get_data_ent_positive(file_id)
+    df_sta = get_data_sta(file_id)
+    df_pce = get_data_pce(file_id)
+    df_pma = get_data_pma(file_id)
+    # df_other_non_ent = get_data_other_non_ent(file_id)
+    df_svi = get_data_svi(file_id)
+    df_bsn = get_data_bsn(file_id)
+    
+    
+    summary = []
+    ave = 0
+    
+    
+    mrsa_esbl = get_mrsa_esbl(file_id)
+    
+    # df_esbl = pd.DataFrame(data=[df_entero[1]], columns=['Organism','Number','Percent'])
+    
+    if len(df_entero) == 3:
+        summary.append(df_entero[1])
+        ave += df_entero[2]
+    
+    if len(df_sal_shi) == 3:
+        summary.append(df_sal_shi[1])
+        ave += df_sal_shi[2]
+        
+    if len(df_ent_vic) == 3:
+        summary.append(df_ent_vic[1])
+        ave += df_ent_vic[2]
+    
+    if len(df_non_ent) == 3:
+        summary.append(df_non_ent[1])
+        ave += df_non_ent[2]
+        
+    if len(df_pae) == 3:
+        summary.append(df_pae[1])
+        ave += df_pae[2]
+        
+    if len(df_hin) == 3:
+        summary.append(df_hin[1])
+        ave += df_hin[2]
+    
+    if len(df_bca) == 3:
+        summary.append(df_bca[1])
+        ave += df_bca[2]
+        
+    if len(df_ngo_nko) == 3:
+        summary.append(df_ngo_nko[1])
+        ave += df_ngo_nko[2]
+    
+    if len(df_spn) == 3:
+        summary.append(df_spn[1])
+        ave += df_spn[2]
+    
+    if len(df_ent_positive) == 3:
+        summary.append(df_ent_positive[1])
+        ave += df_ent_positive[2]
+
+    
+    if len(df_sta) == 3:
+        summary.append(df_sta[1])
+        ave += df_sta[2]
+    
+    if len(df_pce) == 3:
+        summary.append(df_pce[1])
+        ave += df_pce[2]
+    
+    if len(df_pma) == 3:
+        summary.append(df_pma[1])
+        ave += df_pma[2]
+    
+    if len(df_svi) == 3:
+        summary.append(df_svi[1])
+        ave += df_svi[2]
+    
+    if len(df_bsn) == 3:
+        summary.append(df_bsn[1])
+        ave += df_bsn[2]
+    
+    
+        
+    summary.append(['','Average',str( round(ave / len(summary),2) ) + '%'])
+    summary.append(['','',''])
+    summary.append(['Other Phenotypic Test','Number','Percent'])
+    summary.append(mrsa_esbl[0])
+    summary.append(mrsa_esbl[1])
+    
+    final = pd.DataFrame(data=summary, columns=['Organism','Number','Percent'])
+    output = BytesIO()
+    writer = pd.ExcelWriter(output, engine='xlsxwriter')
+    # writer = pd.ExcelWriter(output + 'DATA_SUMMARY_{}.xlsx'.format(file_name), engine='xlsxwriter')
+    df_data_completeness.to_excel(writer, sheet_name='data_complete',index=False)
+    df_entero[0].to_excel(writer, sheet_name='ent_xsal_xshi',index=False)
+    df_sal_shi[0].to_excel(writer, sheet_name='ent_sal_shi', index=False)
+    df_ent_vic[0].to_excel(writer, sheet_name='ent_vic', index=False)
+    df_non_ent[0].to_excel(writer, sheet_name='non_ent_acs', index=False)
+    df_pae[0].to_excel(writer, sheet_name='pae', index=False)
+    df_hin[0].to_excel(writer, sheet_name='hin', index=False)
+    df_bca[0].to_excel(writer, sheet_name='bca', index=False)
+    df_ngo_nko[0].to_excel(writer, sheet_name='ngo_nko', index=False)
+    df_spn[0].to_excel(writer, sheet_name='spn', index=False)
+    df_ent_positive[0].to_excel(writer, sheet_name='ent sp.', index=False)
+    df_sta[0].to_excel(writer, sheet_name='STA sp.', index=False)
+    df_pce[0].to_excel(writer, sheet_name='pce', index=False)
+    df_pma[0].to_excel(writer, sheet_name='pma', index=False)
+    # df_other_non_ent.to_excel(writer, sheet_name='other non ent', index=False)
+    df_svi[0].to_excel(writer, sheet_name='svi', index=False)
+    df_bsn[0].to_excel(writer, sheet_name='bsn', index=False)
+    # df_esbl.to_excel(writer, sheet_name='esbl', index=False)
+    final.to_excel(writer, sheet_name='summary', index=False)
+    
+    writer.save()
+    
+
+    return writer
+
+
 
 def get_data_completeness(file_id):
     df = concat_all_df(file_id)
@@ -2399,6 +2407,32 @@ def get_mrsa_esbl(file_id):
     
     return ret
 
+
+
+
+'''
+END OF DATA SUMMARY REPORTS
+'''
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def import_raw_data(row_iter,file_name):
     for index, row in  row_iter:
 
@@ -2969,5 +3003,757 @@ def patient_id_transform(row):
     
     return row
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@login_required(login_url='/arsp_dmu/login')
+@permission_required('whonet.add_rawfilename', raise_exception=True)
+def old_referred_import(request):
+    if request.method == 'POST':
+        raw_data = request.FILES.getlist('raw_data')           
+        # raw data import
+        results = []
+        
+        for p in raw_data:
+            results.append(import_old(p))
         
     
+        return render(request, 'whonet/old_referred.html',{'multi_import' : results})
+    else:
+        return render(request,'whonet/old_referred.html')
+        
+
+def import_old(raw_data):
+    try:
+        df = pd.read_csv(raw_data,encoding='iso-8859-1')
+    except:
+        return 'File ' + raw_data.name + ' is invalid format'
+    
+    tmp_name = raw_data.name
+
+    file_name = OldFileName(file_name=tmp_name.split('.')[0])
+    df = set_old_pd_columns(df)
+    row_iter = df.iterrows()
+    try:
+        file_name.save()
+    except IntegrityError as e:
+        file_name = OldFileName.objects.get(file_name=tmp_name.split('.')[0])
+        file_name.updated_at = datetime.now()
+        file_name.save()
+        OldOrigin.objects.select_related('oldlocation','oldmicrobiology','oldspecimen','oldantidisk','oldantimic','oldantidiskris','oldantimicris').filter(file_ref=file_name).delete()
+        import_old_data(row_iter,file_name)
+        
+        return 'File ' + tmp_name.split('.')[0] + ' is already uploaded. System updated the file.'
+
+    try:
+        import_old_data(row_iter,file_name)
+        return 'File ' + tmp_name.split('.')[0]  +' successfully uploaded.'
+     
+    except IntegrityError as e:
+        return 'File ' + tmp_name.split('.')[0] + ' is already uploaded.'
+
+
+
+def set_old_pd_columns(clm):
+    
+    whonet_data_fields = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_fields.xlsx','RIS')
+    # whonet_data_fields_etest = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_fields.xlsx','etest')
+    data_fields = whonet_data_fields['Data fields'].values.tolist()
+    # etest = whonet_data_fields_etest['Data fields'].values.tolist()
+    # etest = [x.lower() for x in etest]
+    
+    for col in data_fields:
+        if col not in clm.columns:
+            clm[col] = ''
+
+    
+    return clm
+
+
+
+def import_old_data(row_iter,file_name):
+    for index, row in  row_iter:
+
+        origin = OldOrigin(
+        
+        file_ref = file_name,
+
+        country_a = row['COUNTRY_A'],
+
+        region  = row['REGION'],
+
+        island  = row['ISLAND'],
+
+        laboratory  = row['LABORATORY'],
+
+        patient_id = row['PATIENT_ID'],
+
+        first_name = row['FIRST_NAME'],
+
+        mid_name = row['MID_NAME'],
+
+        last_name = row['LAST_NAME'],
+
+        sex = row['SEX'],
+
+        age = row['AGE'],
+
+        date_birth = row['DATE_BIRTH'],
+
+        age_grp = row['AGE_GRP'],
+
+        pat_type = row['PAT_TYPE'],
+
+        date_data = row['DATE_DATA'],
+
+        x_referred = row['X_REFERRED'],
+
+        x_recnum = row['X_RECNUM'],
+
+        date_admis = row['DATE_ADMIS'],
+
+        nosocomial = row['NOSOCOMIAL'],
+
+        diagnosis = row['DIAGNOSIS'],
+
+        stock_num = row['STOCK_NUM'],
+
+        )
+
+        origin.save()
+
+
+        loc = OldLocation(
+
+            origin_ref = origin,
+
+            ward = row['WARD'],
+
+            institut = row['INSTITUT'],
+
+            department = row['DEPARTMENT'],
+
+            ward_type = row['WARD_TYPE'],
+
+        )
+
+        loc.save()
+        
+        mic = OldMicrobiology(
+            origin_ref = origin,
+            
+            organism = row['ORGANISM'],
+            
+            org_type = row['ORG_TYPE'],
+            
+            beta_lact = row['BETA_LACT'],
+            
+            comment = row['COMMENT'],
+            
+            mrsa = row['MRSA'],
+            
+            induc_cli = row['INDUC_CLI'],
+            
+            x_meca = row['X_MECA'],
+            
+            ampc = row['AMPC'],
+            
+            x_mrse = row['X_MRSE'],
+            
+            x_carb = row['X_CARB'],
+            
+            esbl = row['ESBL'],
+            
+            urine_count = row['URINECOUNT'],
+            
+            serotype = row['SEROTYPE'],
+            
+            carbapenem = row['CARBAPENEM'],
+            
+            mbl = row['MBL'],
+            
+            growth = row['GROWTH'],
+            
+            arsrl_pre = row['ARSRL_PRE'],
+            
+            arsrl_final = row['ARSRL_FINAL'],
+            
+            arsrl_post = row['ARSRL_POST'],
+        
+            x_esbl_ct = row['X_ESBL_CT'],
+            
+            x_esbl_tz = row['X_ESBL_TZ'],
+            
+            x_ip_ipi = row['X_IP_IPI'],
+            
+            x_cn_cni = row['X_CN_CNI'],
+            
+            edta = row['EDTA'],
+        )
+        
+        mic.save()
+        
+        spec = OldSpecimen(
+            origin_ref = origin,
+            
+            spec_num = row['SPEC_NUM'],
+            
+            spec_date = row['SPEC_DATE'],
+            
+            spec_type = row['SPEC_TYPE'],
+            
+            spec_code = row['SPEC_CODE'],
+            
+            local_spec = row['LOCAL_SPEC'],
+            
+            date_refer = row['DATE_REFER'],
+            
+            reason = row['REASON'],
+        )
+        
+        spec.save()
+        
+        ant_disk = OldAntidisk(
+            origin_ref = origin,
+            
+            amk_nd30 = row['AMK_ND30'],
+            
+            amc_nd20 = row['AMC_ND20'],
+            
+            amp_nd10 = row['AMP_ND10'],
+            
+            sam_nd10 = row['SAM_ND10'],
+            
+            azm_nd15 = row['AZM_ND15'],
+            
+            atm_nd30 = row['ATM_ND30'],
+            
+            cec_nd30 = row['CEC_ND30'],
+            
+            man_nd30 = row['MAN_ND30'],
+            
+            czo_nd30 = row['CZO_ND30'],
+            
+            fep_nd30 = row['FEP_ND30'],
+            
+            cfm_nd5 = row['CFM_ND5'],
+            
+            cfp_nd75 = row['CFP_ND75'],
+            
+            ctx_nd30 = row['CTX_ND30'],
+            
+            fox_nd30 = row['FOX_ND30'],
+            
+            caz_nd30 = row['CAZ_ND30'],
+            
+            cro_nd30 = row['CRO_ND30'],
+            
+            cxm_nd30 = row['CXM_ND30'],
+            
+            cxa_nd30 = row['CXA_ND30'],
+            
+            cep_nd30 = row['CEP_ND30'],
+            
+            chl_nd30 = row['CHL_ND30'],
+            
+            cip_nd5 = row['CIP_ND5'],
+            
+            clr_nd15 = row['CLR_ND15'],
+            
+            cli_nd2 = row['CLI_ND2'],
+            
+            col_nd10 = row['COL_ND10'],
+            
+            sxt_nd1_2 = row['SXT_ND1_2'],
+            
+            dap_nd30 = row['DAP_ND30'],
+            
+            dor_nd10 = row['DOR_ND10'],
+            
+            etp_nd10 = row['ETP_ND10'],
+            
+            ery_nd15 = row['ERY_ND15'],
+            
+            gen_nd10 = row['GEN_ND10'],
+            
+            geh_nd120 = row['GEH_ND120'],
+            
+            ipm_nd10 = row['IPM_ND10'],
+            
+            kan_nd30 = row['KAN_ND30'],
+            
+            lvx_nd5 = row['LVX_ND5'],
+            
+            lnz_nd30 = row['LNZ_ND30'],
+            
+            mem_nd10 = row['MEM_ND10'],
+            
+            mno_nd30 = row['MNO_ND30'],
+            
+            mfx_nd5 = row['MFX_ND5'],
+            
+            nal_nd30 = row['NAL_ND30'],
+            
+            net_nd30 = row['NET_ND30'],
+            
+            nit_nd300 = row['NIT_ND300'],
+            
+            nor_nd10 = row['NOR_ND10'],
+            
+            nov_nd5 = row['NOV_ND5'],
+            
+            ofx_nd5 = row['OFX_ND5'],
+            
+            oxa_nd1 = row['OXA_ND1'],
+            
+            pen_nd10 = row['PEN_ND10'],
+            
+            pip_nd100 = row['PIP_ND100'],
+            
+            tzp_nd100 = row['TZP_ND100'],
+            
+            pol_nd300 = row['POL_ND300'],
+            
+            qda_nd15 = row['QDA_ND15'],
+            
+            rif_nd5 = row['RIF_ND5'],
+            
+            spt_nd100 = row['SPT_ND100'],
+            
+            str_nd10 = row['STR_ND10'],
+            
+            sth_nd300 = row['STH_ND300'],
+            
+            tcy_nd30 = row['TCY_ND30'],
+            
+            tic_nd75 = row['TIC_ND75'],
+            
+            tcc_nd75 = row['TCC_ND75'],
+            
+            tgc_nd15 = row['TGC_ND15'],
+            
+            tob_nd10 = row['TOB_ND10'],
+            
+            van_nd30 = row['VAN_ND30'],
+            
+            fos_nd200 = row['FOS_ND200'],
+            
+            dox_nd30 = row['DOX_ND30'],
+            
+            sss_nd200 = row['SSS_ND200'],
+            
+            
+            
+        )
+        
+        ant_disk.save()
+        
+        ant_disk_ris = OldAntidiskris(
+                origin_ref = origin,
+                
+                amk_nd30_ris = row['AMK_ND30_RIS'],
+                
+                amc_nd20_ris = row['AMC_ND20_RIS'],
+                
+                amp_nd10_ris = row['AMP_ND10_RIS'],
+                
+                sam_nd10_ris = row['SAM_ND10_RIS'],
+                
+                azm_nd15_ris = row['AZM_ND15_RIS'],
+                
+                atm_nd30_ris = row['ATM_ND30_RIS'],
+                
+                cec_nd30_ris = row['CEC_ND30_RIS'],
+                
+                man_nd30_ris = row['MAN_ND30_RIS'],
+                
+                czo_nd30_ris = row['CZO_ND30_RIS'],
+                
+                fep_nd30_ris = row['FEP_ND30_RIS'],
+                
+                cfm_nd5_ris = row['CFM_ND5_RIS'],
+                
+                cfp_nd75_ris = row['CFP_ND75_RIS'],
+                
+                ctx_nd30_ris = row['CTX_ND30_RIS'],
+                
+                fox_nd30_ris = row['FOX_ND30_RIS'],
+                
+                caz_nd30_ris = row['CAZ_ND30_RIS'],
+                
+                cro_nd30_ris = row['CRO_ND30_RIS'],
+                
+                cxm_nd30_ris = row['CXM_ND30_RIS'],
+                
+                cxa_nd30_ris = row['CXA_ND30_RIS'],
+                
+                cep_nd30_ris = row['CEP_ND30_RIS'],
+                
+                chl_nd30_ris = row['CHL_ND30_RIS'],
+                
+                cip_nd5_ris = row['CIP_ND5_RIS'],
+                
+                clr_nd15_ris = row['CLR_ND15_RIS'],
+                
+                cli_nd2_ris = row['CLI_ND2_RIS'],
+                
+                col_nd10_ris = row['COL_ND10_RIS'],
+                
+                sxt_nd1_2_ris = row['SXT_ND1_2_RIS'],
+                
+                dap_nd30_ris = row['DAP_ND30_RIS'],
+                
+                dor_nd10_ris = row['DOR_ND10_RIS'],
+                
+                etp_nd10_ris = row['ETP_ND10_RIS'],
+                
+                ery_nd15_ris = row['ERY_ND15_RIS'],
+                
+                gen_nd10_ris = row['GEN_ND10_RIS'],
+                
+                geh_nd120_ris = row['GEH_ND120_RIS'],
+                
+                ipm_nd10_ris = row['IPM_ND10_RIS'],
+                
+                kan_nd30_ris = row['KAN_ND30_RIS'],
+                
+                lvx_nd5_ris = row['LVX_ND5_RIS'],
+                
+                lnz_nd30_ris = row['LNZ_ND30_RIS'],
+                
+                mem_nd10_ris = row['MEM_ND10_RIS'],
+                
+                mno_nd30_ris = row['MNO_ND30_RIS'],
+                
+                mfx_nd5_ris = row['MFX_ND5_RIS'],
+                
+                nal_nd30_ris = row['NAL_ND30_RIS'],
+                
+                net_nd30_ris = row['NET_ND30_RIS'],
+                
+                nit_nd300_ris = row['NIT_ND300_RIS'],
+                
+                nor_nd10_ris = row['NOR_ND10_RIS'],
+                
+                nov_nd5_ris = row['NOV_ND5_RIS'],
+                
+                ofx_nd5_ris = row['OFX_ND5_RIS'],
+                
+                oxa_nd1_ris = row['OXA_ND1_RIS'],
+                
+                pen_nd10_ris = row['PEN_ND10_RIS'],
+                
+                pip_nd100_ris = row['PIP_ND100_RIS'],
+                
+                tzp_nd100_ris = row['TZP_ND100_RIS'],
+                
+                pol_nd300_ris = row['POL_ND300_RIS'],
+                
+                qda_nd15_ris = row['QDA_ND15_RIS'],
+                
+                rif_nd5_ris = row['RIF_ND5_RIS'],
+                
+                spt_nd100_ris = row['SPT_ND100_RIS'],
+                
+                str_nd10_ris = row['STR_ND10_RIS'],
+                
+                sth_nd300_ris = row['STH_ND300_RIS'],
+                
+                tcy_nd30_ris = row['TCY_ND30_RIS'],
+                
+                tic_nd75_ris = row['TIC_ND75_RIS'],
+                
+                tcc_nd75_ris = row['TCC_ND75_RIS'],
+                
+                tgc_nd15_ris = row['TGC_ND15_RIS'],
+                
+                tob_nd10_ris = row['TOB_ND10_RIS'],
+                
+                van_nd30_ris = row['VAN_ND30_RIS'],
+                
+                fos_nd200_ris = row['FOS_ND200_RIS'],
+                
+                dox_nd30_ris = row['DOX_ND30_RIS'],
+                
+                sss_nd200_ris = row['SSS_ND200_RIS'],
+                
+                
+                
+            )
+        
+        ant_disk_ris.save()
+        
+        ant_mic = OldAntimic(
+            origin_ref = origin,
+            
+            amk_nm = row['AMK_NM'],
+            
+            amc_nm = row['AMC_NM'],
+            
+            amp_nm = row['AMP_NM'],
+            
+            sam_nm = row['SAM_NM'],
+            
+            azm_nm = row['AZM_NM'],
+            
+            atm_nm = row['ATM_NM'],
+            
+            cec_nm = row['CEC_NM'],
+            
+            man_nm = row['MAN_NM'],
+            
+            czo_nm = row['CZO_NM'],
+            
+            fep_nm = row['FEP_NM'],
+            
+            cfm_nm = row['CFM_NM'],
+            
+            cfp_nm = row['CFP_NM'],
+            
+            ctx_nm = row['CTX_NM'],
+            
+            fox_nm = row['FOX_NM'],
+            
+            caz_nm = row['CAZ_NM'],
+            
+            cro_nm = row['CRO_NM'],
+            
+            cxm_nm = row['CXM_NM'],
+            
+            cxa_nm = row['CXA_NM'],
+            
+            cep_nm = row['CEP_NM'],
+            
+            chl_nm = row['CHL_NM'],
+            
+            cip_nm = row['CIP_NM'],
+            
+            clr_nm = row['CLR_NM'],
+            
+            cli_nm = row['CLI_NM'],
+            
+            col_nm = row['COL_NM'],
+            
+            sxt_nm = row['SXT_NM'],
+            
+            dap_nm = row['DAP_NM'],
+            
+            dor_nm = row['DOR_NM'],
+            
+            etp_nm = row['ETP_NM'],
+            
+            ery_nm = row['ERY_NM'],
+            
+            gen_nm = row['GEN_NM'],
+            
+            geh_nm = row['GEH_NM'],
+            
+            ipm_nm = row['IPM_NM'],
+            
+            kan_nm = row['KAN_NM'],
+            
+            lvx_nm = row['LVX_NM'],
+            
+            lnz_nm = row['LNZ_NM'],
+            
+            mem_nm = row['MEM_NM'],
+            
+            mno_nm = row['MNO_NM'],
+            
+            mfx_nm = row['MFX_NM'],
+            
+            nal_nm = row['NAL_NM'],
+            
+            net_nm = row['NET_NM'],
+            
+            nit_nm = row['NIT_NM'],
+            
+            nor_nm = row['NOR_NM'],
+            
+            nov_nm = row['NOV_NM'],
+            
+            ofx_nm = row['OFX_NM'],
+            
+            oxa_nm = row['OXA_NM'],
+            
+            pen_nm = row['PEN_NM'],
+            
+            pip_nm = row['PIP_NM'],
+            
+            tzp_nm = row['TZP_NM'],
+            
+            pol_nm = row['POL_NM'],
+            
+            qda_nm = row['QDA_NM'],
+            
+            rif_nm = row['RIF_NM'],
+            
+            spt_nm = row['SPT_NM'],
+            
+            str_nm = row['STR_NM'],
+            
+            sth_nm = row['STH_NM'],
+            
+            tcy_nm = row['TCY_NM'],
+            
+            tic_nm = row['TIC_NM'],
+            
+            tcc_nm = row['TCC_NM'],
+            
+            tgc_nm = row['TGC_NM'],
+            
+            tob_nm = row['TOB_NM'],
+            
+            van_nm = row['VAN_NM'],
+            
+            fos_nm = row['FOS_NM'],
+            
+            dox_nm = row['DOX_NM'],
+            
+            sss_nm = row['SSS_NM'],
+        )
+        
+        ant_mic.save()
+        
+        ant_micris = OldAntimicris(
+            origin_ref = origin,
+            
+            amk_nm_ris = row['AMK_NM_RIS'],
+            
+            amc_nm_ris = row['AMC_NM_RIS'],
+            
+            amp_nm_ris = row['AMP_NM_RIS'],
+            
+            sam_nm_ris = row['SAM_NM_RIS'],
+            
+            azm_nm_ris = row['AZM_NM_RIS'],
+            
+            atm_nm_ris = row['ATM_NM_RIS'],
+            
+            cec_nm_ris = row['CEC_NM_RIS'],
+            
+            man_nm_ris = row['MAN_NM_RIS'],
+            
+            czo_nm_ris = row['CZO_NM_RIS'],
+            
+            fep_nm_ris = row['FEP_NM_RIS'],
+            
+            cfm_nm_ris = row['CFM_NM_RIS'],
+            
+            cfp_nm_ris = row['CFP_NM_RIS'],
+            
+            ctx_nm_ris = row['CTX_NM_RIS'],
+            
+            fox_nm_ris = row['FOX_NM_RIS'],
+            
+            caz_nm_ris = row['CAZ_NM_RIS'],
+            
+            cro_nm_ris = row['CRO_NM_RIS'],
+            
+            cxm_nm_ris = row['CXM_NM_RIS'],
+            
+            cxa_nm_ris = row['CXA_NM_RIS'],
+            
+            cep_nm_ris = row['CEP_NM_RIS'],
+            
+            chl_nm_ris = row['CHL_NM_RIS'],
+            
+            cip_nm_ris = row['CIP_NM_RIS'],
+            
+            clr_nm_ris = row['CLR_NM_RIS'],
+            
+            cli_nm_ris = row['CLI_NM_RIS'],
+            
+            col_nm_ris = row['COL_NM_RIS'],
+            
+            sxt_nm_ris = row['SXT_NM_RIS'],
+            
+            dap_nm_ris = row['DAP_NM_RIS'],
+            
+            dor_nm_ris = row['DOR_NM_RIS'],
+            
+            etp_nm_ris = row['ETP_NM_RIS'],
+            
+            ery_nm_ris = row['ERY_NM_RIS'],
+            
+            gen_nm_ris = row['GEN_NM_RIS'],
+            
+            geh_nm_ris = row['GEH_NM_RIS'],
+            
+            ipm_nm_ris = row['IPM_NM_RIS'],
+            
+            kan_nm_ris = row['KAN_NM_RIS'],
+            
+            lvx_nm_ris = row['LVX_NM_RIS'],
+            
+            lnz_nm_ris = row['LNZ_NM_RIS'],
+            
+            mem_nm_ris = row['MEM_NM_RIS'],
+            
+            mno_nm_ris = row['MNO_NM_RIS'],
+            
+            mfx_nm_ris = row['MFX_NM_RIS'],
+            
+            nal_nm_ris = row['NAL_NM_RIS'],
+            
+            net_nm_ris = row['NET_NM_RIS'],
+            
+            nit_nm_ris = row['NIT_NM_RIS'],
+            
+            nor_nm_ris = row['NOR_NM_RIS'],
+            
+            nov_nm_ris = row['NOV_NM_RIS'],
+            
+            ofx_nm_ris = row['OFX_NM_RIS'],
+            
+            oxa_nm_ris = row['OXA_NM_RIS'],
+            
+            pen_nm_ris= row['PEN_NM_RIS'],
+            
+            pip_nm_ris = row['PIP_NM_RIS'],
+            
+            tzp_nm_ris = row['TZP_NM_RIS'],
+            
+            pol_nm_ris = row['POL_NM_RIS'],
+            
+            qda_nm_ris = row['QDA_NM_RIS'],
+            
+            rif_nm_ris = row['RIF_NM_RIS'],
+            
+            spt_nm_ris = row['SPT_NM_RIS'],
+            
+            str_nm_ris = row['STR_NM_RIS'],
+            
+            sth_nm_ris = row['STH_NM_RIS'],
+            
+            tcy_nm_ris = row['TCY_NM_RIS'],
+            
+            tic_nm_ris = row['TIC_NM_RIS'],
+            
+            tcc_nm_ris = row['TCC_NM_RIS'],
+            
+            tgc_nm_ris = row['TGC_NM_RIS'],
+            
+            tob_nm_ris = row['TOB_NM_RIS'],
+            
+            van_nm_ris = row['VAN_NM_RIS'],
+            
+            fos_nm_ris = row['FOS_NM_RIS'],
+            
+            dox_nm_ris = row['DOX_NM_RIS'],
+            
+            sss_nm_ris = row['SSS_NM_RIS'],
+        )
+        
+        ant_micris.save()
