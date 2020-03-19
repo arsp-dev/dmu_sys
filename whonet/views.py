@@ -15,7 +15,7 @@ import multiprocessing as mp
 import time
 import os
 import zipfile
-from io import BytesIO
+# import datetime
 
 
 dirpath = os.getcwd()
@@ -25,7 +25,12 @@ whonet_specimen = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_speci
 whonet_data_fields = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_fields.xlsx')
 whonet_data_fields_mic = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_fields.xlsx','mic')
 whonet_data_fields_etest = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_fields.xlsx','etest')
-
+comp = pd.read_excel(dirpath + '/whonet/static/whonet_xl/org_all.xlsx')
+spec_type = pd.read_excel(dirpath + '/whonet/static/whonet_xl/specimen_type.xlsx')
+spn = pd.DataFrame(spec_type, columns=['C_ENGLISH'])
+org = pd.DataFrame(comp,columns=['ORG'])
+org_list = org.to_numpy()
+spec_list = spn.to_numpy()
 lab_chk = whonet_region_island['LABORATORY'].values.tolist()
 org_chk = whonet_organism['ORGANISM'].values.tolist()
 spec_chk = whonet_specimen['SPEC_TYPE'].values.tolist()
@@ -67,12 +72,18 @@ def whonet_data_summary_report(request,file_id):
     zf = zipfile.ZipFile(response, 'w')
     
     summary_report = compute_summary_report(file_name,file_id)
+    summary_review = xl_for_review(file_id,file_name.file_name,getYearInt(file_name.file_name))
     
     zf.write(summary_report)
+    zf.write(summary_review)
     
     zf.close()
     
+    
     response['Content-Disposition'] = 'attachment; filename=SUMMARY_REPORT_{}.zip'.format(file_name)
+    
+    os.remove('DATA_SUMMARY_{}.xlsx'.format(file_name))
+    os.remove('SUMMARY_FOR_REVIEW_{}.xlsx'.format(file_name))
     return response
 
 
@@ -308,8 +319,16 @@ def getYear(site):
     ret_yr = list(dict.fromkeys(ret))
     
     return ret_yr
+
+def getYearInt(file_name):
+    q = file_name.split('_')
+    g = q[0]
     
+    year = '20' + g[3:5]
     
+    ret = int(year)
+    
+    return ret
         
 
 
@@ -856,9 +875,8 @@ def compute_summary_report(file_name,file_id):
     summary.append(mrsa_esbl[1])
     
     final = pd.DataFrame(data=summary, columns=['Organism','Number','Percent'])
-    output = BytesIO()
-    writer = pd.ExcelWriter(output, engine='xlsxwriter')
-    # writer = pd.ExcelWriter(output + 'DATA_SUMMARY_{}.xlsx'.format(file_name), engine='xlsxwriter')
+    # writer = pd.ExcelWriter(output, engine='xlsxwriter')
+    writer = pd.ExcelWriter('DATA_SUMMARY_{}.xlsx'.format(file_name), engine='xlsxwriter')
     df_data_completeness.to_excel(writer, sheet_name='data_complete',index=False)
     df_entero[0].to_excel(writer, sheet_name='ent_xsal_xshi',index=False)
     df_sal_shi[0].to_excel(writer, sheet_name='ent_sal_shi', index=False)
@@ -882,6 +900,49 @@ def compute_summary_report(file_name,file_id):
     writer.save()
     
 
+    return writer
+
+
+
+def xl_for_review(file_id,file_name,file_year):
+    df = concat_all_df(file_id)
+    df['patient_id'] = df['patient_id'].apply(str)
+    df['date_admis'] = pd.to_datetime(df['date_admis'])
+    df['spec_date'] = pd.to_datetime(df['spec_date'])
+    df['date_birth'] = pd.to_datetime(df['date_birth'])
+    
+    df_date_of_admission = df[ df['date_admis'].dt.year != file_year ]
+    df_spec_date = df[ df['spec_date'].dt.year != file_year]
+    df_date_birth = df[ df['date_birth'] > datetime.now()]
+    df_sex = df.apply(lambda row: summary_err_gender(row), axis=1)
+    df_org = df.apply(lambda row: summary_err_org(row), axis=1)
+    df_spec_type = df.apply(lambda row: summary_err_spec_type(row), axis=1)
+    # df_sex = df[ (df['sex'] != 'm') | (df['sex'] != 'f') ]
+    
+
+    writer = pd.ExcelWriter('SUMMARY_FOR_REVIEW_{}.xlsx'.format(file_name), engine='xlsxwriter')
+    # if len(df_date_of_admission) > 0:
+    # df_date_of_admission.columns = map(str.upper, df_date_of_admission.columns)
+    df_date_of_admission.to_excel(writer, sheet_name='Date of Admission', index=False)
+    # if len(df_spec_date) > 0:
+    # df_spec_date.columns = map(str.upper, df_spec_date.columns)
+    df_spec_date.to_excel(writer, sheet_name='Specimen Date', index=False)
+    # if len(df_date_birth) > 0:
+    # df_date_birth.columns = map(str.upper, df_date_birth.columns)
+    df_date_birth.to_excel(writer,sheet_name='Date of Birth', index=False)
+    # if  'sex' in df_sex:
+    # df_sex.columns = map(str.upper, df_sex.columns)
+    df_sex.to_excel(writer, sheet_name='Sex', index=False)
+    # if 'organism' in df_org:
+    # df_org.columns = map(str.upper, df_org)
+    df_org.to_excel(writer, sheet_name='Organism', index=False)
+    
+    # if 'spec_type' in df_spec_type:
+    # df_spec_type.columns = map(str.upper, df_spec_type)
+    df_spec_type.to_excel(writer, sheet_name='Specimen Type', index=False)
+    
+    writer.save()
+    
     return writer
 
 
@@ -2971,7 +3032,7 @@ def origin_transform(row,lab_chk,whonet_region_island):
             # age.append('U')
             row['age_grp'] = 'U'
         
-    elif 'w' in str(row['age']) or 'W' in str(row['age']) or 'd' in str(row['age']) or 'D' in str(row['age']) or 'm' in str(row['age']) or 'M' in str(row['age']) or 'nb' in str(row['age']) or 'NB' in str(row['age']):
+    elif 'w' in str(row['age']) or 'W' in str(row['age']) or 'd' in str(row['age']) or 'D' in str(row['age']) or 'm' in str(row['age']) or 'M' in str(row['age']) or 'nb' in str(row['age']) or 'NB' in str(row['age']) or 'y' in str(row['age']):
             # age.append('A')
             row['age_grp'] = 'A'
     elif row['age'] == 'nan':
@@ -3003,6 +3064,18 @@ def patient_id_transform(row):
     
     return row
 
+def summary_err_gender(row):
+    sex = ['m','f']
+    if row['sex'] not in sex:
+        return row
+    
+def summary_err_org(row):
+    if row['organism'] not in org_list:
+        return row
+
+def summary_err_spec_type(row):
+    if row['spec_type'] not in spec_list:
+        return row
 
 
 
