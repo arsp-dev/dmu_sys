@@ -15,6 +15,7 @@ import multiprocessing as mp
 import time
 import os
 import zipfile
+from whonet.functions.file_import import import_final
 # import datetime
 
 
@@ -27,10 +28,9 @@ whonet_data_fields_mic = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whone
 whonet_data_fields_etest = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_fields.xlsx','etest')
 comp = pd.read_excel(dirpath + '/whonet/static/whonet_xl/org_all.xlsx')
 spec_type = pd.read_excel(dirpath + '/whonet/static/whonet_xl/specimen_type.xlsx')
-spn = pd.DataFrame(spec_type, columns=['C_ENGLISH'])
-org = pd.DataFrame(comp,columns=['ORG'])
-org_list = org.to_numpy()
-spec_list = spn.to_numpy()
+
+org_list = comp['ORG'].values.tolist()
+spec_list = spec_type['C_ENGLISH'].values.tolist()
 lab_chk = whonet_region_island['LABORATORY'].values.tolist()
 org_chk = whonet_organism['ORGANISM'].values.tolist()
 spec_chk = whonet_specimen['SPEC_TYPE'].values.tolist()
@@ -136,6 +136,11 @@ def whonet_transform_year(request):
         df['SPEC_DATE'] = pd.to_datetime(df['SPEC_DATE'],errors='ignore')
         df = df[df['SPEC_DATE'].dt.year == int(year)]
         df =  df[df['SPEC_DATE'] != '']
+        df['SPEC_DATE'] = df['SPEC_DATE'].dt.date
+        df['DATE_ADMIS'] = pd.to_datetime(df['DATE_ADMIS'],dayfirst=True,errors='ignore')
+        df['DATE_DATA'] = pd.to_datetime(df['DATE_DATA'],dayfirst=True,errors='ignore')
+        df['DATE_ADMIS'] = df['DATE_ADMIS'].dt.date
+        df['DATE_DATA'] =  df['DATE_DATA'].dt.date
         con_df.append(df)
         df.to_excel(writer, sheet_name=val.file_name,index=False)
         
@@ -146,14 +151,29 @@ def whonet_transform_year(request):
     tmp_year = []
     if 'CORRECT_YEAR' in options:
         crt_year['SPEC_DATE'] = pd.to_datetime(crt_year['SPEC_DATE'],errors='ignore')
+        # crt_year['SPEC_DATE'] = crt_year[crt_year['SPEC_DATE'].dt.year != int(year) ]
+        # crt_year['SPEC_DATE'] = crt_year['SPEC_DATE'].dt.date
         tmp_year.append(crt_year[crt_year['SPEC_DATE'].dt.year != int(year) ])
         tmp_year.append(crt_year[(crt_year['SPEC_DATE'] == '')])
         
         df_year = pd.concat(tmp_year)
+        df_year['SPEC_DATE'] = df_year['SPEC_DATE'].dt.date
+        df['DATE_ADMIS'] = pd.to_datetime(df['DATE_ADMIS'],dayfirst=True,errors='ignore')
+        df['DATE_DATA'] = pd.to_datetime(df['DATE_DATA'],dayfirst=True,errors='ignore')
+        df['DATE_ADMIS'] = df['DATE_ADMIS'].dt.date
+        df['DATE_DATA'] = df['DATE_DATA'].dt.date
+       
         df_year.to_excel(writer,sheet_name='INCORRECT_DATE',index=False)
- 
+    
+    if 'DUPLICATES' in options:
+        df_duplicates = concat_df[concat_df.duplicated(subset=['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep=False)]
+        # df_duplicates = concat_df[concat_df['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'].duplicated() == True]
+        df_duplicates.to_excel(writer, sheet_name='DUPLICATES',index=False)
+    
+    concat_df = concat_df.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep=False)
     concat_df.to_excel(writer, sheet_name=site + '_' + year,index=False)
-        
+    
+    
     writer.save()
     
     time_elapsed = datetime.now() - start_time
@@ -183,9 +203,7 @@ def whonet_transform_data(request,file_id):
     print('Time elapsed (hh:mm:ss.ms) {}'.format(time_elapsed))
     return response
     
-
-    
-   
+  
 # <! --- staff login and logout --- !>
 def staff_login(request):
      if request.method == 'POST':
@@ -243,6 +261,26 @@ def whonet_import(request):
         return render(request, 'whonet/whonet_import.html',{'multi_import' : results,'f_names': f_names})
     else:
         return render(request, 'whonet/whonet_import.html',{'f_names': f_names})
+    
+
+@login_required(login_url='/arsp_dmu/login')
+@permission_required('whonet.add_finalfilename', raise_exception=True)
+def final_import(request):
+    f_names = FinalFileName.objects.all()
+    # output = mp.Queue()
+    
+    if request.method == 'POST':
+        raw_data = request.FILES.getlist('raw_data')           
+        # raw data import
+        results = []
+        
+        for p in raw_data:
+            results.append(import_final(p))
+        
+    
+        return render(request, 'whonet/whonet_import_final.html',{'multi_import' : results,'f_names': f_names})
+    else:
+        return render(request, 'whonet/whonet_import_final.html',{'f_names': f_names})
 
 
 #helping functions
@@ -339,8 +377,6 @@ def bigwork(file_id,search_file_name,options, year = ''):
     df['comment'] = df['comment'].str.replace('=', '', regex=False)
     df['comment'] = df['comment'].str.replace('-', '', regex=False)
     
-    
-    
     #changing patient_id if 7777777 seven(7)
     if 'PATIENT_ID' in options:
         df = df.apply(lambda row: patient_id_transform(row), axis=1)
@@ -350,17 +386,11 @@ def bigwork(file_id,search_file_name,options, year = ''):
     if 'X_REFERRED' in options:
         df = df[df['x_referred'] != 1]
 
-    
-    
-    # loc_chk = [x.lower() for x in loc_chk]
  
     
     whonet_site_location = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_codes_location.xlsx',search_file_name[1].lower())
     loc_chk = whonet_site_location['WARD'].values.tolist()
 
-    region = []
-    island = []
-    age = []
     new_org = []
     new_org_type = []
     new_spec_type = []
@@ -403,6 +433,14 @@ def bigwork(file_id,search_file_name,options, year = ''):
                     df.at[index,atx.lower()] = row[atx_name[0].lower() + '_ne']
                 else:
                     df.at[index,atx.lower()] = row[atx.lower()]
+                    
+    df['mrsa'] = df.apply(lambda item: posi_nega(item,'mrsa'), axis = 1)
+    df['induc_cli'] = df.apply(lambda item: posi_nega(item,'induc_cli'), axis = 1)
+    df['ampc'] = df.apply(lambda item: posi_nega(item,'ampc'), axis = 1)
+    df['x_meca'] = df.apply(lambda item: posi_nega(item,'x_meca'), axis = 1)
+    df['x_mrse'] = df.apply(lambda item: posi_nega(item,'x_mrse'), axis = 1)
+    df['carbapenem'] = df.apply(lambda item: posi_nega(item,'carbapenem'), axis = 1)
+    df['mbl'] = df.apply(lambda item: posi_nega(item,'mbl'), axis = 1)
         
     df['country_a'] = new_country
     df['laboratory'] = new_lab
@@ -411,6 +449,8 @@ def bigwork(file_id,search_file_name,options, year = ''):
     for index,row in df.iterrows():
         
         if 'growth' in row['comment'].lower():
+            x_growth.append(row['comment'])
+        elif 'incubation' in row['comment'].lower():
             x_growth.append(row['comment'])
         else:
             x_growth.append('')
@@ -470,37 +510,7 @@ def bigwork(file_id,search_file_name,options, year = ''):
                 new_org_type.append('o')
         
         
-        # if 'Origin' in options:
-        #     if row['laboratory'].upper() in lab_chk:
-        #         region.append(whonet_region_island['REGION'][lab_chk.index(row['laboratory'])])
-        #         island.append(whonet_region_island['ISLAND'][lab_chk.index(row['laboratory'])])
-        #     else:
-        #         region.append('')
-        #         island.append('')
-        
-                
-        #     if pd.isna(row['age']) == True or row['age'] == '':
-        #             age.append('U')
-                
-        #     elif 'w' in str(row['age']) or 'W' in str(row['age']) or 'd' in str(row['age']) or 'D' in str(row['age']) or 'm' in str(row['age']) or 'M' in str(row['age']) or 'nb' in str(row['age']) or 'NB' in str(row['age']):
-        #             age.append('A')
-        #     elif row['age'] == 'nan':
-        #             age.append('U')  
-                
-        #     elif float(row['age']) >= 0 and float(row['age']) <= 5:
-        #             age.append('A')
-                
-        #     elif float(row['age']) >= 6 and float(row['age']) <= 17:
-        #             age.append('B')
-                
-        #     elif float(row['age']) > 17 and float(row['age']) <= 64:
-        #             age.append('C')
-                
-        #     elif float(row['age']) > 64:
-        #             age.append('D')
-                
-        #     else:
-        #             age.append('U')  
+
         
         
         if 'SPN' in options:
@@ -550,7 +560,6 @@ def bigwork(file_id,search_file_name,options, year = ''):
      
     xx_ward = []
     xx_ward_type = []
-    xx_institut = []
     xx_dept = []
        
     for index,row in df.iterrows():
@@ -637,9 +646,6 @@ def import_raw(raw_data):
         df = pd.read_csv(raw_data,encoding='iso-8859-1')
     except:
         return 'File ' + raw_data.name + ' is invalid format'
-        # output.put('File ' + raw_data.name + ' is invalid format')
-        # time.sleep(0.1)
-        # return render(request,'whonet/whonet_import.html',{'danger':'Invalid file format. Please upload WHONET output file.'})
 
     #File name Model
     # f_names = RawFileName.objects.all()
@@ -914,32 +920,40 @@ def xl_for_review(file_id,file_name,file_year):
     df_date_of_admission = df[ df['date_admis'].dt.year != file_year ]
     df_spec_date = df[ df['spec_date'].dt.year != file_year]
     df_date_birth = df[ df['date_birth'] > datetime.now()]
-    df_sex = df.apply(lambda row: summary_err_gender(row), axis=1)
-    df_org = df.apply(lambda row: summary_err_org(row), axis=1)
-    df_spec_type = df.apply(lambda row: summary_err_spec_type(row), axis=1)
+    sex = ['m','f']
+    # df_sex = df.apply(lambda row: row if row['sex'] not in sex else '')
+    df_sex = df[ ~df['sex'].isin(sex) ]
+    df_org = df[ ~df['organism'].isin(org_list) ]
+    df_spec_type = df[ ~df['spec_type'].isin(spec_list) ]
     # df_sex = df[ (df['sex'] != 'm') | (df['sex'] != 'f') ]
     
 
     writer = pd.ExcelWriter('SUMMARY_FOR_REVIEW_{}.xlsx'.format(file_name), engine='xlsxwriter')
-    # if len(df_date_of_admission) > 0:
-    # df_date_of_admission.columns = map(str.upper, df_date_of_admission.columns)
-    df_date_of_admission.to_excel(writer, sheet_name='Date of Admission', index=False)
-    # if len(df_spec_date) > 0:
-    # df_spec_date.columns = map(str.upper, df_spec_date.columns)
-    df_spec_date.to_excel(writer, sheet_name='Specimen Date', index=False)
-    # if len(df_date_birth) > 0:
-    # df_date_birth.columns = map(str.upper, df_date_birth.columns)
-    df_date_birth.to_excel(writer,sheet_name='Date of Birth', index=False)
-    # if  'sex' in df_sex:
-    # df_sex.columns = map(str.upper, df_sex.columns)
-    df_sex.to_excel(writer, sheet_name='Sex', index=False)
-    # if 'organism' in df_org:
-    # df_org.columns = map(str.upper, df_org)
-    df_org.to_excel(writer, sheet_name='Organism', index=False)
+    if len(df_date_of_admission) > 0:
+        df_date_of_admission.columns = map(str.upper, df_date_of_admission.columns)
+        df_date_of_admission = df_date_of_admission.drop(columns=['ID','ORIGIN_REF','FILE_REF'])
+        df_date_of_admission.to_excel(writer, sheet_name='Date of Admission', index=False)
+    if len(df_spec_date) > 0:
+        df_spec_date.columns = map(str.upper, df_spec_date.columns)
+        df_spec_date = df_spec_date.drop(columns=['ID','ORIGIN_REF','FILE_REF'])
+        df_spec_date.to_excel(writer, sheet_name='Specimen Date', index=False)
+    if len(df_date_birth) > 0:
+        df_date_birth.columns = map(str.upper, df_date_birth.columns)
+        df_date_birth = df_date_birth.drop(columns=['ID','ORIGIN_REF','FILE_REF'])
+        df_date_birth.to_excel(writer,sheet_name='Date of Birth', index=False)
+    if  len(df_sex) > 0:
+        df_sex.columns = map(str.upper, df_sex.columns)
+        df_sex = df_sex.drop(columns=['ID','ORIGIN_REF','FILE_REF'])
+        df_sex.to_excel(writer, sheet_name='Sex', index=False)
+    if  len(df_org) > 0:
+        df_org.columns = map(str.upper, df_org)
+        df_org = df_org.drop(columns=['ID','ORIGIN_REF','FILE_REF'])
+        df_org.to_excel(writer, sheet_name='Organism', index=False)
     
-    # if 'spec_type' in df_spec_type:
-    # df_spec_type.columns = map(str.upper, df_spec_type)
-    df_spec_type.to_excel(writer, sheet_name='Specimen Type', index=False)
+    if len(df_spec_type) > 0:
+        df_spec_type.columns = map(str.upper, df_spec_type)
+        df_spec_type = df_spec_type.drop(columns=['ID','ORIGIN_REF','FILE_REF'])
+        df_spec_type.to_excel(writer, sheet_name='Specimen Type', index=False)
     
     writer.save()
     
@@ -3021,12 +3035,16 @@ def import_raw_data(row_iter,file_name):
 # lambda function for origin
 def origin_transform(row,lab_chk,whonet_region_island):
     
-    if row['laboratory'].upper() in lab_chk:
+    if  row['laboratory'].upper in lab_chk:
         row['region'] = whonet_region_island['REGION'][lab_chk.index(row['laboratory'])]
         row['island'] = whonet_region_island['ISLAND'][lab_chk.index(row['laboratory'])]
     else:
-        row['region'] = ''
-        row['island'] = ''
+        if  row['institut'].upper in lab_chk:
+            row['region'] = whonet_region_island['REGION'][lab_chk.index(row['institut'])]
+            row['island'] = whonet_region_island['ISLAND'][lab_chk.index(row['institut'])]
+        else:
+            row['region'] = ''
+            row['island'] = ''
     
     if pd.isna(row['age']) == True or row['age'] == '':
             # age.append('U')
@@ -3057,11 +3075,11 @@ def origin_transform(row,lab_chk,whonet_region_island):
     return row
 
 
+#lambda functions
+
 def patient_id_transform(row):
     if row['patient_id'] == '7777777' or row['patient_id'] == 7777777:
         row['patient_id'] = ''
-        
-    
     return row
 
 def summary_err_gender(row):
@@ -3076,6 +3094,16 @@ def summary_err_org(row):
 def summary_err_spec_type(row):
     if row['spec_type'] not in spec_list:
         return row
+    
+def posi_nega(item,col):
+    try:
+        flt = float(item[col])
+        if flt == 1.0:
+            return '+'
+        elif flt == 0.0:
+            return '-'
+    except ValueError:
+        return item[col]
 
 
 

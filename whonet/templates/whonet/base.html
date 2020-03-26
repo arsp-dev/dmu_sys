@@ -246,6 +246,7 @@
                             <ul aria-expanded="false" class="collapse  first-level">
                                 {% if perms.whonet.add_rawfilename %}
                                 <li class="sidebar-item"><a href="{% url 'whonet_import' %}" class="sidebar-link"><i class="mdi mdi-file-import"></i><span class="hide-menu"> Import Raw Data </span></a></li>
+                                <li class="sidebar-item"><a href="{% url 'final_import' %}" class="sidebar-link"><i class="mdi mdi-database"></i><span class="hide-menu"> Import Final Data </span></a></li>
                                 <li class="sidebar-item"><a href="{% url 'whonet_transform' %}" class="sidebar-link"><i class="mdi mdi-verified"></i><span class="hide-menu"> Transform Data</span></a></li>
                                 {% endif %}
                                 {% if perms.auth.can_clean_create_data_summary_report %}
