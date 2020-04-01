@@ -116,7 +116,7 @@ def whonet_transform_year(request):
     #W0119PHL_VSM
     query = year[2:4] + "PHL_" + site
     
-    coll = RawFileName.objects.filter(file_name__contains=query)
+    coll = RawFileName.objects.filter(file_name__contains=query).order_by('file_name')
     
     response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -139,8 +139,14 @@ def whonet_transform_year(request):
         df['SPEC_DATE'] = df['SPEC_DATE'].dt.date
         df['DATE_ADMIS'] = pd.to_datetime(df['DATE_ADMIS'],dayfirst=True,errors='ignore')
         df['DATE_DATA'] = pd.to_datetime(df['DATE_DATA'],dayfirst=True,errors='ignore')
+        if 'W0019PHL' in val.file_name:
+            df['DATE_BIRTH'] = df.apply(lambda row: date_birth_2_digit_to_4(row['DATE_BIRTH'],row['AGE']), axis = 1)
+            
+        df['DATE_BIRTH'] = pd.to_datetime(df['DATE_BIRTH'],dayfirst=True,errors='ignore')
+        
         df['DATE_ADMIS'] = df['DATE_ADMIS'].dt.date
         df['DATE_DATA'] =  df['DATE_DATA'].dt.date
+        df['DATE_BIRTH'] = df['DATE_BIRTH'].dt.date
         con_df.append(df)
         df.to_excel(writer, sheet_name=val.file_name,index=False)
         
@@ -160,12 +166,19 @@ def whonet_transform_year(request):
         df_year['SPEC_DATE'] = df_year['SPEC_DATE'].dt.date
         df['DATE_ADMIS'] = pd.to_datetime(df['DATE_ADMIS'],dayfirst=True,errors='ignore')
         df['DATE_DATA'] = pd.to_datetime(df['DATE_DATA'],dayfirst=True,errors='ignore')
+        df['DATE_BIRTH'] = pd.to_datetime(df['DATE_BIRTH'],dayfirst=True,errors='ignore')
         df['DATE_ADMIS'] = df['DATE_ADMIS'].dt.date
         df['DATE_DATA'] = df['DATE_DATA'].dt.date
+        df['DATE_BIRTH'] = df['DATE_BIRTH'].dt.date
        
         df_year.to_excel(writer,sheet_name='INCORRECT_DATE',index=False)
     
     if 'DUPLICATES' in options:
+        concat_df['PATIENT_ID'] = concat_df['PATIENT_ID'].astype(str).str.lower()
+        concat_df['LAST_NAME'] = concat_df['LAST_NAME'].astype(str).str.lower()
+        concat_df['SPEC_NUM'] = concat_df['SPEC_NUM'].astype(str).str.lower()
+        concat_df['SPEC_TYPE'] = concat_df['SPEC_TYPE'].astype(str).str.lower()
+        concat_df['ORGANISM'] = concat_df['ORGANISM'].astype(str).str.lower()
         df_duplicates = concat_df[concat_df.duplicated(subset=['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep=False)]
         # df_duplicates = concat_df[concat_df['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'].duplicated() == True]
         df_duplicates.to_excel(writer, sheet_name='DUPLICATES',index=False)
@@ -282,6 +295,38 @@ def final_import(request):
     else:
         return render(request, 'whonet/whonet_import_final.html',{'f_names': f_names})
 
+
+@login_required(login_url='/arsp_dmu/login')
+def whonet_retrieve_final(request,file_id):
+    start_time = datetime.now()
+    options = request.POST.getlist('options')
+    file_name = FinalFileName.objects.get(id=file_id)
+    # search_file_name = file_name.file_name.split('_')
+    
+   
+    df = concat_df_final(file_id)
+    df.columns = map(str.upper, df.columns)
+    
+    df['DATE_ADMIS'] = pd.to_datetime(df['DATE_ADMIS'],dayfirst=True,errors='ignore')
+    df['DATE_DATA'] = pd.to_datetime(df['DATE_DATA'],dayfirst=True,errors='ignore')
+    df['DATE_BIRTH'] = pd.to_datetime(df['DATE_BIRTH'],dayfirst=True,errors='ignore')
+    df['SPEC_DATE'] = pd.to_datetime(df['SPEC_DATE'],dayfirst=True,errors='ignore')
+    df['DATE_ADMIS'] = df['DATE_ADMIS'].dt.date
+    df['DATE_DATA'] = df['DATE_DATA'].dt.date
+    df['DATE_BIRTH'] = df['DATE_BIRTH'].dt.date
+    df['SPEC_DATE'] = df['SPEC_DATE'].dt.date
+    
+    # if 'DATE_BIRTH' in options:
+    #     df['date_birth'] = df.apply(lambda row: date_birth_2_digit_to_4(row['date_birth'],row['age']), axis = 1)
+    
+    
+    response = HttpResponse( df.to_csv(index=False,mode = 'w'),content_type='text/csv')
+    response['Content-Disposition'] = "attachment; filename=FINAL_TRANSFORMED_{}_{}.csv".format(file_name,datetime.now())
+    
+    
+    time_elapsed = datetime.now() - start_time
+    print('Time elapsed (hh:mm:ss.ms) {}'.format(time_elapsed))
+    return response
 
 #helping functions
 
@@ -674,6 +719,46 @@ def import_raw(raw_data):
         return 'File ' + tmp_name.split('.')[0] + ' is already uploaded.'
 
 
+def concat_df_final(file_id):
+    orig = FinalOrigin.objects.select_related('finallocation','finalmicrobiology','finalspecimen','finalantidisk','finalantimic','finalantietest').filter(file_ref=file_id)
+    pallobjs = [ model_to_dict(pallobj) for pallobj in FinalOrigin.objects.select_related('finallocation','finalmicrobiology','finalspecimen','finalantidisk','finalantimic','finalantietest').filter(file_ref=file_id)] 
+    # objs_spec = [model_to_dict(obj.rawspecimen) for obj in orig]
+    objs_spec = [model_to_dict(obj.finalspecimen) for obj in orig]
+    objs_location = [model_to_dict(obj.finallocation) for obj in orig]
+    objs_micro = [model_to_dict(obj.finalmicrobiology) for obj in orig]
+    objs_dsk = [model_to_dict(obj.finalantidisk) for obj in orig]
+    objs_mic = [model_to_dict(obj.finalantimic) for obj in orig]
+    objs_etest = [model_to_dict(obj.finalantietest) for obj in orig]
+    df = pd.DataFrame(pallobjs)
+    df_spec = pd.DataFrame(objs_spec)
+    # df_spec.drop(columns=['id'])
+    df_loc = pd.DataFrame(objs_location)
+    # df_loc.drop(columns=['id'])
+    df_micro = pd.DataFrame(objs_micro)
+    # df_micro.drop(columns=['id'])
+    df_dsk = pd.DataFrame(objs_dsk)
+    # df_dsk.drop(columns=['id'])
+    df_mic = pd.DataFrame(objs_mic)
+    # df_mic.drop(columns=['id'])
+    df_etest = pd.DataFrame(objs_etest)
+    
+    df2 = pd.merge(df_loc,df_spec,on='origin_ref')
+    df2 = pd.merge(df2,df_micro,on='origin_ref')
+    df2 = pd.merge(df2,df_dsk,on='origin_ref')
+    df2 = pd.merge(df2,df_mic,on='origin_ref')
+    df2 = pd.merge(df2,df_etest,on='origin_ref')
+    # df = pd.merge(df,df2,on='origin_ref')
+    # return HttpResponse(df.columns)
+    df = pd.merge(df,df2,right_on='origin_ref',left_on='id')
+    # df = pd.merge(df,df2,right_on='origin_ref',left_on='id')
+    # df = pd.concat([df,df2],axis=1,join="inner")
+    df = df.replace('nan','')
+    
+    df = df.drop(columns=['origin_ref','file_ref','id'])
+    
+    return df
+
+
 def concat_all_df(file_id):
     orig = RawOrigin.objects.select_related('rawlocation','rawmicrobiology','rawspecimen','rawantidisk','rawantimic','rawantietest').filter(file_ref=file_id)
     pallobjs = [ model_to_dict(pallobj) for pallobj in RawOrigin.objects.select_related('rawlocation','rawmicrobiology','rawspecimen','rawantidisk','rawantimic','rawantietest').filter(file_ref=file_id)] 
@@ -778,6 +863,11 @@ def concat_all_df(file_id):
       
     df['comment'] = df['comment'].str.replace('/^=/', '', regex=True)
 
+    
+    df['spec_num'] = df['spec_num'].str.replace('.0', '', regex=False)
+    df['age'] = df['age'].str.replace('.0', '', regex=False)
+    df['patient_id'] = df['patient_id'].apply(str)
+    df['patient_id'] = df['patient_id'].str.replace('.', '', regex=False)
     return df
 
 '''
@@ -3032,14 +3122,26 @@ def import_raw_data(row_iter,file_name):
 
 
 # functions that will be used on lambda
+# lambda function for datebirth on referred
+def date_birth_2_digit_to_4(date,age):
+    if date != '':
+        if 'w' in str(age) or 'W' in str(age) or 'd' in str(age) or 'D' in str(age) or 'm' in str(age) or 'M' in str(age) or 'nb' in str(age) or 'NB' in str(age) or 'y' in str(age):
+            return datetime.strptime(date,'%d-%b-%y').strftime('20%y-%m-%d')
+        elif  float(age) >= 0 and float(age) < 19:
+            return datetime.strptime(date,'%d-%b-%y').strftime('20%y-%m-%d')
+        elif float(age) >= 19:
+            return datetime.strptime(date,'%d-%b-%y').strftime('19%y-%m-%d')
+    else:
+        return ''
+    
 # lambda function for origin
 def origin_transform(row,lab_chk,whonet_region_island):
     
-    if  row['laboratory'].upper in lab_chk:
+    if  row['laboratory'].upper() in lab_chk:
         row['region'] = whonet_region_island['REGION'][lab_chk.index(row['laboratory'])]
         row['island'] = whonet_region_island['ISLAND'][lab_chk.index(row['laboratory'])]
     else:
-        if  row['institut'].upper in lab_chk:
+        if  row['institut'].upper() in lab_chk:
             row['region'] = whonet_region_island['REGION'][lab_chk.index(row['institut'])]
             row['island'] = whonet_region_island['ISLAND'][lab_chk.index(row['institut'])]
         else:
