@@ -9,7 +9,7 @@ dirpath = os.getcwd()
 
 def import_final(raw_data):
     try:
-        df = pd.read_csv(raw_data,encoding='iso-8859-1')
+        df = pd.read_csv(raw_data,encoding='iso-8859-1',dtype=str)
     except:
         return 'File ' + raw_data.name + ' is invalid format'
 

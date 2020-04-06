@@ -16,6 +16,8 @@ import time
 import os
 import zipfile
 from whonet.functions.file_import import import_final
+from whonet.functions.summary_report_referred import summary_report_referred
+from whonet.functions.df_helper import concat_all_df
 # import datetime
 
 
@@ -73,9 +75,11 @@ def whonet_data_summary_report(request,file_id):
     
     summary_report = compute_summary_report(file_name,file_id)
     summary_review = xl_for_review(file_id,file_name.file_name,getYearInt(file_name.file_name))
+    summary_referred = summary_report_referred(file_id,file_name)
     
     zf.write(summary_report)
     zf.write(summary_review)
+    zf.write(summary_referred)
     
     zf.close()
     
@@ -84,6 +88,7 @@ def whonet_data_summary_report(request,file_id):
     
     os.remove('DATA_SUMMARY_{}.xlsx'.format(file_name))
     os.remove('SUMMARY_FOR_REVIEW_{}.xlsx'.format(file_name))
+    os.remove('REFERRED_FOR_REVIEW_{}.xlsx'.format(file_name))
     return response
 
 
@@ -759,116 +764,7 @@ def concat_df_final(file_id):
     return df
 
 
-def concat_all_df(file_id):
-    orig = RawOrigin.objects.select_related('rawlocation','rawmicrobiology','rawspecimen','rawantidisk','rawantimic','rawantietest').filter(file_ref=file_id)
-    pallobjs = [ model_to_dict(pallobj) for pallobj in RawOrigin.objects.select_related('rawlocation','rawmicrobiology','rawspecimen','rawantidisk','rawantimic','rawantietest').filter(file_ref=file_id)] 
-    # objs_spec = [model_to_dict(obj.rawspecimen) for obj in orig]
-    objs_spec = [model_to_dict(obj.rawspecimen) for obj in orig]
-    objs_location = [model_to_dict(obj.rawlocation) for obj in orig]
-    objs_micro = [model_to_dict(obj.rawmicrobiology) for obj in orig]
-    objs_dsk = [model_to_dict(obj.rawantidisk) for obj in orig]
-    objs_mic = [model_to_dict(obj.rawantimic) for obj in orig]
-    objs_etest = [model_to_dict(obj.rawantietest) for obj in orig]
-    df = pd.DataFrame(pallobjs)
-    df_spec = pd.DataFrame(objs_spec)
-    # df_spec.drop(columns=['id'])
-    df_loc = pd.DataFrame(objs_location)
-    # df_loc.drop(columns=['id'])
-    df_micro = pd.DataFrame(objs_micro)
-    # df_micro.drop(columns=['id'])
-    df_dsk = pd.DataFrame(objs_dsk)
-    # df_dsk.drop(columns=['id'])
-    df_mic = pd.DataFrame(objs_mic)
-    # df_mic.drop(columns=['id'])
-    df_etest = pd.DataFrame(objs_etest)
-    
-    df2 = pd.merge(df_loc,df_spec,on='origin_ref')
-    df2 = pd.merge(df2,df_micro,on='origin_ref')
-    df2 = pd.merge(df2,df_dsk,on='origin_ref')
-    df2 = pd.merge(df2,df_mic,on='origin_ref')
-    df2 = pd.merge(df2,df_etest,on='origin_ref')
-    # df = pd.merge(df,df2,on='origin_ref')
-    # return HttpResponse(df.columns)
-    df = pd.merge(df,df2,right_on='origin_ref',left_on='id')
-    # df = pd.merge(df,df2,right_on='origin_ref',left_on='id')
-    # df = pd.concat([df,df2],axis=1,join="inner")
-    df = df.replace('nan','')
-    # df = df.replace(pd.NaN,'')
-    
-    # df = df.drop(columns=['ORIGIN_REF','FILE_REF','ID'])
-    
-    df['amk_nd30'] = df['amk_nd30'].str.replace('.0', '', regex=False)
-    df['amc_nd20'] = df['amc_nd20'].str.replace('.0', '', regex=False)
-    df['amp_nd10'] = df['amp_nd10'].str.replace('.0', '', regex=False)
-    df['sam_nd10'] = df['sam_nd10'].str.replace('.0', '', regex=False)
-    df['azm_nd15'] = df['azm_nd15'].str.replace('.0', '', regex=False)
-    df['atm_nd30'] = df['atm_nd30'].str.replace('.0', '', regex=False)
-    df['cec_nd30'] = df['cec_nd30'].str.replace('.0', '', regex=False)
-    df['man_nd30'] = df['man_nd30'].str.replace('.0', '', regex=False)
-    df['czo_nd30'] = df['czo_nd30'].str.replace('.0', '', regex=False)
-    df['fep_nd30'] = df['fep_nd30'].str.replace('.0', '', regex=False)
-    df['cfm_nd5'] = df['cfm_nd5'].str.replace('.0', '', regex=False)
-    df['cfp_nd75'] = df['cfp_nd75'].str.replace('.0', '', regex=False)
-    df['ctx_nd30'] = df['ctx_nd30'].str.replace('.0', '', regex=False)
-    df['fox_nd30'] = df['fox_nd30'].str.replace('.0', '', regex=False)
-    df['caz_nd30'] = df['caz_nd30'].str.replace('.0', '', regex=False)
-    df['cro_nd30'] = df['cro_nd30'].str.replace('.0', '', regex=False)
-    df['cxm_nd30'] = df['cxm_nd30'].str.replace('.0', '', regex=False)
-    df['cxa_nd30'] = df['cxa_nd30'].str.replace('.0', '', regex=False)
-    df['cep_nd30'] = df['cep_nd30'].str.replace('.0', '', regex=False)
-    df['chl_nd30'] = df['chl_nd30'].str.replace('.0', '', regex=False)
-    df['cip_nd5'] = df['cip_nd5'].str.replace('.0', '', regex=False)
-    df['clr_nd15'] = df['clr_nd15'].str.replace('.0', '', regex=False)
-    df['cli_nd2'] = df['cli_nd2'].str.replace('.0', '', regex=False)
-    df['col_nd10'] = df['col_nd10'].str.replace('.0', '', regex=False)
-    df['sxt_nd1_2'] = df['sxt_nd1_2'].str.replace('.0', '', regex=False)
-    df['dap_nd30'] = df['dap_nd30'].str.replace('.0', '', regex=False)
-    df['dor_nd10'] = df['dor_nd10'].str.replace('.0', '', regex=False)
-    df['etp_nd10'] = df['etp_nd10'].str.replace('.0', '', regex=False)
-    df['ery_nd15'] = df['ery_nd15'].str.replace('.0', '', regex=False)
-    df['gen_nd10'] = df['gen_nd10'].str.replace('.0', '', regex=False)
-    df['geh_nd120'] = df['geh_nd120'].str.replace('.0', '', regex=False)
-    df['ipm_nd10'] = df['ipm_nd10'].str.replace('.0', '', regex=False)
-    df['kan_nd30'] = df['kan_nd30'].str.replace('.0', '', regex=False)
-    df['lvx_nd5'] = df['lvx_nd5'].str.replace('.0', '', regex=False)
-    df['lnz_nd30'] = df['lnz_nd30'].str.replace('.0', '', regex=False)
-    df['mem_nd10'] = df['mem_nd10'].str.replace('.0', '', regex=False)
-    df['mno_nd30'] = df['mno_nd30'].str.replace('.0', '', regex=False)
-    df['mfx_nd5'] = df['mfx_nd5'].str.replace('.0', '', regex=False)
-    df['nal_nd30'] = df['nal_nd30'].str.replace('.0', '', regex=False)
-    df['net_nd30'] = df['net_nd30'].str.replace('.0', '', regex=False)
-    df['nit_nd300'] = df['nit_nd300'].str.replace('.0', '', regex=False)
-    df['nor_nd10'] = df['nor_nd10'].str.replace('.0', '', regex=False)
-    df['nov_nd5'] = df['nov_nd5'].str.replace('.0', '', regex=False)
-    df['ofx_nd5'] = df['ofx_nd5'].str.replace('.0', '', regex=False)
-    df['oxa_nd1'] = df['oxa_nd1'].str.replace('.0', '', regex=False)
-    df['pen_nd10'] = df['pen_nd10'].str.replace('.0', '', regex=False)
-    df['pip_nd100'] = df['pip_nd100'].str.replace('.0', '', regex=False)
-    df['tzp_nd100'] = df['tzp_nd100'].str.replace('.0', '', regex=False)
-    df['pol_nd300'] = df['pol_nd300'].str.replace('.0', '', regex=False)
-    df['qda_nd15'] = df['qda_nd15'].str.replace('.0', '', regex=False)
-    df['rif_nd5'] = df['rif_nd5'].str.replace('.0', '', regex=False)
-    df['spt_nd100'] = df['spt_nd100'].str.replace('.0', '', regex=False)
-    df['str_nd10'] = df['str_nd10'].str.replace('.0', '', regex=False)
-    df['sth_nd300'] = df['sth_nd300'].str.replace('.0', '', regex=False)
-    df['tcy_nd30'] = df['tcy_nd30'].str.replace('.0', '', regex=False)
-    df['tic_nd75'] = df['tic_nd75'].str.replace('.0', '', regex=False)
-    df['tcc_nd75'] = df['tcc_nd75'].str.replace('.0', '', regex=False)
-    df['tgc_nd15'] = df['tgc_nd15'].str.replace('.0', '', regex=False)
-    df['tob_nd10'] = df['tob_nd10'].str.replace('.0', '', regex=False)
-    df['van_nd30'] = df['van_nd30'].str.replace('.0', '', regex=False)
-    df['fos_nd200'] = df['fos_nd200'].str.replace('.0', '', regex=False)
-    df['dox_nd30'] = df['dox_nd30'].str.replace('.0', '', regex=False)
-    df['sss_nd200'] = df['sss_nd200'].str.replace('.0', '', regex=False)
-      
-    df['comment'] = df['comment'].str.replace('/^=/', '', regex=True)
 
-    
-    df['spec_num'] = df['spec_num'].str.replace('.0', '', regex=False)
-    df['age'] = df['age'].str.replace('.0', '', regex=False)
-    df['patient_id'] = df['patient_id'].apply(str)
-    df['patient_id'] = df['patient_id'].str.replace('.', '', regex=False)
-    return df
 
 '''
 FUNCTIONS BELOW ARE FOR DATA SUMMARY REPORT
