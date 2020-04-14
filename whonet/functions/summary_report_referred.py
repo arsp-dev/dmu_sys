@@ -280,7 +280,7 @@ def summary_report_referred(file_id,file_name):
 
 
 # lambda functions
-
+#
 def get_date_to_compute(df):
     if pd.isna(df) == False:
         year = int(df.year)
