@@ -470,6 +470,14 @@ def bigwork(file_id,search_file_name,options, year = ''):
     if 'Origin' in options:
         df = df.apply(lambda row: origin_transform(row,lab_chk,whonet_region_island), axis = 1)
     
+    if 'Nosocomial' in options:
+        df['ward_type'] = df['ward_type'].str.lower()
+        
+        df['date_admis'] = pd.to_datetime(df.date_admis)
+        df['spec_date'] = pd.to_datetime(df.spec_date)
+        
+        df['date_admis'] = df['date_admis'].dt.strftime('%m/%d/%Y')
+        df['spec_date'] = df['spec_date'].dt.strftime('%m/%d/%Y')
     
     
     for index,row in df.iterrows():
@@ -632,17 +640,14 @@ def bigwork(file_id,search_file_name,options, year = ''):
         
         
         
-        if 'Nosocomial' in options:
+        if 'Nosocomial' in options:         
                 if row['ward_type'] == 'in' or row['ward_type'] == 'eme':
                     if (row['date_admis'] != '' and row['spec_date'] != '') and ('/' in row['date_admis'] and '/' in row['spec_date']):
-                        # if check_str_to_date(row['spec_date']) and check_str_to_date(row['date_admis']):
                         x = datetime.strptime(row['spec_date'],'%m/%d/%Y') - datetime.strptime(row['date_admis'],'%m/%d/%Y')
                         if x.days > 2:
                             new_noso.append('Y')
                         else:
-                            new_noso.append('N')
-                        # else:
-                        #     new_noso.append('')   
+                            new_noso.append('N')  
                     else:
                         new_noso.append('X')
                 elif row['ward_type'] == 'out':

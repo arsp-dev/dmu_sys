@@ -14,6 +14,15 @@ pae = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_summary_refe
 aba = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_summary_referred.xlsx','Acinetobacter_species')
 sau = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_summary_referred.xlsx','Staphylococcus species')
 ent = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_summary_referred.xlsx','Enterococcus species')
+sal_shi = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','sal_shi')
+ent_vic = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','ent_vic')
+
+sal_shi_list = sal_shi['ORG'].values.tolist()
+ent_vic_list = ent_vic['ORG'].values.tolist()
+other_ent_list = ['efa','efm','ngo','hin','spn','nme','bca']
+
+ent_list_q = sal_shi_list + ent_vic_list + other_ent_list
+
 
 enterobact_all_list = enterobact_all['WHON5_CODE'].values.tolist()
 pae_list = pae['WHON5_CODE'].values.tolist()
@@ -83,18 +92,15 @@ def summary_report_referred(file_id,file_name):
         df_sau_referred = df_sau_referred[df_sau_referred['ent_fast'].dt.days >= 0]
         
           
-    df_ent = df[df['ORGANISM'].isin(['efa','efm'])]
+    df_ent = df[df['ORGANISM'].isin(ent_list_q)]
     if len(df_ent) > 0:
         df_ent = df_ent[df_ent['X_REFERRED'] != 1]
         df_ent = df_ent[df_ent['ent_fast'].dt.days >= 0]
     
-    df_ent_referred = df[df['ORGANISM'].isin(['efa','efm'])]
+    df_ent_referred = df[df['ORGANISM'].isin(ent_list_q)]
     if len(df_ent_referred) > 0:
         df_ent_referred = df_ent_referred[df_ent_referred['X_REFERRED'] != 1]
         df_ent_referred = df_ent_referred[df_ent_referred['ent_fast'].dt.days >= 0]
-    
-    
-    
     
     for value in enterobact_all_list:
         df_enterobact_all = df_enterobact_all.apply(lambda row: calculate_R_S(row,value,enterobact_all,enterobact_all_list), axis = 1)

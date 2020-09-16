@@ -16,7 +16,5 @@ urlpatterns = [
     path('whonet_transform_year', views.whonet_transform_year, name="whonet_transform_year"),
     path('whonet_old_referred', views.old_referred_import, name="old_referred"),
     path('whonet_final_import', views.final_import, name="final_import"),
-    re_path(r'whonet_transform/(?P<site>\w{0,50})/$', views.whonet_transform_sentinel,name="whonet_transform_sentinel")
-   
-    
+    re_path(r'whonet_transform/(?P<site>\w{0,50})/$', views.whonet_transform_sentinel,name="whonet_transform_sentinel")   
 ] 
