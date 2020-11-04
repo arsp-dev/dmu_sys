@@ -727,6 +727,23 @@ def import_raw(raw_data):
      
     except IntegrityError as e:
         return 'File ' + tmp_name.split('.')[0] + ' is already uploaded.'
+ 
+    
+@login_required(login_url='/arsp_dmu/login')
+@permission_required('whonet.add_rawfilename', raise_exception=True)
+def delete_raw(request,file_id):
+    file_name = RawFileName.objects.get(id=file_id)
+    tmp = file_name.file_name
+    RawOrigin.objects.select_related('rawlocation','rawmicrobiology','rawspecimen','rawantidisk','rawantimic','rawantietest').filter(file_ref=file_name).delete()
+    RawFileName.objects.get(file_name=file_name).delete()
+    
+    # res = tmp + 'successfully deleted.'
+    
+    f_names = RawFileName.objects.all()
+    
+    return render(request, 'whonet/whonet_import.html',{'f_names': f_names})
+    
+    
 
 
 def concat_df_final(file_id):

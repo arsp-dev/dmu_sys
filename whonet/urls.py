@@ -11,6 +11,7 @@ urlpatterns = [
     re_path(r'whonet_transform/data/(?P<file_id>\w{0,50})/$', views.whonet_transform_data,name="whonet_transform_data"),
     re_path(r'whonet_transform/final/(?P<file_id>\w{0,50})/$', views.whonet_retrieve_final,name="whonet_retrieve_final"),
     re_path(r'whonet_data_summary/data/(?P<file_id>\w{0,50})/$', views.whonet_data_summary_report,name="whonet_data_summary_report"),
+    re_path(r'whonet_data_summary/delete/(?P<file_id>\w{0,50})/$', views.delete_raw,name="delete_raw"),
     path('whonet_transform', views.whonet_transform, name="whonet_transform"),
     path('whonet_data_summary', views.whonet_data_summary, name="whonet_data_summary"),
     path('whonet_transform_year', views.whonet_transform_year, name="whonet_transform_year"),
