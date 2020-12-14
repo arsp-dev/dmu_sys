@@ -17,6 +17,7 @@ import os
 import zipfile
 from whonet.functions.file_import import import_final
 from whonet.functions.summary_report_referred import summary_report_referred
+from whonet.functions.summary_report_enterics_fastidious import get_ent_fast
 from whonet.functions.df_helper import concat_all_df
 # import datetime
 
@@ -76,19 +77,22 @@ def whonet_data_summary_report(request,file_id):
     summary_report = compute_summary_report(file_name,file_id)
     summary_review = xl_for_review(file_id,file_name.file_name,getYearInt(file_name.file_name))
     summary_referred = summary_report_referred(file_id,file_name)
+    # summary_ent_fast = get_ent_fast(file_id,file_name)
     
     zf.write(summary_report)
     zf.write(summary_review)
     zf.write(summary_referred)
-    
+    # zf.write(summary_ent_fast)
+
     zf.close()
     
     
     response['Content-Disposition'] = 'attachment; filename=SUMMARY_REPORT_{}.zip'.format(file_name)
     
     os.remove('DATA_SUMMARY_{}.xlsx'.format(file_name))
-    os.remove('SUMMARY_FOR_REVIEW_{}.xlsx'.format(file_name))
+    os.remove('INVALID_CODES_FOR_REVIEW_{}.xlsx'.format(file_name))
     os.remove('REFERRED_FOR_REVIEW_{}.xlsx'.format(file_name))
+    # os.remove('ENTERIC_PATHOGENS_FASTIDIOUS_ORGANISM_{}.xlsx'.format(file_name))
     return response
 
 
@@ -246,7 +250,7 @@ def staff_logout(request):
 
 
 @login_required(login_url='/arsp_dmu/login')
-@permission_required('whonet.view_rawfilename', raise_exception=True)
+# @permission_required('whonet.view_rawfilename', raise_exception=True)
 def whonet_import_data(request,file_id):
     file_name = RawFileName.objects.get(id=file_id)
     df = concat_all_df(file_id)
@@ -936,7 +940,7 @@ def xl_for_review(file_id,file_name,file_year):
     # df_sex = df[ (df['sex'] != 'm') | (df['sex'] != 'f') ]
     
 
-    writer = pd.ExcelWriter('SUMMARY_FOR_REVIEW_{}.xlsx'.format(file_name), engine='xlsxwriter')
+    writer = pd.ExcelWriter('INVALID_CODES_FOR_REVIEW_{}.xlsx'.format(file_name), engine='xlsxwriter')
     if len(df_date_of_admission) > 0:
         df_date_of_admission.columns = map(str.upper, df_date_of_admission.columns)
         df_date_of_admission = df_date_of_admission.drop(columns=['ID','ORIGIN_REF','FILE_REF'])
