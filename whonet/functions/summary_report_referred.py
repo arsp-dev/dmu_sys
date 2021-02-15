@@ -53,7 +53,7 @@ def summary_report_referred(file_id,file_name):
     df['comp'] = df['SPEC_DATE'].apply(lambda df: get_date_to_compute(df) )
     df['ent_fast'] = df['comp'] - df['SPEC_DATE']
     df['X_REFERRED'] = df['X_REFERRED'].str.replace('.0', '', regex=False)
-    df['X_REFERRED'] = pd.to_numeric(df['X_REFERRED'], downcast='signed')
+    df['X_REFERRED'] = pd.to_numeric(df['X_REFERRED'], downcast='signed',errors='ignore')
     
     
     
@@ -488,8 +488,6 @@ def calculate_R_S(row,value,frame,org_list):
         row[value] = row[value].replace('<=','')
         row[value] = row[value].replace('>','')
         row[value] = row[value].replace('<','')
-    
-            
         if value.split('_')[0] + '_RIS' not in frame.columns:
             if row[value].replace('.','').isdigit() == True:
                 if frame['R<='][org_list.index(value)] != '':
@@ -519,7 +517,6 @@ def calculate_R_S(row,value,frame,org_list):
             else:
                 return row
         else:
-            print(row[value.split('_')[0] + '_RIS'])
             return row
 
 
@@ -532,13 +529,16 @@ def calculate_R_S_MIC(row,value,frame,org_list):
     if row[value].replace('.','').isdigit() == True:
             if frame['R>='][org_list.index(value)] != '':
                 if float(row[value]) >= float(frame['R>='][org_list.index(value)]):
-                    row[value.split('_')[0] + '_RIS'] =  'R'        
+                    row[value.split('_')[0] + '_RIS'] =  'R' 
+                      
                     return row
                 elif float(row[value]) <= float(frame['S<='][org_list.index(value)]):
                     row[value.split('_')[0] + '_RIS'] = 'S'
+                 
                     return row
                 elif float(row[value]) < float(frame['R>='][org_list.index(value)]) and float(row[value]) > float(frame['S<='][org_list.index(value)]):
                     row[value.split('_')[0] + '_RIS'] = 'I'
+                
                     return row
                 else:
                     return row             

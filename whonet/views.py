@@ -23,6 +23,11 @@ from whonet.functions.df_helper import concat_all_df
 
 
 dirpath = os.getcwd()
+enterobact_all = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_summary_referred.xlsx','ENTEROBACTERIACEAE_X_SAL_SHI_v2')
+pae = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_summary_referred.xlsx','Pseudomonas_aeruginosa_v2')
+aba = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_summary_referred.xlsx','Acinetobacter_species_v2')
+ent = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_summary_referred.xlsx','Enterococcus species_v2')
+ent_pos = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','ent_positive_v2')
 whonet_region_island = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_region_island.xlsx')
 whonet_organism = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_organism.xlsx')
 whonet_specimen = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_specimen.xlsx')
@@ -41,6 +46,30 @@ data_fields = whonet_data_fields['Data fields'].values.tolist()
 data_fields_mic = whonet_data_fields_mic['Data fields'].values.tolist()
 data_fields_etest = whonet_data_fields_etest['Data fields'].values.tolist()
 
+enterobact_all_list = enterobact_all['WHON5_CODE'].values.tolist()
+enterobact_all_list_mic = enterobact_all['WHON5_CODE_MIC'].values.tolist()
+enterobact_all_list = [x.lower() for x in enterobact_all_list]
+enterobact_all_list_mic = [x.lower() for x in enterobact_all_list_mic]
+
+pae_list = pae['WHON5_CODE'].values.tolist()
+aba_list = aba['WHON5_CODE'].values.tolist()
+pae_list_mic = pae['WHON5_CODE_MIC'].values.tolist()
+aba_list_mic = aba['WHON5_CODE_MIC'].values.tolist()
+ent_list = ent['WHON5_CODE'].values.tolist()
+ent_list_mic = ent['WHON5_CODE_MIC'].values.tolist()
+
+
+ent_list_pos = ent_pos['ORG'].values.tolist()
+
+pae_list = [x.lower() for x in pae_list]
+pae_list_mic = [x.lower() for x in pae_list_mic]
+
+aba_list = [x.lower() for x in aba_list]
+aba_list_mic = [x.lower() for x in aba_list_mic]
+
+
+ent_list = [x.lower() for x in ent_list]
+ent_list_mic = [x.lower() for x in ent_list_mic]
 # GET : view for landing page
 @login_required(login_url='/arsp_dmu/login')
 def whonet_landing(request):
@@ -473,7 +502,7 @@ def bigwork(file_id,search_file_name,options, year = ''):
     start_time = datetime.now() 
     if 'Origin' in options:
         df = df.apply(lambda row: origin_transform(row,lab_chk,whonet_region_island), axis = 1)
-    
+        
     if 'Nosocomial' in options:
         df['ward_type'] = df['ward_type'].str.lower()
         
@@ -501,7 +530,7 @@ def bigwork(file_id,search_file_name,options, year = ''):
     df['ampc'] = df.apply(lambda item: posi_nega(item,'ampc'), axis = 1)
     df['x_meca'] = df.apply(lambda item: posi_nega(item,'x_meca'), axis = 1)
     df['x_mrse'] = df.apply(lambda item: posi_nega(item,'x_mrse'), axis = 1)
-    df['carbapenem'] = df.apply(lambda item: posi_nega(item,'carbapenem'), axis = 1)
+    # df['carbapenem'] = df.apply(lambda item: posi_nega(item,'carbapenem'), axis = 1)
     df['mbl'] = df.apply(lambda item: posi_nega(item,'mbl'), axis = 1)
         
     df['country_a'] = new_country
@@ -684,6 +713,50 @@ def bigwork(file_id,search_file_name,options, year = ''):
 
     df['growth'] = x_growth
     
+    if 'ESCR' in options:
+        df['escr'] = ''
+        org = ['eco','kpn']
+        for value in enterobact_all_list_mic:
+            df = df.apply(lambda row: calculate_R_S_MIC(row,value,enterobact_all,enterobact_all_list_mic,org,'escr'), axis = 1)
+        
+        for value in enterobact_all_list:
+            df = df.apply(lambda row: calculate_R_S(row,value,enterobact_all,enterobact_all_list,org,'escr'), axis = 1)
+
+    if 'CARBAPENEM' in options:
+        org = ['eco','kpn','aba','pae']
+        ## separate ang aba, pae at eco kpn. pag nagchange ang breakpoint dapat magkaiba din sila
+        ## if eco kpn iba nag break point same with aba and pae
+        for value in pae_list_mic:
+            df = df.apply(lambda row: calculate_R_S_MIC(row,value,pae,pae_list_mic,org,'carbapenem'), axis = 1)
+        
+        for value in pae_list:
+            df = df.apply(lambda row: calculate_R_S(row,value,pae,pae_list,org,'carbapenem'), axis = 1)
+            
+            
+    if 'HLAR' in options:
+        df['hlar'] = ''
+        for value in ent_list_mic:
+            df = df.apply(lambda row: calculate_R_S_MIC(row,value,ent,ent_list_mic,ent_list_pos,'hlar'), axis = 1)
+        
+        for value in ent_list:
+            df = df.apply(lambda row: calculate_R_S(row,value,ent,ent_list,ent_list_pos,'hlar'), axis = 1)
+    
+    if 'HLARB' in options:
+        df['hlarb'] = ''
+        df['sth_nm_MIC_TMP'] = ''
+        df['geh_nm_MIC_TMP'] = ''
+        df['sth_nd300_TMP'] = ''
+        df['geh_nd120_TMP'] = ''
+         
+        for value in ent_list_mic:
+            df = df.apply(lambda row: calculate_R_S_MIC_hlarb(row,value,ent,ent_list_mic,ent_list_pos,'hlarb'), axis = 1)
+        
+        for value in ent_list:
+            df = df.apply(lambda row: calculate_R_S_hlarb(row,value,ent,ent_list,ent_list_pos,'hlarb'), axis = 1)
+        
+        df = df.apply(lambda row:get_hrlab(row,ent_list_mic,ent_list), axis = 1)
+        
+       
     
     #df columns to upper
     df.columns = map(str.upper, df.columns)
@@ -885,8 +958,10 @@ def compute_summary_report(file_name,file_id):
         ave += df_bsn[2]
     
     
-        
-    summary.append(['','Average',str( round(ave / len(summary),2) ) + '%'])
+    if len(summary) > 0:    
+        summary.append(['','Average',str( round(ave / len(summary),2) ) + '%'])
+    else:
+         summary.append(['','Average',''])
     summary.append(['','',''])
     summary.append(['Other Phenotypic Test','Number','Percent'])
     summary.append(mrsa_esbl[0])
@@ -3882,3 +3957,171 @@ def import_old_data(row_iter,file_name):
         )
         
         ant_micris.save()
+
+
+def calculate_R_S_MIC(row,value,frame,org_list,organism,row_col):
+    row[value] = row[value].replace('>=','')
+    row[value] = row[value].replace('<=','')
+    row[value] = row[value].replace('>','')
+    row[value] = row[value].replace('<','')
+    if row['organism'] in organism:
+        if row[value].replace('.','').isdigit() == True:
+                if frame['R>='][org_list.index(value)] != '':
+                        if float(row[value]) >= float(frame['R>='][org_list.index(value)]):
+                            if row[row_col] != '+':
+                                row[row_col] =  '+' 
+                            return row
+                        elif float(row[value]) <= float(frame['S<='][org_list.index(value)]):
+                            if row[row_col] != '+':
+                                row[row_col] = '-'
+                            return row
+                        elif float(row[value]) < float(frame['R>='][org_list.index(value)]) and float(row[value]) > float(frame['S<='][org_list.index(value)]):
+                            if row[row_col] != '+':
+                                row[row_col] = '-'
+                            return row
+                        else:
+                            row[row_col] = 'U'
+                            return row         
+        else:
+            return row
+    else:
+        return row
+    
+def calculate_R_S(row,value,frame,org_list,organism,row_col):
+        row[value] = row[value].replace('>=','')
+        row[value] = row[value].replace('<=','')
+        row[value] = row[value].replace('>','')
+        row[value] = row[value].replace('<','')
+        if row['organism'] in organism:
+            #group 1
+                if row[value].replace('.','').isdigit() == True:
+                    if frame['R<='][org_list.index(value)] != '':
+                        if float(row[value]) <= float(frame['R<='][org_list.index(value)]):
+                            if row[row_col] != '+':
+                                row[row_col] = '+'        
+                            return row
+                        elif float(row[value]) >= float(frame['S>='][org_list.index(value)]):
+                            if row[row_col] != '+':
+                                row[row_col] = '-'
+                            return row
+                        elif (float(row[value]) < float(frame['S>='][org_list.index(value)])) and (float(row[value]) > float(frame['R<='][org_list.index(value)])):
+                            if row[row_col] != '+':
+                                row[row_col] = '-'
+                            return row
+                        else:
+                            row[row_col] = 'U'
+                            return row
+                    else:
+                        if float(row[value]) <= float(frame['S>='][org_list.index(value)]):
+                            if row[row_col] != '+':
+                                row[row_col] = '+'    
+                            return row
+                        elif float(row[value]) >= float(frame['S>='][org_list.index(value)]):
+                            if row[row_col] != '+':
+                                row[row_col] = '-'
+                            return row
+                        elif (float(row[value]) > float(frame['S>='][org_list.index(value)])) and (float(row[value]) < float(frame['R<='][org_list.index(value)])):
+                            if row[row_col] != '+':
+                                row[row_col] = '-'
+                            return row
+                        else:
+                            row[row_col] = 'U'
+                            return row
+                else:
+                    return row
+            #end group 1
+        else:
+            return row
+        
+        
+        
+def calculate_R_S_MIC_hlarb(row,value,frame,org_list,organism,row_col):
+    row[value] = row[value].replace('>=','')
+    row[value] = row[value].replace('<=','')
+    row[value] = row[value].replace('>','')
+    row[value] = row[value].replace('<','')
+    if row['organism'] in organism:
+        ## Group 1
+        if row[value].replace('.','').isdigit() == True:
+                if frame['R>='][org_list.index(value)] != '':
+                    if float(row[value]) >= float(frame['R>='][org_list.index(value)]):
+                        if row[value + '_MIC_TMP'] != '+':
+                            row[value + '_MIC_TMP'] =  '+' 
+                            return row
+                    elif float(row[value]) <= float(frame['S<='][org_list.index(value)]):
+                        if row[value + '_MIC_TMP'] != '+':
+                            row[value + '_MIC_TMP'] = '-'
+                            return row
+                    elif float(row[value]) < float(frame['R>='][org_list.index(value)]) and float(row[value]) > float(frame['S<='][org_list.index(value)]):
+                        if row[value + '_MIC_TMP'] != '+':
+                            row[value + '_MIC_TMP'] = '-'
+                            return row
+                    else:
+                        row[value + '_MIC_TMP'] = '-'
+                        return row            
+        else:
+            # row[row_col] = 'U'
+            return row
+        ## End Group 1
+    else:
+        # row[row_col] = 'U'
+        return row
+    
+def calculate_R_S_hlarb(row,value,frame,org_list,organism,row_col):
+        row[value] = row[value].replace('>=','')
+        row[value] = row[value].replace('<=','')
+        row[value] = row[value].replace('>','')
+        row[value] = row[value].replace('<','')
+        if row['organism'] in organism:
+            if row[value].replace('.','').isdigit() == True:
+                if frame['R<='][org_list.index(value)] != '':
+                    if float(row[value]) <= float(frame['R<='][org_list.index(value)]):
+                        if row[value + '_TMP'] != '+':
+                            row[value + '_TMP'] = '+'        
+                            return row
+                    elif float(row[value]) >= float(frame['S>='][org_list.index(value)]):
+                        if row[value + '_TMP'] != '+':
+                            row[value + '_TMP'] = '-'
+                            return row
+                    elif (float(row[value]) < float(frame['S>='][org_list.index(value)])) and (float(row[value]) > float(frame['R<='][org_list.index(value)])):
+                       if row[value + '_TMP'] != '+':
+                        row[value + '_TMP'] = '-'
+                        return row
+                    else:
+                        # row[row_col] = 'U'
+                        return row
+                else:
+                    if float(row[value]) <= float(frame['S>='][org_list.index(value)]):
+                        if row[value + '_TMP'] != '+':
+                            row[value + '_TMP'] = '+'    
+                            return row
+                    elif float(row[value]) >= float(frame['S>='][org_list.index(value)]):
+                        if row[value + '_TMP'] != '+':
+                            row[value + '_TMP'] = '-'
+                            return row
+                    elif (float(row[value]) > float(frame['S>='][org_list.index(value)])) and (float(row[value]) < float(frame['R<='][org_list.index(value)])):
+                        if row[value + '_TMP'] != '+':
+                            row[value + '_TMP'] = '-'
+                            return row
+                    else:
+                        # row[row_col] = 'U'
+                        return row
+            else:
+                return row
+        else:
+            return row
+
+def get_hrlab(row,mic,dsk):
+        if row[mic[0] + '_MIC_TMP'] == '+' and row[mic[1] + '_MIC_TMP'] == '+':
+                row['hlarb'] = '+'
+                return row
+        elif row[dsk[0] + '_TMP'] == '+' and row[dsk[1] + '_TMP'] == '+':
+                row['hlarb'] = '+'
+                return row
+        elif (row[mic[0] + '_MIC_TMP'] != '+' or  row[mic[1] + '_MIC_TMP'] != '+') or (row[dsk[0] + '_TMP'] != '+' or row[dsk[0] + '_TMP'] != '+'):
+                row['hlarb'] = '-'
+                return row
+        else:
+                row['hlarb'] = ''
+                return row
+        
