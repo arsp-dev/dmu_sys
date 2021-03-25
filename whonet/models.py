@@ -1,5 +1,93 @@
 from django.db import models
 
+
+class SatScanCluster(models.Model):
+    year_month = models.TextField(null=True,blank=True,default=None)
+    lab = models.TextField(null=True,blank=True,default=None)
+    cluster_number = models.TextField(null=True,blank=True,default=None)
+    cluster_code = models.TextField(null=True,blank=True,default=None)
+    cluster_description = models.TextField(null=True,blank=True,default=None)
+    cluster_start_date = models.DateField(null=True,blank=True,default=None)
+    cluster_end_date = models.DateField(null=True,blank=True,default=None)
+    date_first_signal = models.DateField(null=True,blank=True,default=None)
+    date_last_signal = models.DateField(null=True,blank=True,default=None)
+    recurrence_interval = models.TextField(null=True,blank=True,default=None)
+    recurrence_highest = models.TextField(null=True,blank=True,default=None)
+    recurrence_final = models.TextField(null=True,blank=True,default=None)
+    p_value_first = models.TextField(null=True,blank=True,default=None)
+    p_value_lowest = models.TextField(null=True,blank=True,default=None)
+    p_value_final = models.TextField(null=True,blank=True,default=None)
+    number_observed_first = models.TextField(null=True,blank=True,default=None)
+    number_observed_max = models.TextField(null=True,blank=True,default=None)
+    number_observed_final = models.TextField(null=True,blank=True,default=None)
+    number_observed_total = models.TextField(null=True,blank=True,default=None)
+    number_expected_first = models.TextField(null=True,blank=True,default=None)
+    number_expected_max = models.TextField(null=True,blank=True,default=None)
+    number_expected_final = models.TextField(null=True,blank=True,default=None)
+    days_to_first_signal = models.TextField(null=True,blank=True,default=None)
+    total_days_cluster = models.TextField(null=True,blank=True,default=None)
+    number_of_signals = models.TextField(null=True,blank=True,default=None)
+    number_of_locations = models.TextField(null=True,blank=True,default=None)
+    radius = models.TextField(null=True,blank=True,default=None)
+    satscan_x = models.TextField(null=True,blank=True,default=None)
+    satscan_y = models.TextField(null=True,blank=True,default=None)
+    january = models.TextField(null=True,blank=True,default=None)
+    february = models.TextField(null=True,blank=True,default=None)
+    march = models.TextField(null=True,blank=True,default=None)
+    april = models.TextField(null=True,blank=True,default=None)
+    may = models.TextField(null=True,blank=True,default=None)
+    june = models.TextField(null=True,blank=True,default=None)
+    july = models.TextField(null=True,blank=True,default=None)
+    august = models.TextField(null=True,blank=True,default=None)
+    september = models.TextField(null=True,blank=True,default=None)
+    october = models.TextField(null=True,blank=True,default=None)
+    november = models.TextField(null=True,blank=True,default=None)
+    december = models.TextField(null=True,blank=True,default=None)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+    
+    
+    
+
+
+class SatScanPatientList(models.Model):
+    year_month = models.TextField(null=True,blank=True,default=None)
+    cluster_number = models.TextField(null=True,blank=True,default=None)
+    lab = models.TextField(null=True,blank=True,default=None)
+    identification_number = models.TextField(null=True,blank=True,default=None)
+    first_name = models.TextField(null=True,blank=True,default=None)
+    last_name = models.TextField(null=True,blank=True,default=None)
+    sex = models.TextField(null=True,blank=True,default=None)
+    age = models.TextField(null=True,blank=True,default=None)
+    date_of_birth = models.TextField(null=True,blank=True,default=None)
+    age_group = models.TextField(null=True,blank=True,default=None)
+    location = models.TextField(null=True,blank=True,default=None)
+    department = models.TextField(null=True,blank=True,default=None)
+    location_type = models.TextField(null=True,blank=True,default=None)
+    specimen_number = models.TextField(null=True,blank=True,default=None)
+    specimen_date = models.DateField(null=True,blank=True,default=None)
+    specimen_type = models.TextField(null=True,blank=True,default=None)
+    organism = models.TextField(null=True,blank=True,default=None)
+    beta_lactamase = models.TextField(null=True,blank=True,default=None)
+    comment = models.TextField(null=True,blank=True,default=None)
+    referral_isolates = models.TextField(null=True,blank=True,default=None)
+    mrsa = models.TextField(null=True,blank=True,default=None)
+    icr = models.TextField(null=True,blank=True,default=None)
+    meca = models.TextField(null=True,blank=True,default=None)
+    ampc = models.TextField(null=True,blank=True,default=None)
+    carb = models.TextField(null=True,blank=True,default=None)
+    date_of_admission = models.DateField(null=True,blank=True,default=None)
+    esbl = models.TextField(null=True,blank=True,default=None)
+    nosocomial = models.TextField(null=True,blank=True,default=None)
+    urine_colony = models.TextField(null=True,blank=True,default=None)
+    diagnosis = models.TextField(null=True,blank=True,default=None)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+
+
+
+
+
 class RawFileName(models.Model):
     file_name = models.TextField(null=True,blank=True,default=None,unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -309,10 +397,10 @@ class RawAntietest(models.Model):
     
     
 
-#OLD REFERRED DATA DITO ANG START
+#REFERRED DATA DITO ANG START
 
 
-class OldFileName(models.Model):
+class ReferredFileName(models.Model):
     file_name = models.TextField(null=True,blank=True,default=None,unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -321,8 +409,8 @@ class OldFileName(models.Model):
         return self.file_name
     
 
-class OldOrigin(models.Model):
-    file_ref = models.ForeignKey(OldFileName, on_delete=models.CASCADE)
+class ReferredOrigin(models.Model):
+    file_ref = models.ForeignKey(ReferredFileName, on_delete=models.CASCADE)
     country_a = models.TextField(null=True,blank=True,default=None)
     region = models.TextField(null=True,blank=True,default=None)
     island = models.TextField(null=True,blank=True,default=None)
@@ -342,6 +430,7 @@ class OldOrigin(models.Model):
     date_admis = models.TextField(null=True,blank=True,default=None)
     nosocomial = models.TextField(null=True,blank=True,default=None)
     diagnosis = models.TextField(null=True,blank=True,default=None)
+    diagnosis_text = models.TextField(null=True,blank=True,default=None)
     stock_num = models.TextField(null=True,blank=True,default=None)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -349,8 +438,8 @@ class OldOrigin(models.Model):
     def __str__(self):
         return self.file_ref
 
-class OldLocation(models.Model):
-    origin_ref = models.OneToOneField(OldOrigin,  on_delete = models.CASCADE, primary_key = True) 
+class ReferredLocation(models.Model):
+    origin_ref = models.OneToOneField(ReferredOrigin,  on_delete = models.CASCADE, primary_key = True) 
     ward = models.TextField(null=True,blank=True,default=None)
     institut = models.TextField(null=True,blank=True,default=None)
     department = models.TextField(null=True,blank=True,default=None)
@@ -363,8 +452,8 @@ class OldLocation(models.Model):
 
 
 
-class OldMicrobiology(models.Model):
-    origin_ref = models.OneToOneField(OldOrigin,  on_delete = models.CASCADE, primary_key = True) 
+class ReferredMicrobiology(models.Model):
+    origin_ref = models.OneToOneField(ReferredOrigin,  on_delete = models.CASCADE, primary_key = True) 
     organism = models.TextField(null=True,blank=True,default=None)
     org_type = models.TextField(null=True,blank=True,default=None)
     beta_lact = models.TextField(null=True,blank=True,default=None)
@@ -374,10 +463,13 @@ class OldMicrobiology(models.Model):
     x_meca = models.TextField(null=True,blank=True,default=None)
     ampc = models.TextField(null=True,blank=True,default=None)
     x_mrse = models.TextField(null=True,blank=True,default=None)
-    x_carb = models.TextField(null=True,blank=True,default=None)
+    # x_carb = models.TextField(null=True,blank=True,default=None)
     esbl = models.TextField(null=True,blank=True,default=None)
     urine_count = models.TextField(null=True,blank=True,default=None)
     serotype = models.TextField(null=True,blank=True,default=None)
+    mix_org1 = models.TextField(null=True,blank=True,default=None)
+    mix_org2 = models.TextField(null=True,blank=True,default=None)
+    antigenic = models.TextField(null=True,blank=True,default=None)
     carbapenem = models.TextField(null=True,blank=True,default=None)
     mbl = models.TextField(null=True,blank=True,default=None)
     growth = models.TextField(null=True,blank=True,default=None)
@@ -396,8 +488,8 @@ class OldMicrobiology(models.Model):
         return self.organism
     
 
-class OldSpecimen(models.Model):
-    origin_ref = models.OneToOneField(OldOrigin,  on_delete = models.CASCADE, primary_key = True) 
+class ReferredSpecimen(models.Model):
+    origin_ref = models.OneToOneField(ReferredOrigin,  on_delete = models.CASCADE, primary_key = True) 
     spec_num = models.TextField(null=True,blank=True,default=None)
     spec_date = models.TextField(null=True,blank=True,default=None)
     spec_type = models.TextField(null=True,blank=True,default=None)
@@ -413,8 +505,8 @@ class OldSpecimen(models.Model):
 
 
 
-class OldAntidisk(models.Model):
-    origin_ref = models.OneToOneField(OldOrigin,  on_delete = models.CASCADE, primary_key = True) 
+class ReferredAntidisk(models.Model):
+    origin_ref = models.OneToOneField(ReferredOrigin,  on_delete = models.CASCADE, primary_key = True) 
     amk_nd30 = models.TextField(null=True,blank=True,default=None)
     amc_nd20 = models.TextField(null=True,blank=True,default=None)
     amp_nd10 = models.TextField(null=True,blank=True,default=None)
@@ -485,8 +577,8 @@ class OldAntidisk(models.Model):
         return self.origin_ref
     
 
-class OldAntimic(models.Model):
-    origin_ref = models.OneToOneField(OldOrigin,  on_delete = models.CASCADE, primary_key = True) 
+class ReferredAntimic(models.Model):
+    origin_ref = models.OneToOneField(ReferredOrigin,  on_delete = models.CASCADE, primary_key = True) 
     amk_nm = models.TextField(null=True,blank=True,default=None)
     amc_nm = models.TextField(null=True,blank=True,default=None)
     amp_nm = models.TextField(null=True,blank=True,default=None)
@@ -557,8 +649,8 @@ class OldAntimic(models.Model):
         return self.origin_ref
 
 
-class OldAntidiskris(models.Model):
-    origin_ref = models.OneToOneField(OldOrigin,  on_delete = models.CASCADE, primary_key = True) 
+class ReferredAntidiskris(models.Model):
+    origin_ref = models.OneToOneField(ReferredOrigin,  on_delete = models.CASCADE, primary_key = True) 
     amk_nd30_ris = models.TextField(null=True,blank=True,default=None)
     amc_nd20_ris = models.TextField(null=True,blank=True,default=None)
     amp_nd10_ris = models.TextField(null=True,blank=True,default=None)
@@ -629,8 +721,8 @@ class OldAntidiskris(models.Model):
         return self.origin_ref
     
 
-class OldAntimicris(models.Model):
-    origin_ref = models.OneToOneField(OldOrigin,  on_delete = models.CASCADE, primary_key = True) 
+class ReferredAntimicris(models.Model):
+    origin_ref = models.OneToOneField(ReferredOrigin,  on_delete = models.CASCADE, primary_key = True) 
     amk_nm_ris = models.TextField(null=True,blank=True,default=None)
     amc_nm_ris = models.TextField(null=True,blank=True,default=None)
     amp_nm_ris = models.TextField(null=True,blank=True,default=None)

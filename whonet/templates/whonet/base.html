@@ -238,56 +238,23 @@
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav" class="p-t-30">
                         <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'whonet_landing' %}" aria-expanded="false"><i class="mdi mdi-view-dashboard"></i><span class="hide-menu">Dashboard</span></a></li>
-                        {% comment %} <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link" href="#" aria-expanded="false"><i class="mdi mdi-earth"></i><span class="hide-menu">Import Raw data</span></a></li>
-                        <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link" href="widgets.html" aria-expanded="false"><i class="mdi mdi-chart-bubble"></i><span class="hide-menu">Widgets</span></a></li>
-                        <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link" href="tables.html" aria-expanded="false"><i class="mdi mdi-border-inside"></i><span class="hide-menu">Tables</span></a></li>
-                        <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link" href="grid.html" aria-expanded="false"><i class="mdi mdi-blur-linear"></i><span class="hide-menu">Full Width</span></a></li> {% endcomment %}
                         <li class="sidebar-item"> <a class="sidebar-link has-arrow waves-effect waves-dark" href="javascript:void(0)" aria-expanded="false"><i class="mdi mdi-earth"></i><span class="hide-menu">Whonet </span></a>
                             <ul aria-expanded="false" class="collapse  first-level">
                                 {% if perms.whonet.add_rawfilename %}
                                 <li class="sidebar-item"><a href="{% url 'whonet_import' %}" class="sidebar-link"><i class="mdi mdi-file-import"></i><span class="hide-menu"> Import Raw Data </span></a></li>
                                 <li class="sidebar-item"><a href="{% url 'final_import' %}" class="sidebar-link"><i class="mdi mdi-database"></i><span class="hide-menu"> Import Final Data </span></a></li>
                                 <li class="sidebar-item"><a href="{% url 'whonet_transform' %}" class="sidebar-link"><i class="mdi mdi-verified"></i><span class="hide-menu"> Transform Data</span></a></li>
+                                <li class="sidebar-item"><a href="{% url 'whonet_satscan' %}" class="sidebar-link"><i class="mdi mdi-television-guide"></i><span class="hide-menu"> SatScan Data</span></a></li>
                                 {% endif %}
                                 {% if perms.auth.can_clean_create_data_summary_report %}
                                 <li class="sidebar-item"><a href="#" class="sidebar-link"><i class="mdi mdi-auto-fix"></i><span class="hide-menu"> Clean Data</span></a></li>
                                 <li class="sidebar-item"><a href="{% url 'whonet_data_summary' %}" class="sidebar-link"><i class="mdi mdi-chart-areaspline"></i><span class="hide-menu"> Data Summary Report</span></a></li>
                                 {% endif %}
-                                <li class="sidebar-item"><a href="{% url 'old_referred' %}" class="sidebar-link"><i class="mdi mdi-archive"></i><span class="hide-menu">Old Referred Data</span></a></li>
+                                <li class="sidebar-item"><a href="{% url 'referred_import' %}" class="sidebar-link"><i class="mdi mdi-archive"></i><span class="hide-menu">Referred Data</span></a></li>
                                 <!-- <li class="sidebar-item"><a href="#" class="sidebar-link"><i class="mdi mdi-note-plus"></i><span class="hide-menu"> Soon.. </span></a></li> -->
                             </ul>
                         </li>
-                        {% comment %} <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link" href="pages-buttons.html" aria-expanded="false"><i class="mdi mdi-relative-scale"></i><span class="hide-menu">Buttons</span></a></li>
-                        <li class="sidebar-item"> <a class="sidebar-link has-arrow waves-effect waves-dark" href="javascript:void(0)" aria-expanded="false"><i class="mdi mdi-face"></i><span class="hide-menu">Icons </span></a>
-                            <ul aria-expanded="false" class="collapse  first-level">
-                                <li class="sidebar-item"><a href="icon-material.html" class="sidebar-link"><i class="mdi mdi-emoticon"></i><span class="hide-menu"> Material Icons </span></a></li>
-                                <li class="sidebar-item"><a href="icon-fontawesome.html" class="sidebar-link"><i class="mdi mdi-emoticon-cool"></i><span class="hide-menu"> Font Awesome Icons </span></a></li>
-                            </ul>
-                        </li>
-                        <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link" href="pages-elements.html" aria-expanded="false"><i class="mdi mdi-pencil"></i><span class="hide-menu">Elements</span></a></li>
-                        <li class="sidebar-item"> <a class="sidebar-link has-arrow waves-effect waves-dark" href="javascript:void(0)" aria-expanded="false"><i class="mdi mdi-move-resize-variant"></i><span class="hide-menu">Addons </span></a>
-                            <ul aria-expanded="false" class="collapse  first-level">
-                                <li class="sidebar-item"><a href="index2.html" class="sidebar-link"><i class="mdi mdi-view-dashboard"></i><span class="hide-menu"> Dashboard-2 </span></a></li>
-                                <li class="sidebar-item"><a href="pages-gallery.html" class="sidebar-link"><i class="mdi mdi-multiplication-box"></i><span class="hide-menu"> Gallery </span></a></li>
-                                <li class="sidebar-item"><a href="pages-calendar.html" class="sidebar-link"><i class="mdi mdi-calendar-check"></i><span class="hide-menu"> Calendar </span></a></li>
-                                <li class="sidebar-item"><a href="pages-invoice.html" class="sidebar-link"><i class="mdi mdi-bulletin-board"></i><span class="hide-menu"> Invoice </span></a></li>
-                                <li class="sidebar-item"><a href="pages-chat.html" class="sidebar-link"><i class="mdi mdi-message-outline"></i><span class="hide-menu"> Chat Option </span></a></li>
-                            </ul>
-                        </li>
-                        <li class="sidebar-item"> <a class="sidebar-link has-arrow waves-effect waves-dark" href="javascript:void(0)" aria-expanded="false"><i class="mdi mdi-account-key"></i><span class="hide-menu">Authentication </span></a>
-                            <ul aria-expanded="false" class="collapse  first-level">
-                                <li class="sidebar-item"><a href="authentication-login.html" class="sidebar-link"><i class="mdi mdi-all-inclusive"></i><span class="hide-menu"> Login </span></a></li>
-                                <li class="sidebar-item"><a href="authentication-register.html" class="sidebar-link"><i class="mdi mdi-all-inclusive"></i><span class="hide-menu"> Register </span></a></li>
-                            </ul>
-                        </li>
-                        <li class="sidebar-item"> <a class="sidebar-link has-arrow waves-effect waves-dark" href="javascript:void(0)" aria-expanded="false"><i class="mdi mdi-alert"></i><span class="hide-menu">Errors </span></a>
-                            <ul aria-expanded="false" class="collapse  first-level">
-                                <li class="sidebar-item"><a href="error-403.html" class="sidebar-link"><i class="mdi mdi-alert-octagon"></i><span class="hide-menu"> Error 403 </span></a></li>
-                                <li class="sidebar-item"><a href="error-404.html" class="sidebar-link"><i class="mdi mdi-alert-octagon"></i><span class="hide-menu"> Error 404 </span></a></li>
-                                <li class="sidebar-item"><a href="error-405.html" class="sidebar-link"><i class="mdi mdi-alert-octagon"></i><span class="hide-menu"> Error 405 </span></a></li>
-                                <li class="sidebar-item"><a href="error-500.html" class="sidebar-link"><i class="mdi mdi-alert-octagon"></i><span class="hide-menu"> Error 500 </span></a></li>
-                            </ul>
-                        </li> {% endcomment %}
+                       
                     </ul>
                 </nav>
                 <!-- End Sidebar navigation -->
@@ -377,6 +344,131 @@
     bsCustomFileInput.init()
      $(".select2").select2();
     })
+
+    $('#select-all').click(function(event) {
+  if (this.checked) {
+    $('.checkbox-checked').prop('checked', true);
+  } else {
+    $('.checkbox-checked').prop('checked', false);
+  }
+});
+
+
+$('#select-all-referred').click(function(event) {
+  if (this.checked) {
+    $('.checkbox-checked-referred').prop('checked', true);
+  } else {
+    $('.checkbox-checked-referred').prop('checked', false);
+  }
+});
+
+
+$('#file_id').change(function(){
+    if($(this).val() != ''){
+        document.getElementById("referred_file_id").value = $(this).val();
+        $('#delete_request').prop('disabled', false);
+    }else{
+        $('#delete_request').prop('disabled', true);
+    }
+})
+
+
+$("#delete_request").click(function () {
+                var result = confirm("Are you sure you want to delete this item?");
+
+                if (result == true) {
+                    $("#delete_referred_form").submit();
+                }
+
+            });
+    
+    // const sendForm = item => {
+    //     (async () => {
+    //     let response = await new Promise(resolve => {
+    //     document.getElementById('site').value = item;
+    //     var xhr = new XMLHttpRequest();
+    //     xhr.open("POST", "{% url 'whonet_transform_year' %}",true);
+    //             xhr.onload = function(event){ 
+    //                 alert("Success, server responded with: " + event.target.response); // raw response
+    //              }
+    //     var formData = new FormData(document.getElementById("form_year")); 
+    //     xhr.send(formData);
+    //             })
+    //             console.log(response)
+    //     })()
+       
+    // }
+
+   
+    $('#all_submit').click(function(event) {
+        event.preventDefault();
+        var site = ["ONP", "ZPH", "BGH"];
+        site.forEach(send_form)
+    
+    });
+    
+    function s2ab(s) {
+  var buf = new ArrayBuffer(s.length);
+  var view = new Uint8Array(buf);
+  for (var i=0; i!=s.length; ++i) view[i] = s.charCodeAt(i) & 0xFF;
+  return buf;
+}
+
+   
+   
+    function send_form(item,index) {
+        var form_data = new FormData();
+        var checkedValue = document.getElementsByClassName('checkbox-checked-referred')
+        var year = document.getElementById('yearGetReferred').value
+
+        form_data.append('csrfmiddlewaretoken',"{{ csrf_token }}");
+        form_data.append('sentinel_site',item);
+        form_data.append('year',year);
+        form_data.append('options',checkedValue);
+
+        $.ajax({
+                    url: "{% url 'whonet_transform_year' %}",
+                    type:'POST',
+                    data: form_data,
+                    processData: false,     // tell jquery not to process the data
+                    contentType: false,     // tell jquery not to set contentType
+                    success: function(response) {
+                        console.log('OK')
+                        // console.log(response)
+                        var blob = new Blob([s2ab(response)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }); 
+                        var downloadUrl = URL.createObjectURL(blob);
+                        var a = document.createElement("a");
+                        a.href = downloadUrl;
+                        var filename = item  + '_' + year;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        setTimeout(function() {window.URL.revokeObjectURL(downloadUrl);},0);
+                    },
+                    error: function(response) {alert("error")}
+        });
+
+
+        // document.getElementById('site').value = item;
+        // var xhr = new XMLHttpRequest();
+        // xhr.open("POST", "{% url 'whonet_transform_year' %}",true); 
+        // // xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+        // // xhr.responseType = 'blob';
+        // (async () => {
+        // let response = await new Promise(resolve => {
+        // xhr.onload = function(event){ 
+        //     alert("Success, server responded with: " + event.target.response); // raw response
+        // }
+        // })
+        // })()
+        // var formData = new FormData(document.getElementById("form_year")); 
+        // xhr.send(formData);
+   
+   
+   
+   };
+
+ 
   </script>
 
 

@@ -1,0 +1,67 @@
+{% extends 'whonet/base.html' %}
+
+{% block title %}
+ARSP-DMU | ARSEN | SatScan Import
+{% endblock title %}
+
+
+{% block breadcrumb %}
+    <div class="page-breadcrumb">
+                <div class="row">
+                    <div class="col-12 d-flex no-block align-items-center">
+                        <h4 class="page-title">SatScan Import</h4>
+                        <div class="ml-auto text-right">
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="{% url 'whonet_landing' %}">Dashboard</a></li>
+                                    <li class="breadcrumb-item active" aria-current="page">SatScan Import</li>
+                                </ol>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+{% endblock breadcrumb %}
+
+
+
+{% block content %}
+  <div class="row">
+    <div class="mx-auto col-md-9 col-lg-9 col-xlg-9">
+       <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Select WHONET file to import</h4>
+                <h6 class="card-subtitle p-b-10">Import <code>.csv</code> only </h6>
+                <div class="form-group row m-t-10">
+                    <label class="col-md-3">File Upload</label>
+                    <div class="col-md-9">
+                        <div class="custom-file">
+                            <form method="post" enctype="multipart/form-data" action="{% url 'whonet_satscan' %}">
+                            {% csrf_token %}
+                            
+                            <input type="file" class="custom-file-input" id="validatedCustomFile" name="raw_data" accept=".csv" required multiple> 
+                            <label class="custom-file-label" for="validatedCustomFile">
+                                <span class="d-inline-block text-truncate w-75">Choose several files</span>
+                            </label>
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="border-top">
+                <div class="card-body">
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                 
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    
+  </div>
+
+                      
+{% endblock content %}
+

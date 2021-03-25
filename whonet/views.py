@@ -18,7 +18,8 @@ import zipfile
 from whonet.functions.file_import import import_final
 from whonet.functions.summary_report_referred import summary_report_referred
 from whonet.functions.summary_report_enterics_fastidious import get_ent_fast
-from whonet.functions.df_helper import concat_all_df
+from whonet.functions.df_helper import concat_all_df, concat_all_df_referred
+from whonet.functions.satscan_func import import_satscan
 # import datetime
 
 
@@ -70,6 +71,25 @@ aba_list_mic = [x.lower() for x in aba_list_mic]
 
 ent_list = [x.lower() for x in ent_list]
 ent_list_mic = [x.lower() for x in ent_list_mic]
+
+
+@login_required(login_url='/arsp_dmu/login')
+def satscan(request):
+    if request.method == 'GET':
+        return render(request, 'whonet/whonet_satscan.html')
+    elif request.method == 'POST':
+        raw_data = request.FILES.getlist('raw_data')           
+        # raw data import
+        results = []
+        
+        for p in raw_data:
+            results.append(import_satscan(p))
+        
+    
+        return render(request, 'whonet/whonet_satscan.html',{'multi_import' : results})
+
+
+
 # GET : view for landing page
 @login_required(login_url='/arsp_dmu/login')
 def whonet_landing(request):
@@ -142,11 +162,137 @@ def whonet_transform(request):
     f_names = list(dict.fromkeys(retArray))
     f_names.sort()
     
-    return render(request,'whonet/whonet_transform.html',{'f_names': f_names})
+    year_all = getYear('')
+    
+    return render(request,'whonet/whonet_transform.html',{'f_names': f_names,'year_all' : year_all})
+
+
+
+
+
+@login_required(login_url='/arsp_dmu/login')
+def whonet_transform_referred(request):
+    start_time = datetime.now()
+    options = request.POST.getlist('options')
+    file_id = request.POST.get('file_id')
+    file_name = ReferredFileName.objects.get(id=file_id)
+    search_file_name = file_name.file_name.split('_')
+    
+   
+    df = bigwork(file_id,search_file_name,options,'',True)
+    
+    
+    
+    response = HttpResponse( df.to_csv(index=False,mode = 'w'),content_type='text/csv')
+    response['Content-Disposition'] = "attachment; filename=REFERRED_{}_{}.csv".format(file_name,datetime.now())
+    
+    
+    time_elapsed = datetime.now() - start_time
+    print('Time elapsed (hh:mm:ss.ms) {}'.format(time_elapsed))
+    return response
+
+
+
+@login_required(login_url='/arsp_dmu/login')
+def whonet_transform_year_all(request):
+    print('Initializing all sentinel sites process...')
+    start_time = datetime.now()
+    sentinel_sites = ['BGH','BRH','BRT','CMC','CRH','CVM','DMC','EVR','FEU','GMH','JLM','LCP','MAR','MMH','NMC','ONP','PGH','RMC','RTH','RTM','SLH','STU','VSM','ZMC','ZPH']
+    year = request.POST['year']
+    options = request.POST.getlist('options')
+    
+    response = HttpResponse(content_type='application/zip')
+    zf = zipfile.ZipFile(response, 'w')
+    
+    
+    for site in sentinel_sites:
+        query = year[2:4] + "PHL_" + site
+        con_df = []
+        tmp_year_df = []
+        qc_df = []
+        coll = RawFileName.objects.filter(file_name__contains=query).order_by('file_name')
+        writer = pd.ExcelWriter('{}.xlsx'.format(query), engine='xlsxwriter')
+    
+        for val in coll:
+            df = bigwork(val.id,val.file_name.split('_'),options)
+            tmp_year_df.append(df)
+            df['SPEC_DATE'] = pd.to_datetime(df['SPEC_DATE'],errors='ignore')
+            df = df[df['SPEC_DATE'].dt.year == int(year)]
+            df =  df[df['SPEC_DATE'] != '']
+            df['SPEC_DATE'] = df['SPEC_DATE'].dt.date
+            df['DATE_ADMIS'] = pd.to_datetime(df['DATE_ADMIS'],errors='ignore')
+            df['DATE_DATA'] = pd.to_datetime(df['DATE_DATA'],dayfirst=True,errors='ignore')
+            if 'W0019PHL' in val.file_name:
+                df['DATE_BIRTH'] = df.apply(lambda row: date_birth_2_digit_to_4(row['DATE_BIRTH'],row['AGE']), axis = 1)
+                
+            df['DATE_BIRTH'] = pd.to_datetime(df['DATE_BIRTH'],dayfirst=True,errors='ignore')
+            
+            df['DATE_ADMIS'] = df['DATE_ADMIS'].dt.date
+            df['DATE_DATA'] =  df['DATE_DATA'].dt.date
+            df['DATE_BIRTH'] = df['DATE_BIRTH'].dt.date
+            con_df.append(df)
+            # con_df.append(df[df.LOCAL_SPEC != 'qc'])
+            # qc_df.append(df[df.LOCAL_SPEC == 'qc'])
+            # print(len(df[df.LOCAL_SPEC != 'qc']))
+            df.to_excel(writer, sheet_name=val.file_name,index=False)
+        
+        concat_df = pd.concat(con_df)
+        # qc_df = concat_df[concat_df['LOCAL_SPEC'] == 'qc']
+        # concat_qc_df = pd.concat(qc_df)
+        tmp_df  = pd.concat(tmp_year_df)
+    
+        crt_year = tmp_df
+        tmp_year = []
+        if 'CORRECT_YEAR' in options:
+            crt_year['SPEC_DATE'] = pd.to_datetime(crt_year['SPEC_DATE'],errors='ignore')
+            # crt_year['SPEC_DATE'] = crt_year[crt_year['SPEC_DATE'].dt.year != int(year) ]
+            # crt_year['SPEC_DATE'] = crt_year['SPEC_DATE'].dt.date
+            tmp_year.append(crt_year[crt_year['SPEC_DATE'].dt.year != int(year) ])
+            tmp_year.append(crt_year[(crt_year['SPEC_DATE'] == '')])
+            
+            df_year = pd.concat(tmp_year)
+            df_year['SPEC_DATE'] = df_year['SPEC_DATE'].dt.date
+            df['DATE_ADMIS'] = pd.to_datetime(df['DATE_ADMIS'],errors='ignore')
+            df['DATE_DATA'] = pd.to_datetime(df['DATE_DATA'],dayfirst=True,errors='ignore')
+            df['DATE_BIRTH'] = pd.to_datetime(df['DATE_BIRTH'],dayfirst=True,errors='ignore')
+            df['DATE_ADMIS'] = df['DATE_ADMIS'].dt.date
+            df['DATE_DATA'] = df['DATE_DATA'].dt.date
+            df['DATE_BIRTH'] = df['DATE_BIRTH'].dt.date
+        
+            df_year.to_excel(writer,sheet_name='INCORRECT_DATE',index=False)
+    
+        if 'DUPLICATES' in options:
+            concat_df['PATIENT_ID'] = concat_df['PATIENT_ID'].astype(str).str.lower()
+            concat_df['LAST_NAME'] = concat_df['LAST_NAME'].astype(str).str.lower()
+            concat_df['FIRST_NAME'] = concat_df['FIRST_NAME'].astype(str).str.lower()
+            # concat_df['SPEC_TYPE'] = concat_df['SPEC_TYPE'].astype(str).str.lower()
+            concat_df['AGE'] = concat_df['AGE'].astype(str).str.lower()
+            concat_df['ORGANISM'] = concat_df['ORGANISM'].astype(str).str.lower()
+            df_duplicates = concat_df[concat_df.duplicated(subset=['PATIENT_ID','FIRST_NAME','AGE','LAST_NAME','ORGANISM'], keep="first")]
+            # df_duplicates = concat_df[concat_df['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'].duplicated() == True]
+            df_duplicates.to_excel(writer, sheet_name='DUPLICATES',index=False)
+    
+        concat_df = concat_df.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep="first")
+        # concat_df = pd.concat([concat_df,concat_qc_df])
+        concat_df.to_excel(writer, sheet_name=site + '_' + year,index=False)
+    
+    
+        writer.save()
+        
+        zf.write(writer)
+    
+    zf.close()
+    
+    response['Content-Disposition'] = 'attachment; filename={}_ALL_REPORTS.zip'.format(year)
+    time_elapsed = datetime.now() - start_time
+    print('Time elapsed (hh:mm:ss.ms) {}'.format(time_elapsed))
+    return response
+
 
 
 @login_required(login_url='/arsp_dmu/login')
 def whonet_transform_year(request):
+    print('Initializing process...')
     start_time = datetime.now() 
     site = request.POST['sentinel_site']
     year = request.POST['year']
@@ -165,6 +311,7 @@ def whonet_transform_year(request):
     
     con_df = []
     tmp_year_df = []
+    qc_df = []
     
     writer = pd.ExcelWriter(response, engine='xlsxwriter')
     
@@ -175,7 +322,7 @@ def whonet_transform_year(request):
         df = df[df['SPEC_DATE'].dt.year == int(year)]
         df =  df[df['SPEC_DATE'] != '']
         df['SPEC_DATE'] = df['SPEC_DATE'].dt.date
-        df['DATE_ADMIS'] = pd.to_datetime(df['DATE_ADMIS'],dayfirst=True,errors='ignore')
+        df['DATE_ADMIS'] = pd.to_datetime(df['DATE_ADMIS'],errors='ignore')
         df['DATE_DATA'] = pd.to_datetime(df['DATE_DATA'],dayfirst=True,errors='ignore')
         if 'W0019PHL' in val.file_name:
             df['DATE_BIRTH'] = df.apply(lambda row: date_birth_2_digit_to_4(row['DATE_BIRTH'],row['AGE']), axis = 1)
@@ -186,9 +333,14 @@ def whonet_transform_year(request):
         df['DATE_DATA'] =  df['DATE_DATA'].dt.date
         df['DATE_BIRTH'] = df['DATE_BIRTH'].dt.date
         con_df.append(df)
+        # con_df.append(df[df.LOCAL_SPEC != 'qc'])
+        # qc_df.append(df[df.LOCAL_SPEC == 'qc'])
+        # print(len(df[df.LOCAL_SPEC != 'qc']))
         df.to_excel(writer, sheet_name=val.file_name,index=False)
         
     concat_df = pd.concat(con_df)
+    # qc_df = concat_df[concat_df['LOCAL_SPEC'] == 'qc']
+    # concat_qc_df = pd.concat(qc_df)
     tmp_df  = pd.concat(tmp_year_df)
     
     crt_year = tmp_df
@@ -202,7 +354,7 @@ def whonet_transform_year(request):
         
         df_year = pd.concat(tmp_year)
         df_year['SPEC_DATE'] = df_year['SPEC_DATE'].dt.date
-        df['DATE_ADMIS'] = pd.to_datetime(df['DATE_ADMIS'],dayfirst=True,errors='ignore')
+        df['DATE_ADMIS'] = pd.to_datetime(df['DATE_ADMIS'],errors='ignore')
         df['DATE_DATA'] = pd.to_datetime(df['DATE_DATA'],dayfirst=True,errors='ignore')
         df['DATE_BIRTH'] = pd.to_datetime(df['DATE_BIRTH'],dayfirst=True,errors='ignore')
         df['DATE_ADMIS'] = df['DATE_ADMIS'].dt.date
@@ -214,14 +366,16 @@ def whonet_transform_year(request):
     if 'DUPLICATES' in options:
         concat_df['PATIENT_ID'] = concat_df['PATIENT_ID'].astype(str).str.lower()
         concat_df['LAST_NAME'] = concat_df['LAST_NAME'].astype(str).str.lower()
-        concat_df['SPEC_NUM'] = concat_df['SPEC_NUM'].astype(str).str.lower()
-        concat_df['SPEC_TYPE'] = concat_df['SPEC_TYPE'].astype(str).str.lower()
+        concat_df['FIRST_NAME'] = concat_df['FIRST_NAME'].astype(str).str.lower()
+        # concat_df['SPEC_TYPE'] = concat_df['SPEC_TYPE'].astype(str).str.lower()
+        concat_df['AGE'] = concat_df['AGE'].astype(str).str.lower()
         concat_df['ORGANISM'] = concat_df['ORGANISM'].astype(str).str.lower()
-        df_duplicates = concat_df[concat_df.duplicated(subset=['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep=False)]
+        df_duplicates = concat_df[concat_df.duplicated(subset=['PATIENT_ID','FIRST_NAME','AGE','LAST_NAME','ORGANISM'], keep="first")]
         # df_duplicates = concat_df[concat_df['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'].duplicated() == True]
         df_duplicates.to_excel(writer, sheet_name='DUPLICATES',index=False)
     
-    concat_df = concat_df.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep=False)
+    concat_df = concat_df.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep="first")
+    # concat_df = pd.concat([concat_df,concat_qc_df])
     concat_df.to_excel(writer, sheet_name=site + '_' + year,index=False)
     
     
@@ -345,15 +499,21 @@ def whonet_retrieve_final(request,file_id):
     df = concat_df_final(file_id)
     df.columns = map(str.upper, df.columns)
     
-    df['DATE_ADMIS'] = pd.to_datetime(df['DATE_ADMIS'],dayfirst=True,errors='ignore')
+    df['DATE_ADMIS'] = pd.to_datetime(df['DATE_ADMIS'],errors='ignore')
     df['DATE_DATA'] = pd.to_datetime(df['DATE_DATA'],dayfirst=True,errors='ignore')
     df['DATE_BIRTH'] = pd.to_datetime(df['DATE_BIRTH'],dayfirst=True,errors='ignore')
-    df['SPEC_DATE'] = pd.to_datetime(df['SPEC_DATE'],dayfirst=True,errors='ignore')
+    df['SPEC_DATE'] = pd.to_datetime(df['SPEC_DATE'],errors='ignore')
     df['DATE_ADMIS'] = df['DATE_ADMIS'].dt.date
     df['DATE_DATA'] = df['DATE_DATA'].dt.date
     df['DATE_BIRTH'] = df['DATE_BIRTH'].dt.date
     df['SPEC_DATE'] = df['SPEC_DATE'].dt.date
-    
+    df['PATIENT_ID'] = df['PATIENT_ID'].astype(str).str.lower()
+    df['LAST_NAME'] = df['LAST_NAME'].astype(str).str.lower()
+    df['FIRST_NAME'] = df['FIRST_NAME'].astype(str).str.lower()
+    # concat_df['SPEC_TYPE'] = concat_df['SPEC_TYPE'].astype(str).str.lower()
+    df['AGE'] = df['AGE'].astype(str).str.lower()
+    df['ORGANISM'] = df['ORGANISM'].astype(str).str.lower()
+    df = df[df.duplicated(subset=['PATIENT_ID','FIRST_NAME','AGE','LAST_NAME','ORGANISM'], keep="first")]
     # if 'DATE_BIRTH' in options:
     #     df['date_birth'] = df.apply(lambda row: date_birth_2_digit_to_4(row['date_birth'],row['age']), axis = 1)
     
@@ -428,15 +588,23 @@ def spn_def(spn):
         return ''
 
 
-def getYear(site):
+def getYear(site = ''):
     #W0119PHL_VSM
-    x = RawFileName.objects.filter(file_name__contains=site)
-    ret = []
-    for y in x:
-        q = y.file_name.split('_')
-        g = q[0]
-        ret.append('20'+ g[3:5])
-    
+    if site != '':
+        x = RawFileName.objects.filter(file_name__contains=site)
+        ret = []
+        for y in x:
+            q = y.file_name.split('_')
+            g = q[0]
+            ret.append('20'+ g[3:5])
+    else:
+        x = RawFileName.objects.all()
+        ret = []
+        for y in x:
+            q = y.file_name.split('_')
+            g = q[0]
+            ret.append('20'+ g[3:5])
+        ret.sort()
     ret_yr = list(dict.fromkeys(ret))
     
     return ret_yr
@@ -453,9 +621,14 @@ def getYearInt(file_name):
         
 
 
-def bigwork(file_id,search_file_name,options, year = ''):
-    start_time = datetime.now() 
-    df = concat_all_df(file_id)
+def bigwork(file_id,search_file_name,options, year = '', referred = False):
+    start_time = datetime.now()
+    if referred:
+        df = concat_all_df_referred(file_id)
+    else:
+        df = concat_all_df(file_id)
+    
+    # df.columns = map(str.lower, df.columns) 
 
     df['comment'] = df['comment'].str.replace('=', '', regex=False)
     df['comment'] = df['comment'].str.replace('-', '', regex=False)
@@ -467,17 +640,34 @@ def bigwork(file_id,search_file_name,options, year = ''):
   
     #removing rows if x_referred == 1
     if 'X_REFERRED' in options:
-        df = df[df['x_referred'] != 1]
+        if referred == False:
+            df = df[df['x_referred'] != '1']
+
+    if 'Sex' in options:
+        # df['sex'] = df['sex'].apply(str)
+        df = df.apply(lambda row: clean_gender(row), axis = 1)
+    
+    if 'pat_type' in options:
+        # df['age'] = df['age'].fillna('')
+        df = df.apply(lambda row: clean_pat_type(row), axis = 1)
 
  
     
-    whonet_site_location = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_codes_location.xlsx',search_file_name[1].lower())
+    # whonet_site_location = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_codes_location.xlsx','brt')
+    whonet_site_location = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_codes_location_2020.xlsx',search_file_name[1].lower())
     loc_chk = whonet_site_location['WARD'].values.tolist()
+    
+    unq_ward_type = whonet_site_location['WARD_TYPE'].values.tolist()
+    unq_ward_type = list(dict.fromkeys(unq_ward_type))
+    
+    chk_dept = whonet_site_location['DEPARTMENT'].values.tolist()
+    unq_department = list(dict.fromkeys(chk_dept))
 
     new_org = []
     new_org_type = []
     new_spec_type = []
     new_spec_code = []
+    local_spec = []
     
     new_institut = []
     new_department = []
@@ -492,6 +682,7 @@ def bigwork(file_id,search_file_name,options, year = ''):
     
     new_pen = []
     new_oxa = []
+    new_pen_nm = []
     
     new_country = []
     new_lab = []
@@ -505,19 +696,20 @@ def bigwork(file_id,search_file_name,options, year = ''):
         
     if 'Nosocomial' in options:
         df['ward_type'] = df['ward_type'].str.lower()
+        df['date_admis']  = df['date_admis'].apply(str)
+        df['spec_date']  = df['spec_date'].apply(str)
+        # df['date_admis'] = pd.to_datetime(df.date_admis)
+        # df['spec_date'] = pd.to_datetime(df.spec_date)
         
-        df['date_admis'] = pd.to_datetime(df.date_admis)
-        df['spec_date'] = pd.to_datetime(df.spec_date)
-        
-        df['date_admis'] = df['date_admis'].dt.strftime('%m/%d/%Y')
-        df['spec_date'] = df['spec_date'].dt.strftime('%m/%d/%Y')
+        # df['date_admis'] = df['date_admis'].dt.strftime('%m/%d/%Y')
+        # df['spec_date'] = df['spec_date'].dt.strftime('%m/%d/%Y')
     
     
     for index,row in df.iterrows():
         new_country.append('PHL')
         new_lab.append(search_file_name[1])
         new_institut.append(search_file_name[1])
-        if 'NE_NM' in options:
+        if 'NE_NM' in options and referred == False:
             for atx in data_fields_mic:
                 atx_name = atx.split('_')
                 if row[atx.lower()] == '' and row[atx_name[0].lower() + '_ne'] != '':
@@ -575,8 +767,19 @@ def bigwork(file_id,search_file_name,options, year = ''):
         
         if 'Location' in options:
             if row['ward'] in loc_chk:
-                new_department.append(whonet_site_location['DEPARTMENT'][loc_chk.index(row['ward'])])
-                new_ward_type.append(whonet_site_location['WARD_TYPE'][loc_chk.index(row['ward'])])
+                if row['department'] == '':
+                    new_department.append(whonet_site_location['DEPARTMENT'][loc_chk.index(row['ward'])])
+                    ward_type = whonet_site_location['DEPARTMENT'][loc_chk.index(row['ward'])]
+                    new_ward_type.append(whonet_site_location['WARD_TYPE'][chk_dept.index(ward_type)])
+                else:
+                    if row['department'] in unq_department:
+                        new_department.append(row['department'])
+                        ward_type = row['department']
+                        new_ward_type.append(whonet_site_location['WARD_TYPE'][chk_dept.index(ward_type)])
+                    else:
+                        new_department.append(whonet_site_location['DEPARTMENT'][loc_chk.index(row['ward'])])
+                        ward_type = whonet_site_location['DEPARTMENT'][loc_chk.index(row['ward'])]
+                        new_ward_type.append(whonet_site_location['WARD_TYPE'][chk_dept.index(ward_type)])  
                 new_ward.append(whonet_site_location['S_WARD'][loc_chk.index(row['ward'])])
             else:
                 new_department.append('unk')
@@ -585,6 +788,7 @@ def bigwork(file_id,search_file_name,options, year = ''):
         
         
         if 'Specimen' in options:
+            local_spec.append(row['spec_type'])
             if row['spec_type'] in spec_chk:
                 x = whonet_specimen['SPEC_ARS'][spec_chk.index(row['spec_type'])]
                 new_spec_type.append(x)
@@ -599,6 +803,8 @@ def bigwork(file_id,search_file_name,options, year = ''):
             else:
                 new_org.append('unk')
                 new_org_type.append('o')
+            
+            
         
         
 
@@ -606,22 +812,38 @@ def bigwork(file_id,search_file_name,options, year = ''):
         
         if 'SPN' in options:
             if row['organism'] == 'spn' and row['spec_type'] != 'qc':
-                if row['pen_nd10'] != '' and row['oxa_nd1'] != '':
-                    new_pen.append(spn_def(getfloat(row['pen_nd10'])))
-                    new_oxa.append(row['pen_nd10'])
-                elif row['pen_nd10'] == '' and row['oxa_nd1'] != '':
-                    new_pen.append(spn_def(getfloat(row['oxa_nd1'])))
-                    new_oxa.append(row['oxa_nd1'])
+                # if row['pen_nd10'] != '' and row['oxa_nd1'] != '':
+                #     new_pen.append(spn_def(getfloat(row['pen_nd10'])))
+                #     new_oxa.append(row['pen_nd10'])
+                # elif row['pen_nd10'] == '' and row['oxa_nd1'] != '':
+                #     new_pen.append(spn_def(getfloat(row['oxa_nd1'])))
+                #     new_oxa.append(row['oxa_nd1'])
+                # else:
+                #     new_pen.append('')
+                #     new_oxa.append('')
+                if row['pen_nm'] == '' and row['oxa_nd1'] != '':
+                    if spn_def(getfloat(row['oxa_nd1'])) == 'S':
+                        new_pen_nm.append(spn_def(getfloat(row['oxa_nd1'])))
+                        new_oxa.append(row['oxa_nd1'])
+                        new_pen.append(row['pen_nd10'])
+                    else:
+                        new_pen_nm.append(row['pen_nm'])
+                        new_oxa.append(row['oxa_nd1'])
+                        new_pen.append(row['oxa_nd1'])
                 else:
-                    new_pen.append('')
-                    new_oxa.append('')
+                    new_pen.append(row['pen_nd10'])
+                    new_oxa.append(row['oxa_nd1'])
+                    new_pen_nm.append(row['pen_nm'])
+        
             else:
                 if row['spec_type'] != 'qc':
                     new_pen.append('')
+                    new_pen_nm.append('')
                     new_oxa.append('')
                 else:
                     new_pen.append(row['pen_nd10'])
                     new_oxa.append(row['oxa_nd1'])
+                    new_pen_nm.append(row['pen_nm'])
         
     
  
@@ -635,6 +857,7 @@ def bigwork(file_id,search_file_name,options, year = ''):
         df['org_type'] = new_org_type
         df['spec_type'] = new_spec_type
         df['spec_code'] = new_spec_code
+        df['local_spec'] = local_spec
     
     if 'Location' in options:
         df['department'] = new_department
@@ -647,6 +870,7 @@ def bigwork(file_id,search_file_name,options, year = ''):
     if 'SPN' in options:
         df['pen_nd10'] = new_pen
         df['oxa_nd1'] = new_oxa
+        df['pen_nm'] = new_pen_nm
     
      
     xx_ward = []
@@ -655,6 +879,17 @@ def bigwork(file_id,search_file_name,options, year = ''):
        
     for index,row in df.iterrows():
         if 'MRSA' in options:
+            if row['organism'] == 'sau' or row['organism'] == 'slu':
+                if row['oxa_nm'] == '':
+                    if row['fox_nd30'].isdigit() == True or row['fox_nm'].isdigit() == True:
+                        if row['fox_nd30'] != '' and float(getfloat(row['fox_nd30'])) >= 22:
+                            df.loc[index,'oxa_nd1'] = 'S'
+                        if row['fox_nd30'] != '' and float(getfloat(row['fox_nd30'])) <= 21:
+                            df.loc[index,'oxa_nd1'] = 'R'
+                        if row['fox_nm'] != '' and float(getfloat(row['fox_nm'])) <= 4:
+                            df.loc[index,'oxa_nm'] = 'S'
+                        if row['fox_nm'] != '' and float(getfloat(row['fox_nm'])) > 8:
+                            df.loc[index,'oxa_nm'] = 'R'
             if row['organism'] == 'sau':
                 if row['fox_nd30'] == 'R' or row['oxa_nm'] == 'R' or row['fox_nm'] == 'R':
                     new_mrsa.append('+')
@@ -670,11 +905,13 @@ def bigwork(file_id,search_file_name,options, year = ''):
                     new_mrsa.append('') 
             else:
                 new_mrsa.append('')
+            
+            # return row
         
         
         
         if 'Nosocomial' in options:         
-                if row['ward_type'] == 'in' or row['ward_type'] == 'eme':
+                if row['ward_type'] == 'in' or row['ward_type'] == 'eme' or row['ward_type'] == 'mix':
                     if (row['date_admis'] != '' and row['spec_date'] != '') and ('/' in row['date_admis'] and '/' in row['spec_date']):
                         x = datetime.strptime(row['spec_date'],'%m/%d/%Y') - datetime.strptime(row['date_admis'],'%m/%d/%Y')
                         if x.days > 2:
@@ -682,11 +919,19 @@ def bigwork(file_id,search_file_name,options, year = ''):
                         else:
                             new_noso.append('N')  
                     else:
-                        new_noso.append('X')
+                        if row['ward_type'] == 'in':
+                            new_noso.append('X')
+                        else:
+                            new_noso.append('O')
                 elif row['ward_type'] == 'out':
                     new_noso.append('O')
                 else:
-                    new_noso.append('UNK')
+                    new_noso.append('U')
+                # row['spec_date'] = row['spec_date'].strftime('%m/%d/%Y')
+                # row['date_admis'] = row['date_admis'].strftime('%m/%d/%Y')
+                
+                # print('spec date :'  + row['spec_date'])
+                # print('date admis :'  + row['date_admis'])
         
         if 'qc' in row['spec_type'].lower():
             xx_ward.append('atc')
@@ -754,7 +999,10 @@ def bigwork(file_id,search_file_name,options, year = ''):
         for value in ent_list:
             df = df.apply(lambda row: calculate_R_S_hlarb(row,value,ent,ent_list,ent_list_pos,'hlarb'), axis = 1)
         
-        df = df.apply(lambda row:get_hrlab(row,ent_list_mic,ent_list), axis = 1)
+        df = df.apply(lambda row:get_hrlab(row,ent_list_mic,ent_list,ent_list_pos), axis = 1)
+    
+    
+
         
        
     
@@ -769,7 +1017,7 @@ def bigwork(file_id,search_file_name,options, year = ''):
     df = df.reindex(columns = data_fields)
     df = df.drop(columns=data_fields_etest)
     time_elapsed = datetime.now() - start_time 
-    print('Time elapsed zzz (hh:mm:ss.ms) {}'.format(time_elapsed))
+    print('Time elapsed zzz (hh:mm:ss.ms) {} - {}'.format(time_elapsed,search_file_name[0] + '_' + search_file_name[1] ))
     return df
 
 
@@ -795,11 +1043,12 @@ def import_raw(raw_data):
         RawOrigin.objects.select_related('rawlocation','rawmicrobiology','rawspecimen','rawantidisk','rawantimic','rawantietest').filter(file_ref=file_name).delete()
         # RawFileName.objects.get(file_name=tmp_name.split('.')[0]).delete()
         import_raw_data(row_iter,file_name)
-        
+        print("Updated : " + file_name.file_name)
         return 'File ' + tmp_name.split('.')[0] + ' is already uploaded. System updated the file.'
 
     try:
         import_raw_data(row_iter,file_name)
+        print("Saved : " + file_name.file_name)
         return 'File ' + tmp_name.split('.')[0]  +' successfully uploaded.'
      
     except IntegrityError as e:
@@ -819,6 +1068,22 @@ def delete_raw(request,file_id):
     f_names = RawFileName.objects.all()
     
     return render(request, 'whonet/whonet_import.html',{'f_names': f_names})
+
+
+@login_required(login_url='/arsp_dmu/login')
+@permission_required('whonet.add_rawfilename', raise_exception=True)
+def delete_referred(request):
+    request_file_name = request.POST.get('file_id')
+    print(request_file_name)
+    file_name = ReferredFileName.objects.get(id=request_file_name)
+    ReferredOrigin.objects.select_related('referredlocation','referredmicrobiology','referredspecimen','referredantidisk','referredantimic','referredantidiskris','referredantimicris').filter(file_ref=file_name).delete()
+    ReferredFileName.objects.get(id=request_file_name).delete()
+    
+    # res = tmp + 'successfully deleted.'
+        
+    referred_files = ReferredFileName.objects.all().order_by('file_name')
+    
+    return render(request,'whonet/referred.html',{'referred_files' : referred_files})
     
     
 
@@ -3118,6 +3383,7 @@ def import_raw_data(row_iter,file_name):
 
 
 
+
 # functions that will be used on lambda
 # lambda function for datebirth on referred
 def date_birth_2_digit_to_4(date,age):
@@ -3133,14 +3399,13 @@ def date_birth_2_digit_to_4(date,age):
     
 # lambda function for origin
 def origin_transform(row,lab_chk,whonet_region_island):
-    
     if  row['laboratory'].upper() in lab_chk:
-        row['region'] = whonet_region_island['REGION'][lab_chk.index(row['laboratory'])]
-        row['island'] = whonet_region_island['ISLAND'][lab_chk.index(row['laboratory'])]
+        row['region'] = whonet_region_island['REGION'][lab_chk.index(row['laboratory'].upper() )]
+        row['island'] = whonet_region_island['ISLAND'][lab_chk.index(row['laboratory'].upper() )]
     else:
         if  row['institut'].upper() in lab_chk:
-            row['region'] = whonet_region_island['REGION'][lab_chk.index(row['institut'])]
-            row['island'] = whonet_region_island['ISLAND'][lab_chk.index(row['institut'])]
+            row['region'] = whonet_region_island['REGION'][lab_chk.index(row['institut'].upper() )]
+            row['island'] = whonet_region_island['ISLAND'][lab_chk.index(row['institut'].upper() )]
         else:
             row['region'] = ''
             row['island'] = ''
@@ -3155,13 +3420,13 @@ def origin_transform(row,lab_chk,whonet_region_island):
     elif row['age'] == 'nan':
             row['age_grp'] = 'U'  
         
-    elif float(row['age']) >= 0 and float(row['age']) <= 5:
+    elif float(row['age']) >= 0 and float(row['age']) < 5:
             row['age_grp'] = 'A'
         
-    elif float(row['age']) >= 6 and float(row['age']) <= 17:
+    elif float(row['age']) >= 5 and float(row['age']) <= 19:
             row['age_grp'] = 'B'
         
-    elif float(row['age']) > 17 and float(row['age']) <= 64:
+    elif float(row['age']) > 19 and float(row['age']) <= 64:
             row['age_grp'] = 'C'
         
     elif float(row['age']) > 64:
@@ -3219,22 +3484,24 @@ def posi_nega(item,col):
 
 @login_required(login_url='/arsp_dmu/login')
 @permission_required('whonet.add_rawfilename', raise_exception=True)
-def old_referred_import(request):
+def referred_import(request):
+    referred_files = ReferredFileName.objects.all().order_by('file_name')
     if request.method == 'POST':
         raw_data = request.FILES.getlist('raw_data')           
         # raw data import
         results = []
         
         for p in raw_data:
-            results.append(import_old(p))
+            results.append(import_referred(p))
         
     
-        return render(request, 'whonet/old_referred.html',{'multi_import' : results})
+        return render(request, 'whonet/referred.html',{'multi_import' : results,'referred_files' : referred_files})
     else:
-        return render(request,'whonet/old_referred.html')
+        
+        return render(request,'whonet/referred.html',{'referred_files' : referred_files})
         
 
-def import_old(raw_data):
+def import_referred(raw_data):
     try:
         df = pd.read_csv(raw_data,encoding='iso-8859-1')
     except:
@@ -3242,22 +3509,25 @@ def import_old(raw_data):
     
     tmp_name = raw_data.name
 
-    file_name = OldFileName(file_name=tmp_name.split('.')[0])
-    df = set_old_pd_columns(df)
+    file_name = ReferredFileName(file_name=tmp_name.split('.')[0])
+    df = set_referred_pd_columns(df)
+    # df['SPEC_DATE'] = pd.to_datetime(df['SPEC_DATE'],errors='ignore')
+    # df['SPEC_DATE'] = df['SPEC_DATE'].apply(lambda x: x.strftime('%m/%d/%Y'))
+    df.columns = df.columns.str.upper()
     row_iter = df.iterrows()
     try:
         file_name.save()
     except IntegrityError as e:
-        file_name = OldFileName.objects.get(file_name=tmp_name.split('.')[0])
+        file_name = ReferredFileName.objects.get(file_name=tmp_name.split('.')[0])
         file_name.updated_at = datetime.now()
         file_name.save()
-        OldOrigin.objects.select_related('oldlocation','oldmicrobiology','oldspecimen','oldantidisk','oldantimic','oldantidiskris','oldantimicris').filter(file_ref=file_name).delete()
-        import_old_data(row_iter,file_name)
+        ReferredOrigin.objects.select_related('referredlocation','referredmicrobiology','referredspecimen','referredantidisk','referredantimic','referredantidiskris','referredantimicris').filter(file_ref=file_name).delete()
+        import_referred_data(row_iter,file_name)
         
         return 'File ' + tmp_name.split('.')[0] + ' is already uploaded. System updated the file.'
 
     try:
-        import_old_data(row_iter,file_name)
+        import_referred_data(row_iter,file_name)
         return 'File ' + tmp_name.split('.')[0]  +' successfully uploaded.'
      
     except IntegrityError as e:
@@ -3265,7 +3535,7 @@ def import_old(raw_data):
 
 
 
-def set_old_pd_columns(clm):
+def set_referred_pd_columns(clm):
     
     whonet_data_fields = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_fields.xlsx','RIS')
     # whonet_data_fields_etest = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_fields.xlsx','etest')
@@ -3282,10 +3552,10 @@ def set_old_pd_columns(clm):
 
 
 
-def import_old_data(row_iter,file_name):
+def import_referred_data(row_iter,file_name):
     for index, row in  row_iter:
 
-        origin = OldOrigin(
+        origin = ReferredOrigin(
         
         file_ref = file_name,
 
@@ -3317,7 +3587,7 @@ def import_old_data(row_iter,file_name):
 
         date_data = row['DATE_DATA'],
 
-        x_referred = row['X_REFERRED'],
+        x_referred = '1',
 
         x_recnum = row['X_RECNUM'],
 
@@ -3326,6 +3596,8 @@ def import_old_data(row_iter,file_name):
         nosocomial = row['NOSOCOMIAL'],
 
         diagnosis = row['DIAGNOSIS'],
+        
+        diagnosis_text = row['DIAGNOSIS_TEXT'],
 
         stock_num = row['STOCK_NUM'],
 
@@ -3334,7 +3606,7 @@ def import_old_data(row_iter,file_name):
         origin.save()
 
 
-        loc = OldLocation(
+        loc = ReferredLocation(
 
             origin_ref = origin,
 
@@ -3350,7 +3622,7 @@ def import_old_data(row_iter,file_name):
 
         loc.save()
         
-        mic = OldMicrobiology(
+        mic = ReferredMicrobiology(
             origin_ref = origin,
             
             organism = row['ORGANISM'],
@@ -3371,13 +3643,19 @@ def import_old_data(row_iter,file_name):
             
             x_mrse = row['X_MRSE'],
             
-            x_carb = row['X_CARB'],
+            # x_carb = row['X_CARB'],
             
             esbl = row['ESBL'],
             
             urine_count = row['URINECOUNT'],
             
             serotype = row['SEROTYPE'],
+            
+            mix_org1 = row['MIX_ORG1'],
+            
+            mix_org2 = row['MIX_ORG2'],
+            
+            antigenic = row['ANTIGENIC'],
             
             carbapenem = row['CARBAPENEM'],
             
@@ -3404,7 +3682,7 @@ def import_old_data(row_iter,file_name):
         
         mic.save()
         
-        spec = OldSpecimen(
+        spec = ReferredSpecimen(
             origin_ref = origin,
             
             spec_num = row['SPEC_NUM'],
@@ -3424,7 +3702,7 @@ def import_old_data(row_iter,file_name):
         
         spec.save()
         
-        ant_disk = OldAntidisk(
+        ant_disk = ReferredAntidisk(
             origin_ref = origin,
             
             amk_nd30 = row['AMK_ND30'],
@@ -3559,7 +3837,7 @@ def import_old_data(row_iter,file_name):
         
         ant_disk.save()
         
-        ant_disk_ris = OldAntidiskris(
+        ant_disk_ris = ReferredAntidiskris(
                 origin_ref = origin,
                 
                 amk_nd30_ris = row['AMK_ND30_RIS'],
@@ -3694,7 +3972,7 @@ def import_old_data(row_iter,file_name):
         
         ant_disk_ris.save()
         
-        ant_mic = OldAntimic(
+        ant_mic = ReferredAntimic(
             origin_ref = origin,
             
             amk_nm = row['AMK_NM'],
@@ -3826,7 +4104,7 @@ def import_old_data(row_iter,file_name):
         
         ant_mic.save()
         
-        ant_micris = OldAntimicris(
+        ant_micris = ReferredAntimicris(
             origin_ref = origin,
             
             amk_nm_ris = row['AMK_NM_RIS'],
@@ -3983,6 +4261,8 @@ def calculate_R_S_MIC(row,value,frame,org_list,organism,row_col):
                             row[row_col] = 'U'
                             return row         
         else:
+            if row[value].upper() == 'R':
+                row[row_col] =  '+'
             return row
     else:
         return row
@@ -4028,6 +4308,8 @@ def calculate_R_S(row,value,frame,org_list,organism,row_col):
                             row[row_col] = 'U'
                             return row
                 else:
+                    if row[value].upper() == 'R':
+                        row[row_col] =  '+'
                     return row
             #end group 1
         else:
@@ -4044,7 +4326,7 @@ def calculate_R_S_MIC_hlarb(row,value,frame,org_list,organism,row_col):
         ## Group 1
         if row[value].replace('.','').isdigit() == True:
                 if frame['R>='][org_list.index(value)] != '':
-                    if float(row[value]) >= float(frame['R>='][org_list.index(value)]):
+                    if (float(row[value]) >= float(frame['R>='][org_list.index(value)])):
                         if row[value + '_MIC_TMP'] != '+':
                             row[value + '_MIC_TMP'] =  '+' 
                             return row
@@ -4060,8 +4342,13 @@ def calculate_R_S_MIC_hlarb(row,value,frame,org_list,organism,row_col):
                         row[value + '_MIC_TMP'] = '-'
                         return row            
         else:
+            if row[value].upper() == 'R':
+                row[value + '_MIC_TMP'] =  '+'
+                return row
+            else:
+                return row
             # row[row_col] = 'U'
-            return row
+            # return row
         ## End Group 1
     else:
         # row[row_col] = 'U'
@@ -4107,21 +4394,60 @@ def calculate_R_S_hlarb(row,value,frame,org_list,organism,row_col):
                         # row[row_col] = 'U'
                         return row
             else:
-                return row
+                if row[value].upper() == 'R':
+                    row[value + '_TMP'] =  '+'
+                    return row
+                else:
+                    return row
         else:
             return row
 
-def get_hrlab(row,mic,dsk):
-        if row[mic[0] + '_MIC_TMP'] == '+' and row[mic[1] + '_MIC_TMP'] == '+':
-                row['hlarb'] = '+'
-                return row
-        elif row[dsk[0] + '_TMP'] == '+' and row[dsk[1] + '_TMP'] == '+':
-                row['hlarb'] = '+'
-                return row
-        elif (row[mic[0] + '_MIC_TMP'] != '+' or  row[mic[1] + '_MIC_TMP'] != '+') or (row[dsk[0] + '_TMP'] != '+' or row[dsk[0] + '_TMP'] != '+'):
-                row['hlarb'] = '-'
-                return row
+def get_hrlab(row,mic,dsk,organism):
+    if row['organism'] in organism:
+        if row['hlar'] != '':
+            if row[mic[0] + '_MIC_TMP'] == '+' and row[mic[1] + '_MIC_TMP'] == '+':
+                    row['hlarb'] = '+'
+                    return row
+            elif row[dsk[0] + '_TMP'] == '+' and row[dsk[1] + '_TMP'] == '+':
+                    row['hlarb'] = '+'
+                    return row
+            elif (row[mic[0] + '_MIC_TMP'] != '+' and  row[mic[1] + '_MIC_TMP'] != '+') and (row[dsk[0] + '_TMP'] != '+' and row[dsk[0] + '_TMP'] != '+'):
+                    row['hlarb'] = '-'
+                    return row
+            else:
+                    row['hlarb'] = '-'
+                    return row
         else:
-                row['hlarb'] = ''
-                return row
+            return row
+    else:
+        return row
+
+def clean_gender(row):
+    sex = ['m','f']
+    if pd.isna(row['sex']) == False and row['sex'].lower() not in sex:
+        row['sex'] = 'u'
+    
+    return row
+
+def clean_pat_type(row):
+    # row['age'] = row['age'].apply(str)
+    # print(row['age'])
+    if  row['age'] != 'nan' or pd.isna(row['age']) == False or row['age'] != '':
+        if  'd' in row['age']:
+            row['pat_type'] = 'new'
+        elif 'm' in row['age']:
+            row['pat_type'] = 'ped'
+        elif row['age'].isdigit() == True and (int(row['age']) >= 1 and int(row['age']) <= 18):
+            row['pat_type'] = 'ped'
+        elif row['age'].isdigit() == True and int(row['age']) >= 19 and int(row['age']) <= 64:
+            row['pat_type'] = 'adu'
+        elif row['age'].isdigit() == True and int(row['age']) >= 65:
+            row['pat_type'] = 'ger'
+        else:
+            row['pat_type'] = 'unk'
+    else:
+        row['pat_type'] = 'unk'
+    
+    
+    return row
         
