@@ -42,8 +42,8 @@ aba_list_mic = aba['WHON5_CODE_MIC'].values.tolist()
 sau_list_mic = sau['WHON5_CODE_MIC'].values.tolist()
 ent_list_mic = ent['WHON5_CODE_MIC'].values.tolist()
 
-def summary_report_referred(file_id,file_name):
-    df = concat_all_df(file_id)
+def summary_report_referred(file_id,file_name,config = 'raw'):
+    df = concat_all_df(file_id,config)
     df.columns = map(str.upper, df.columns)
     
     df_ent_list_review = df[df['ORGANISM'].isin(ent_list_review)]
@@ -52,83 +52,89 @@ def summary_report_referred(file_id,file_name):
     df['SPEC_DATE'] = pd.to_datetime(df['SPEC_DATE'],errors='ignore')
     df['comp'] = df['SPEC_DATE'].apply(lambda df: get_date_to_compute(df) )
     df['ent_fast'] = df['comp'] - df['SPEC_DATE']
+    # df['X_REFERRED'] = df['X_REFERRED'].astype(str)
     df['X_REFERRED'] = df['X_REFERRED'].str.replace('.0', '', regex=False)
-    df['X_REFERRED'] = pd.to_numeric(df['X_REFERRED'], downcast='signed',errors='ignore')
-    
+    # df['X_REFERRED'] = pd.to_numeric(df['X_REFERRED'], downcast='signed',errors='ignore')
+    df_referred = df[df['X_REFERRED'] == '1']
+    # df = df[df['X_REFERRED'] != '1']    
+        
     
     
     df_enterobact_all = df[df['ORGANISM'].isin(['eco','kpn'])]
-    df_enterobact_col = df_enterobact_all[df_enterobact_all['X_REFERRED'] != 1]
+    df_enterobact_col = df_enterobact_all[df_enterobact_all['X_REFERRED'] != '1']
     if len(df_enterobact_all) > 0:
-        df_enterobact_all = df_enterobact_all[df_enterobact_all['X_REFERRED'] != 1]
+        df_enterobact_all = df_enterobact_all[df_enterobact_all['X_REFERRED'] != '1']
         # df_enterobact_col = df_enterobact_all
         df_enterobact_all = df_enterobact_all[df_enterobact_all['ent_fast'].dt.days >= 0]
     
-    df_enterobact_all_referred = df[df['ORGANISM'].isin(['eco','kpn'])]
-    df_enterobact_col_referred = df_enterobact_all_referred[df_enterobact_all_referred['X_REFERRED'] == 1]
+    df_enterobact_all_referred = df_referred[df_referred['ORGANISM'].isin(['eco','kpn'])]
+    df_enterobact_col_referred = df_enterobact_all_referred[df_enterobact_all_referred['X_REFERRED'] == '1']
     if len(df_enterobact_all_referred) > 0:
-        df_enterobact_all_referred = df_enterobact_all_referred[df_enterobact_all_referred['X_REFERRED'] == 1]
+        df_enterobact_all_referred = df_enterobact_all_referred[df_enterobact_all_referred['X_REFERRED'] == '1']
         # df_enterobact_col_referred = df_enterobact_all_referred
         # df_enterobact_all_referred = df_enterobact_all_referred[df_enterobact_all_referred['ent_fast'].dt.days >= 0]
     
     df_pae = df[df['ORGANISM'].isin(['pae'])]
-    df_pae_col = df_pae[df_pae['X_REFERRED'] != 1]
+    df_pae_col = df_pae[df_pae['X_REFERRED'] != '1']
     if len(df_pae) > 0:
-        df_pae = df_pae[df_pae['X_REFERRED'] != 1]
+        df_pae = df_pae[df_pae['X_REFERRED'] != '1']
         # df_pae_col = df_pae
         df_pae = df_pae[df_pae['ent_fast'].dt.days >= 0]
     
-    df_pae_referred = df[df['ORGANISM'].isin(['pae'])]
-    df_pae_col_referred = df_pae_referred[df_pae_referred['X_REFERRED'] == 1]
+    df_pae_referred = df_referred[df_referred['ORGANISM'].isin(['pae'])]
+    df_pae_col_referred = df_pae_referred[df_pae_referred['X_REFERRED'] == '1']
     if len(df_pae_referred) > 0:
-        df_pae_referred = df_pae_referred[df_pae_referred['X_REFERRED'] == 1]
+        df_pae_referred = df_pae_referred[df_pae_referred['X_REFERRED'] == '1']
         # df_pae_col_referred = df_pae_referred
         # df_pae_referred = df_pae_referred[df_pae_referred['ent_fast'].dt.days >= 0]
     
     
     df_aba = df[df['ORGANISM'].isin(['aba'])]
-    df_aba_col =  df_aba[df_aba['X_REFERRED'] != 1]
+    
+    df_aba_col =  df_aba[df_aba['X_REFERRED'] != '1']
     if len(df_aba) > 0:
-        df_aba = df_aba[df_aba['X_REFERRED'] != 1]
+        df_aba = df_aba[df_aba['X_REFERRED'] != '1']
         # df_aba_col = df_aba
         df_aba = df_aba[df_aba['ent_fast'].dt.days >= 0]
     
     
-    df_aba_referred = df[df['ORGANISM'].isin(['aba'])]
-    df_aba_col_referred = df_aba_referred[df_aba_referred['X_REFERRED'] == 1]
+    df_aba_referred = df_referred[df_referred['ORGANISM'].isin(['aba'])]
+    df_aba_col_referred = df_aba_referred[df_aba_referred['X_REFERRED'] == '1']
     if len(df_aba_referred) > 0:
-        df_aba_referred = df_aba_referred[df_aba_referred['X_REFERRED'] == 1]
+        df_aba_referred = df_aba_referred[df_aba_referred['X_REFERRED'] == '1']
         # df_aba_col_referred = df_aba_referred
         # df_aba_referred = df_aba_referred[df_aba_referred['ent_fast'].dt.days >= 0]
         
     
     df_sau = df[df['ORGANISM'].isin(['sau'])]
-    df_sau_ir = df_sau[df_sau['X_REFERRED'] != 1]
+    df_sau_ir = df_sau[df_sau['X_REFERRED'] != '1']
     if len(df_sau) > 0:
-        df_sau = df_sau[df_sau['X_REFERRED'] != 1]
+        df_sau = df_sau[df_sau['X_REFERRED'] != '1']
         # df_sau_ir = df_sau
         df_sau = df_sau[df_sau['ent_fast'].dt.days >= 0]
     
     
-    df_sau_referred = df[df['ORGANISM'].isin(['sau'])]
-    df_sau_ir_referred = df_sau_referred[df_sau_referred['X_REFERRED'] == 1]
+    df_sau_referred = df_referred[df_referred['ORGANISM'].isin(['sau'])]
+    df_sau_ir_referred = df_sau_referred[df_sau_referred['X_REFERRED'] == '1']
     if len(df_sau_referred) > 0:
-        df_sau_referred = df_sau_referred[df_sau_referred['X_REFERRED'] == 1]
+        df_sau_referred = df_sau_referred[df_sau_referred['X_REFERRED'] == '1']
         # df_sau_ir_referred = df_sau_referred
         # df_sau_referred = df_sau_referred[df_sau_referred['ent_fast'].dt.days >= 0]
         
           
     df_ent = df[df['ORGANISM'].isin(ent_list_q)]
-    df_ent_ir = df_ent[df_ent['X_REFERRED'] != 1]
+    df_ent_ir = df_ent[df_ent['X_REFERRED'] != '1']
     if len(df_ent) > 0:
-        df_ent = df_ent[df_ent['X_REFERRED'] != 1]
-        df_ent_ir = df_ent
-        # df_ent = df_ent[df_ent['ent_fast'].dt.days >= 0]
+        df_ent = df_ent[df_ent['X_REFERRED'] != '1']
+        # df_ent_ir = df_ent
+        df_ent = df_ent[df_ent['ent_fast'].dt.days >= 0]
     
-    df_ent_referred = df[df['ORGANISM'].isin(ent_list_q)]
-    df_ent_referred_ir = df_ent_referred[df_ent_referred['X_REFERRED'] != 1]
+    print(len(df_ent))
+    
+    df_ent_referred = df_referred[df_referred['ORGANISM'].isin(ent_list_q)]
+    df_ent_referred_ir = df_ent_referred[df_ent_referred['X_REFERRED'] == '1']
     if len(df_ent_referred) > 0:
-        df_ent_referred = df_ent_referred[df_ent_referred['X_REFERRED'] != 1]
+        df_ent_referred = df_ent_referred[df_ent_referred['X_REFERRED'] == '1']
         # df_ent_referred_ir = df_ent_referred
         # df_ent_referred = df_ent_referred[df_ent_referred['ent_fast'].dt.days >= 0]
     for value in enterobact_all_list_mic:
@@ -215,16 +221,16 @@ def summary_report_referred(file_id,file_name):
         df_enterobact_all = df_enterobact_all[cols]
     
     if len(df_enterobact_all_referred) > 0:
-        # df_enterobact_all_referred_concat = df_enterobact_all_referred.apply(lambda row: check_R(row,enterobact_all_list_mic), axis = 1)
-        df_enterobact_all_referred = df_enterobact_all_referred.apply(lambda row: check_R_entero(row,enterobact_list), axis = 1)
-        # frames = [df_enterobact_all_referred,df_enterobact_all_referred_concat]
-        df_enterobact_all_referred = df_enterobact_all_referred[df_enterobact_all_referred['Test'] == 'R']
-        df_enterobact_col_referred = df_enterobact_col_referred[(df_enterobact_col_referred['COL_NM'] == 'I')  | (df_enterobact_col_referred['COL_NM'] == 'R')]
-        frames = [df_enterobact_all_referred,df_enterobact_col_referred]
-        df_enterobact_all_referred = pd.concat(frames,sort=False)
-        df_enterobact_all_referred.dropna(how = 'all',inplace = True)
+        # # df_enterobact_all_referred_concat = df_enterobact_all_referred.apply(lambda row: check_R(row,enterobact_all_list_mic), axis = 1)
+        # df_enterobact_all_referred = df_enterobact_all_referred.apply(lambda row: check_R_entero(row,enterobact_list), axis = 1)
+        # # frames = [df_enterobact_all_referred,df_enterobact_all_referred_concat]
+        # df_enterobact_all_referred = df_enterobact_all_referred[df_enterobact_all_referred['Test'] == 'R']
+        # df_enterobact_col_referred = df_enterobact_col_referred[(df_enterobact_col_referred['COL_NM'] == 'I')  | (df_enterobact_col_referred['COL_NM'] == 'R')]
+        # frames = [df_enterobact_all_referred,df_enterobact_col_referred]
+        # df_enterobact_all_referred = pd.concat(frames,sort=False)
+        # df_enterobact_all_referred.dropna(how = 'all',inplace = True)
         df_enterobact_all_referred = df_enterobact_all_referred.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep=False)
-        df_enterobact_all_referred = df_enterobact_all_referred.drop(columns=['ORIGIN_REF','FILE_REF','ID','comp','ent_fast','Test'])
+        df_enterobact_all_referred = df_enterobact_all_referred.drop(columns=['ORIGIN_REF','FILE_REF','ID'])
         df_enterobact_all_referred['SPEC_DATE'] = df_enterobact_all_referred['SPEC_DATE'].dt.strftime('%m/%d/%Y')
         # df_enterobact_all_referred = df_enterobact_all_referred.dropna(axis=1,how='all')
       
@@ -255,19 +261,19 @@ def summary_report_referred(file_id,file_name):
         df_pae = df_pae[cols]
     
     if len(df_pae_referred) > 0:
-        df_pae_referred['CARBAPENEM'] = df_pae_referred['CARBAPENEM'].replace({"1": "+", "0" : "-"}, inplace=True)
-        df_pae_col_referred['CARBAPENEM'] = df_pae_col_referred['CARBAPENEM'].replace({"1": "+", "0" : "-"}, inplace=True)
-        # df_pae_referred_concat = df_pae_referred.apply(lambda row: check_R(row,pae_list_mic), axis = 1)
-        df_pae_referred = df_pae_referred.apply(lambda row: check_R_nfo(row,pae_list_all), axis = 1)
-        # frames = [df_pae_referred,df_pae_referred_concat]
-        # df_pae_referred = pd.concat(frames)
-        df_pae_referred = df_pae_referred[df_pae_referred['Test'] == 'R']
-        df_pae_col_referred = df_pae_col_referred[(df_pae_col_referred['COL_NM'] == 'I')  | (df_pae_col_referred['COL_NM'] == 'R')]
-        frames = [df_pae_referred,df_pae_col_referred]
-        df_pae_referred = pd.concat(frames,sort=False)
-        df_pae_referred.dropna(how = 'all',inplace = True)
+        # df_pae_referred['CARBAPENEM'] = df_pae_referred['CARBAPENEM'].replace({"1": "+", "0" : "-"}, inplace=True)
+        # df_pae_col_referred['CARBAPENEM'] = df_pae_col_referred['CARBAPENEM'].replace({"1": "+", "0" : "-"}, inplace=True)
+        # # df_pae_referred_concat = df_pae_referred.apply(lambda row: check_R(row,pae_list_mic), axis = 1)
+        # df_pae_referred = df_pae_referred.apply(lambda row: check_R_nfo(row,pae_list_all), axis = 1)
+        # # frames = [df_pae_referred,df_pae_referred_concat]
+        # # df_pae_referred = pd.concat(frames)
+        # df_pae_referred = df_pae_referred[df_pae_referred['Test'] == 'R']
+        # df_pae_col_referred = df_pae_col_referred[(df_pae_col_referred['COL_NM'] == 'I')  | (df_pae_col_referred['COL_NM'] == 'R')]
+        # frames = [df_pae_referred,df_pae_col_referred]
+        # df_pae_referred = pd.concat(frames,sort=False)
+        # df_pae_referred.dropna(how = 'all',inplace = True)
         df_pae_referred = df_pae_referred.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep=False)
-        df_pae_referred = df_pae_referred.drop(columns=['ORIGIN_REF','FILE_REF','ID','comp','ent_fast','Test'])
+        df_pae_referred = df_pae_referred.drop(columns=['ORIGIN_REF','FILE_REF','ID'])
         df_pae_referred['SPEC_DATE'] = df_pae_referred['SPEC_DATE'].dt.strftime('%m/%d/%Y')
         # df_pae_referred = df_pae_referred.dropna(axis=1,how='all')
        
@@ -282,8 +288,10 @@ def summary_report_referred(file_id,file_name):
         
      
         df_aba = df_aba.apply(lambda row: check_R_nfo(row,aba_list_all), axis = 1)
+       
         # if len(df_aba) > 0:
         df_aba = df_aba[df_aba['Test'] == 'R']
+        
         # if len(df_aba_col) > 0:
         df_aba_col = df_aba_col[(df_aba_col['COL_NM'] == 'I')  | (df_aba_col['COL_NM'] == 'R')]
         
@@ -291,9 +299,9 @@ def summary_report_referred(file_id,file_name):
         frames = [df_aba,df_aba_col]
         df_aba = pd.concat(frames,sort=False)
         # elif len(df_aba) > 0 and len(df_aba_col) <= 0:
-        df_aba = df_aba
+        # df_aba = df_aba
         # elif len(df_aba) <= 0 and len(df_aba_col) > 0:
-        df_aba = df_aba_col
+        # df_aba = df_aba_col
         
         # if len(df_aba) > 0:
         df_aba.dropna(how = 'all',inplace = True)
@@ -308,32 +316,32 @@ def summary_report_referred(file_id,file_name):
     
     if len(df_aba_referred) > 0:
         # df_aba_referred_concat = df_aba_referred.apply(lambda row: check_R(row,aba_list_mic), axis = 1)
-        df_aba_referred['CARBAPENEM'] = df_aba_referred['CARBAPENEM'].replace({"1": "+", "0" : "-"}, inplace=True)
-        df_aba_col_referred['CARBAPENEM'] = df_aba_col_referred['CARBAPENEM'].replace({"1": "+", "0" : "-"}, inplace=True)
-        df_aba_referred = df_aba_referred.apply(lambda row: check_R_nfo(row,aba_list_all), axis = 1)
-        # if len(df_aba_referred) > 0:
-        df_aba_referred = df_aba_referred[df_aba_referred['Test'] == 'R']
-        # print(len(df_aba_referred))
+        # df_aba_referred['CARBAPENEM'] = df_aba_referred['CARBAPENEM'].replace({"1": "+", "0" : "-"}, inplace=True)
+        # df_aba_col_referred['CARBAPENEM'] = df_aba_col_referred['CARBAPENEM'].replace({"1": "+", "0" : "-"}, inplace=True)
+        # df_aba_referred = df_aba_referred.apply(lambda row: check_R_nfo(row,aba_list_all), axis = 1)
+        # # if len(df_aba_referred) > 0:
+        # df_aba_referred = df_aba_referred[df_aba_referred['Test'] == 'R']
+        # # print(len(df_aba_referred))
             
-        # if len(df_aba_col_referred) > 0:    
-        df_aba_col_referred = df_aba_col_referred[(df_aba_col_referred['COL_NM'] == 'I')  | (df_aba_col_referred['COL_NM'] == 'R')]
-        print(df_aba_col_referred) 
-        # if len(df_aba_referred) > 0 and len(df_aba_col_referred) > 0:    
-        frames = [df_aba_referred,df_aba_col_referred]
-        df_aba_referred = pd.concat(frames,sort=False)
+        # # if len(df_aba_col_referred) > 0:    
+        # df_aba_col_referred = df_aba_col_referred[(df_aba_col_referred['COL_NM'] == 'I')  | (df_aba_col_referred['COL_NM'] == 'R')]
+       
+        # # if len(df_aba_referred) > 0 and len(df_aba_col_referred) > 0:    
+        # frames = [df_aba_referred,df_aba_col_referred]
+        # df_aba_referred = pd.concat(frames,sort=False)
         # elif len(df_aba_referred) > 0 and len(df_aba_col_referred) <= 0:
-        df_aba_referred = df_aba_referred
-        # elif len(df_aba) <= 0 and len(df_aba_col_referred) > 0:
-        df_aba_referred = df_aba_col_referred 
+        # df_aba_referred = df_aba_referred
+        # # elif len(df_aba) <= 0 and len(df_aba_col_referred) > 0:
+        # df_aba_referred = df_aba_col_referred 
         
         if len(df_aba_referred) > 0:
             df_aba_referred.dropna(how = 'all',inplace = True)
             df_aba_referred = df_aba_referred.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep=False)
-            df_aba_referred = df_aba_referred.drop(columns=['ORIGIN_REF','FILE_REF','ID','comp','ent_fast','Test'])
+            df_aba_referred = df_aba_referred.drop(columns=['ORIGIN_REF','FILE_REF','ID'])
             df_aba_referred['SPEC_DATE'] = df_aba_referred['SPEC_DATE'].dt.strftime('%m/%d/%Y')
             # df_aba_referred = df_aba_referred.dropna(axis=1,how='all')
-            df_aba_referred, cols = remove_null_cols(df_aba_referred,['PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','CARBAPENEM','IPM_ND10','IPM_NM','IPM_RIS','MEM_ND10','MEM_NM','MEM_RIS','ETP_ND10','ETP_NM','ETP_RIS','DOR_ND10','DOR_NM','DOR_RIS','COL_NM','COL_RIS'])
-            df_aba_referred = df_aba_referred[cols]
+            # df_aba_referred, cols = remove_null_cols(df_aba_referred,['PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','CARBAPENEM','IPM_ND10','IPM_NM','IPM_RIS','MEM_ND10','MEM_NM','MEM_RIS','ETP_ND10','ETP_NM','ETP_RIS','DOR_ND10','DOR_NM','DOR_RIS','COL_NM','COL_RIS'])
+            # df_aba_referred = df_aba_referred[cols]
         # df_aba_referred, cols = remove_null_cols(df_aba_referred,['PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','CARBAPENEM','IPM_ND10','IPM_NM','IPM_RIS','MEM_ND10','MEM_NM','MEM_RIS','ETP_ND10','ETP_NM','ETP_RIS','DOR_ND10','DOR_NM','DOR_RIS','COL_NM','COL_RIS'])
         # df_aba_referred = df_aba_referred[cols]
         # df_aba_referred = df_aba_referred[['PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','CARBAPENEM','IPM_ND10','IPM_NM','IPM_RIS','MEM_ND10','MEM_NM','MEM_RIS','ETP_ND10','ETP_NM','ETP_RIS','DOR_ND10','DOR_NM','DOR_RIS','COL_NM','COL_RIS']]
@@ -360,15 +368,15 @@ def summary_report_referred(file_id,file_name):
     
     if len(df_sau_referred) > 0:
         # df_sau_referred_concat = df_sau_referred.apply(lambda row: check_R(row,sau_list_mic), axis = 1)
-        df_sau_referred = df_sau_referred.apply(lambda row: check_R_sau_1_7(row,sau_list), axis = 1)
-        df_sau_ir_referred = df_sau_ir_referred.apply(lambda row: check_R_sau_ir(row,sau_list), axis = 1)
-        df_sau_referred = df_sau_referred[df_sau_referred['Test'] == 'R']
-        df_sau_ir_referred = df_sau_ir_referred[df_sau_ir_referred['Test'] == 'R']
-        frames = [df_sau_referred,df_sau_ir_referred]
-        df_sau_referred = pd.concat(frames,sort=False)
-        df_sau_referred.dropna(how = 'all',inplace = True)
+        # df_sau_referred = df_sau_referred.apply(lambda row: check_R_sau_1_7(row,sau_list), axis = 1)
+        # df_sau_ir_referred = df_sau_ir_referred.apply(lambda row: check_R_sau_ir(row,sau_list), axis = 1)
+        # df_sau_referred = df_sau_referred[df_sau_referred['Test'] == 'R']
+        # df_sau_ir_referred = df_sau_ir_referred[df_sau_ir_referred['Test'] == 'R']
+        # frames = [df_sau_referred,df_sau_ir_referred]
+        # df_sau_referred = pd.concat(frames,sort=False)
+        # df_sau_referred.dropna(how = 'all',inplace = True)
         df_sau_referred = df_sau_referred.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep=False)
-        df_sau_referred = df_sau_referred.drop(columns=['ORIGIN_REF','FILE_REF','ID','comp','ent_fast','Test'])
+        df_sau_referred = df_sau_referred.drop(columns=['ORIGIN_REF','FILE_REF','ID'])
         df_sau_referred['SPEC_DATE'] = df_sau_referred['SPEC_DATE'].dt.strftime('%m/%d/%Y')
         # df_sau_referred = df_sau_referred.dropna(axis=1,how='all')
      
@@ -377,39 +385,46 @@ def summary_report_referred(file_id,file_name):
         # df_sau_referred = df_sau_referred[['PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','INDUC_CLI','MRSA','FOX_ND30','FOX_NM','FOX_RIS','OXA_NM','OXA_RIS','LNZ_ND30','LNZ_NM','LNZ_RIS','DAP_ND30','DAP_NM','DAP_RIS','VAN_NM','VAN_RIS','ERY_ND15','ERY_NM','ERY_RIS','CLI_ND2','CLI_NM','CLI_RIS']]
         
         
-    ent_list_1_7 = ['GEH_ND120','GEH_NM','STH_ND300','STH_NM']
-    ent_list_ir = ['VAN_ND30','VAN_NM','LNZ_ND30','LNZ_NM','DAP_ND30','DAP_NM']
+    ent_list_1_7 = ['STH_RIS','GEH_RIS']
+    ent_list_ir = ['VAN_RIS','LNZ_RIS','DAP_RIS']
+    print(len(df_ent))
     if len(df_ent) > 0:
        
         # df_ent_concat = df_ent.apply(lambda row: check_R(row,ent_list_mic), axis = 1)
         df_ent = df_ent.apply(lambda row: check_R(row,ent_list_1_7), axis = 1)
         df_ent_ir = df_ent_ir.apply(lambda row: check_R(row,ent_list_ir), axis = 1)
+        print(len(df_ent_ir))
+        df_ent = df_ent[df_ent['Test'] == 'R']
+        print(str(len(df_ent)) + ': Resistant df')
+        df_ent_ir = df_ent_ir[df_ent_ir['Test'] == 'R']
+        print(str(len(df_ent_ir)) + ': Resistant ir')
         frames = [df_ent,df_ent_ir]
         df_ent = pd.concat(frames,sort=False)
+        print(len(df_ent))
     
-        df_ent = df_ent[df_ent['Test'] == 'R']
-        print(df_ent['GEH_NM'])
+        
         # for col in df_ent.columns: 
             # print(col)
         df_ent.dropna(how = 'all',inplace = True)
-        df_ent = df_ent.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep=False)
+        df_ent = df_ent.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep='last')
         df_ent = df_ent.drop(columns=['ORIGIN_REF','FILE_REF','ID','comp','ent_fast','Test'])
         df_ent['SPEC_DATE'] = df_ent['SPEC_DATE'].dt.strftime('%m/%d/%Y')
         # df_ent = df_ent.dropna(axis=1,how='all')
-    
-        df_ent, cols = remove_null_cols(df_ent,['PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','GEH_ND120','GEH_NM','GEH_RIS','STH_ND300','STH_NM','STH_RIS','VAN_ND30','VAN_NM','VAN_RIS','LNZ_ND30','LNZ_NM','LNZ_RIS','DAP_ND30','DAP_NM','DAP_RIS'])
+        cols = ['PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','GEH_ND120','GEH_NM','GEH_RIS','STH_ND300','STH_NM','STH_RIS','VAN_ND30','VAN_NM','VAN_RIS','LNZ_ND30','LNZ_NM','LNZ_RIS','DAP_ND30','DAP_NM','DAP_RIS']
+        # df_ent, cols = remove_null_cols(df_ent,['PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','GEH_ND120','GEH_NM','GEH_RIS','STH_ND300','STH_NM','STH_RIS','VAN_ND30','VAN_NM','VAN_RIS','LNZ_ND30','LNZ_NM','LNZ_RIS','DAP_ND30','DAP_NM','DAP_RIS'])
         df_ent = df_ent[cols]
+    print(len(df_ent))
     
     if len(df_ent_referred) > 0:
         # df_ent_referred_concat = df_ent_referred.apply(lambda row: check_R(row,ent_list_mic), axis = 1)
-        df_ent_referred = df_ent_referred.apply(lambda row: check_R(row,ent_list_1_7), axis = 1)
-        df_ent_referred_ir = df_ent_referred_ir.apply(lambda row: check_R(row,ent_list_ir), axis = 1)
-        frames = [df_ent_referred,df_ent_referred_ir]
-        df_ent_referred = pd.concat(frames,sort=False)
-        df_ent_referred = df_ent_referred[df_ent_referred['Test'] == 'R']
-        df_ent_referred.dropna(how = 'all',inplace = True)
+        # df_ent_referred = df_ent_referred.apply(lambda row: check_R(row,ent_list_1_7), axis = 1)
+        # df_ent_referred_ir = df_ent_referred_ir.apply(lambda row: check_R(row,ent_list_ir), axis = 1)
+        # frames = [df_ent_referred,df_ent_referred_ir]
+        # df_ent_referred = pd.concat(frames,sort=False)
+        # df_ent_referred = df_ent_referred[df_ent_referred['Test'] == 'R']
+        # df_ent_referred.dropna(how = 'all',inplace = True)
         df_ent_referred = df_ent_referred.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep=False)
-        df_ent_referred = df_ent_referred.drop(columns=['ORIGIN_REF','FILE_REF','ID','comp','ent_fast','Test'])
+        df_ent_referred = df_ent_referred.drop(columns=['ORIGIN_REF','FILE_REF','ID'])
         df_ent_referred['SPEC_DATE'] = df_ent_referred['SPEC_DATE'].dt.strftime('%m/%d/%Y')
         # df_ent_referred = df_ent_referred.dropna(axis=1,how='all')
         

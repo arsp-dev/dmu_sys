@@ -19,7 +19,18 @@ urlpatterns = [
     path('whonet_transform_referred', views.whonet_transform_referred, name="whonet_transform_referred"),
     path('referred_import', views.referred_import, name="referred_import"),
     path('whonet_final_import', views.final_import, name="final_import"),
+    re_path(r'whonet_final_summary_report/data/(?P<file_id>\w{0,50})/$', views.final_summary_report,name="final_summary_report"),
     path('whonet_satscan', views.satscan, name="whonet_satscan"),
     path('whonet_delete_referred', views.delete_referred, name="whonet_delete_referred"),
-    re_path(r'whonet_transform/(?P<site>\w{0,50})/$', views.whonet_transform_sentinel,name="whonet_transform_sentinel")   
+    re_path(r'whonet_transform/(?P<site>\w{0,50})/$', views.whonet_transform_sentinel,name="whonet_transform_sentinel"),   
+    
+    
+    
+    
+    #################### BIOINFORMATICS ENDPOINTS ##################################
+    
+    path('bioinfo_merge', views.bioinfo_merge,name="bioinfo_merge"),
+    
+    
+    #################### END OF BIOINFORMATICS ENDPOINTS ###########################
 ] 

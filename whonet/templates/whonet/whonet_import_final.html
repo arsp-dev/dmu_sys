@@ -1,4 +1,4 @@
-{% extends 'whonet/base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}
 ARSP-DMU | ARSEN | Whonet Import Final
@@ -82,14 +82,12 @@ ARSP-DMU | ARSEN | Whonet Import Final
                             <td>{{ fnames }}</td>
                             <td>{{ fnames.updated_at }}</td>
                             <td>
-                                <!-- <div class="row mb-3">
-                                    <a href="/arsp_dmu/whonet_import/data/{{ fnames.id }}" class="btn btn-success btn-sm mr-3">Raw data</a>
-                                </div> -->
+                               
                                 <div class="form-group row col-md-12">
-                                    <label class=""></label> 
+                                   
                                     <form method="POST" action="/arsp_dmu/whonet_transform/final/{{ fnames.id }}/">
                                     {% csrf_token %}
-                                            <div class="col-md-12">
+                                            <div class="col-md-6">
                                                 <!-- <div class="custom-control custom-checkbox mr-sm-2">
                                                     <input value="DATE_BIRTH" name="options" type="checkbox" class="custom-control-input" id="customControlAutosizing1{{ fnames.id }}">
                                                     <label class="custom-control-label" for="customControlAutosizing1{{ fnames.id }}">DATE_BIRTH</label>
@@ -100,8 +98,22 @@ ARSP-DMU | ARSEN | Whonet Import Final
                                   
                                     
                                     </form>
+                                
+                                        <div class="col-md-6">
+                                            <a href="/arsp_dmu/whonet_final_summary_report/data/{{ fnames.id }}/" class="btn btn-success btn-sm mr-3 m-t-15">Referred List</a>
+                                        </div>
+                                    
+                                    
+                                     <!-- <div class="row mb-3">
+                                    <a href="/arsp_dmu/whonet_import/data/{{ fnames.id }}" class="btn btn-success btn-sm mr-3">Raw data</a>
+                                </div> -->
+                                    
                                     
                                 </div>
+                                
+                                <!-- <div class="form-group col-md-6">
+                                   
+                                </div> -->
                             </td>
                         </tr>
                         {% endfor %}

@@ -238,9 +238,16 @@
                 <nav class="sidebar-nav">
                     <ul id="sidebarnav" class="p-t-30">
                         <li class="sidebar-item"> <a class="sidebar-link waves-effect waves-dark sidebar-link" href="{% url 'whonet_landing' %}" aria-expanded="false"><i class="mdi mdi-view-dashboard"></i><span class="hide-menu">Dashboard</span></a></li>
+                        {% if perms.auth.can_show_bioinformatics %}
+                        <li class="sidebar-item"> <a class="sidebar-link has-arrow waves-effect waves-dark" href="javascript:void(0)" aria-expanded="false"><i class="mdi mdi-earth"></i><span class="hide-menu">Bioinformatics</span></a>
+                           <ul aria-expanded="false" class="collapse  first-level">       
+                               <li class="sidebar-item"><a href="{% url 'bioinfo_merge' %}" class="sidebar-link"><i class="mdi mdi-file-import"></i><span class="hide-menu"> Merge Files </span></a></li>
+                           </ul>
+                       {% endif %}
+                        {% if perms.whonet.add_rawfilename %}
+                      
                         <li class="sidebar-item"> <a class="sidebar-link has-arrow waves-effect waves-dark" href="javascript:void(0)" aria-expanded="false"><i class="mdi mdi-earth"></i><span class="hide-menu">Whonet </span></a>
-                            <ul aria-expanded="false" class="collapse  first-level">
-                                {% if perms.whonet.add_rawfilename %}
+                            <ul aria-expanded="false" class="collapse  first-level">       
                                 <li class="sidebar-item"><a href="{% url 'whonet_import' %}" class="sidebar-link"><i class="mdi mdi-file-import"></i><span class="hide-menu"> Import Raw Data </span></a></li>
                                 <li class="sidebar-item"><a href="{% url 'final_import' %}" class="sidebar-link"><i class="mdi mdi-database"></i><span class="hide-menu"> Import Final Data </span></a></li>
                                 <li class="sidebar-item"><a href="{% url 'whonet_transform' %}" class="sidebar-link"><i class="mdi mdi-verified"></i><span class="hide-menu"> Transform Data</span></a></li>
@@ -249,12 +256,13 @@
                                 {% if perms.auth.can_clean_create_data_summary_report %}
                                 <li class="sidebar-item"><a href="#" class="sidebar-link"><i class="mdi mdi-auto-fix"></i><span class="hide-menu"> Clean Data</span></a></li>
                                 <li class="sidebar-item"><a href="{% url 'whonet_data_summary' %}" class="sidebar-link"><i class="mdi mdi-chart-areaspline"></i><span class="hide-menu"> Data Summary Report</span></a></li>
-                                {% endif %}
+                              
                                 <li class="sidebar-item"><a href="{% url 'referred_import' %}" class="sidebar-link"><i class="mdi mdi-archive"></i><span class="hide-menu">Referred Data</span></a></li>
+                                {% endif %}
                                 <!-- <li class="sidebar-item"><a href="#" class="sidebar-link"><i class="mdi mdi-note-plus"></i><span class="hide-menu"> Soon.. </span></a></li> -->
                             </ul>
                         </li>
-                       
+                        
                     </ul>
                 </nav>
                 <!-- End Sidebar navigation -->
@@ -448,23 +456,6 @@ $("#delete_request").click(function () {
                     error: function(response) {alert("error")}
         });
 
-
-        // document.getElementById('site').value = item;
-        // var xhr = new XMLHttpRequest();
-        // xhr.open("POST", "{% url 'whonet_transform_year' %}",true); 
-        // // xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
-        // // xhr.responseType = 'blob';
-        // (async () => {
-        // let response = await new Promise(resolve => {
-        // xhr.onload = function(event){ 
-        //     alert("Success, server responded with: " + event.target.response); // raw response
-        // }
-        // })
-        // })()
-        // var formData = new FormData(document.getElementById("form_year")); 
-        // xhr.send(formData);
-   
-   
    
    };
 

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}
-ARSP-DMU | ARSEN | SatScan Import
+ARSP-DMU | Bioinformatics | Merge Files
 {% endblock title %}
 
 
@@ -9,12 +9,12 @@ ARSP-DMU | ARSEN | SatScan Import
     <div class="page-breadcrumb">
                 <div class="row">
                     <div class="col-12 d-flex no-block align-items-center">
-                        <h4 class="page-title">SatScan Import</h4>
+                        <h4 class="page-title">Merge File</h4>
                         <div class="ml-auto text-right">
                             <nav aria-label="breadcrumb">
                                 <ol class="breadcrumb">
                                     <li class="breadcrumb-item"><a href="{% url 'whonet_landing' %}">Dashboard</a></li>
-                                    <li class="breadcrumb-item active" aria-current="page">SatScan Import</li>
+                                    <li class="breadcrumb-item active" aria-current="page">Merge Files</li>
                                 </ol>
                             </nav>
                         </div>
@@ -30,20 +30,20 @@ ARSP-DMU | ARSEN | SatScan Import
     <div class="mx-auto col-md-9 col-lg-9 col-xlg-9">
        <div class="card">
             <div class="card-body">
-                <h4 class="card-title">Select WHONET file to import</h4>
-                <h6 class="card-subtitle p-b-10">Import <code>.csv</code> only </h6>
-                <h6 class="card-subtitle p-b-10">Sample csv name for patient <code>satscan_patient_list_202101</code> </h6>
-                <h6 class="card-subtitle p-b-10">Sample csv name for cluster <code>satscan_cluster_202101</code> </h6>
+                <h4 class="card-title">Select Metadata file to import</h4>
+                <h6 class="card-subtitle p-b-10">Import <code>.xlsx</code> only </h6>
+               
                 <div class="form-group row m-t-10">
-                    <label class="col-md-3">File Upload</label>
-                    <div class="col-md-9">
+                  
+                    <div class="col-md-6">
+                        <label >File Upload</label>
                         <div class="custom-file">
-                            <form method="post" enctype="multipart/form-data" action="{% url 'whonet_satscan' %}">
+                            <form method="post" enctype="multipart/form-data" action="{% url 'bioinfo_merge' %}">
                             {% csrf_token %}
                             
-                            <input type="file" class="custom-file-input" id="validatedCustomFile" name="raw_data" accept=".csv" required multiple> 
+                            <input type="file" class="custom-file-input" id="validatedCustomFile" name="raw_data" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required> 
                             <label class="custom-file-label" for="validatedCustomFile">
-                                <span class="d-inline-block text-truncate w-75">Choose several files</span>
+                                <span class="d-inline-block text-truncate w-75">Choose file to import</span>
                             </label>
                             
                         </div>

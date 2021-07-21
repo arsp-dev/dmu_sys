@@ -20,6 +20,7 @@ from whonet.functions.summary_report_referred import summary_report_referred
 from whonet.functions.summary_report_enterics_fastidious import get_ent_fast
 from whonet.functions.df_helper import concat_all_df, concat_all_df_referred
 from whonet.functions.satscan_func import import_satscan
+from whonet.functions.bioinfo import merge_epi_data
 # import datetime
 
 
@@ -145,8 +146,32 @@ def whonet_data_summary_report(request,file_id):
     return response
 
 
+@login_required(login_url='/arsp_dmu/login')
+@permission_required('auth.can_clean_create_data_summary_report', raise_exception=True)
+def final_summary_report(request,file_id):
+    file_name = FinalFileName.objects.get(id=file_id)
+    response = HttpResponse(content_type='application/zip')
+    zf = zipfile.ZipFile(response, 'w')
+    # summary_report = compute_summary_report(file_name,file_id,'final')
+    # summary_review = xl_for_review(file_id,file_name.file_name,getYearInt(file_name.file_name),'final')
+    summary_referred = summary_report_referred(file_id,file_name,'final')
+    # summary_ent_fast = get_ent_fast(file_id,file_name)
+    
+    # zf.write(summary_report)
+    # zf.write(summary_review)
+    zf.write(summary_referred)
+    # zf.write(summary_ent_fast)
 
-
+    zf.close()
+    
+    
+    response['Content-Disposition'] = 'attachment; filename=SUMMARY_REPORT_{}.zip'.format(file_name)
+    
+    # os.remove('DATA_SUMMARY_{}.xlsx'.format(file_name))
+    # os.remove('INVALID_CODES_FOR_REVIEW_{}.xlsx'.format(file_name))
+    os.remove('REFERRED_FOR_REVIEW_{}.xlsx'.format(file_name))
+    # os.remove('ENTERIC_PATHOGENS_FASTIDIOUS_ORGANISM_{}.xlsx'.format(file_name))
+    return response
 
 
 @login_required(login_url='/arsp_dmu/login')
@@ -836,14 +861,14 @@ def bigwork(file_id,search_file_name,options, year = '', referred = False):
                     new_pen_nm.append(row['pen_nm'])
         
             else:
-                if row['spec_type'] != 'qc':
-                    new_pen.append('')
-                    new_pen_nm.append('')
-                    new_oxa.append('')
-                else:
-                    new_pen.append(row['pen_nd10'])
-                    new_oxa.append(row['oxa_nd1'])
-                    new_pen_nm.append(row['pen_nm'])
+                # if row['spec_type'] != 'qc':
+                new_pen.append(row['pen_nd10'])
+                new_oxa.append(row['oxa_nd1'])
+                new_pen_nm.append(row['pen_nm'])
+                # else:
+                #     new_pen.append('')
+                #     new_pen_nm.append('')
+                #     new_oxa.append('')
         
     
  
@@ -1080,7 +1105,7 @@ def delete_referred(request):
     ReferredFileName.objects.get(id=request_file_name).delete()
     
     # res = tmp + 'successfully deleted.'
-        
+
     referred_files = ReferredFileName.objects.all().order_by('file_name')
     
     return render(request,'whonet/referred.html',{'referred_files' : referred_files})
@@ -1133,31 +1158,31 @@ def concat_df_final(file_id):
 '''
 FUNCTIONS BELOW ARE FOR DATA SUMMARY REPORT
 '''
-def compute_summary_report(file_name,file_id):
-    df_data_completeness = get_data_completeness(file_id)
-    df_entero = get_data_entero(file_id)
-    df_sal_shi = get_data_sal_shi(file_id)
-    df_ent_vic = get_data_ent_vic(file_id)
-    df_non_ent = get_data_non_ent(file_id)
-    df_pae = get_data_pae(file_id)
-    df_hin = get_data_hin(file_id)
-    df_bca = get_data_bca(file_id)
-    df_ngo_nko = get_data_ngo_nko(file_id)
-    df_spn = get_data_spn(file_id)
-    df_ent_positive = get_data_ent_positive(file_id)
-    df_sta = get_data_sta(file_id)
-    df_pce = get_data_pce(file_id)
-    df_pma = get_data_pma(file_id)
+def compute_summary_report(file_name,file_id,config = 'raw'):
+    df_data_completeness = get_data_completeness(file_id,config)
+    df_entero = get_data_entero(file_id,config)
+    df_sal_shi = get_data_sal_shi(file_id,config)
+    df_ent_vic = get_data_ent_vic(file_id,config)
+    df_non_ent = get_data_non_ent(file_id,config)
+    df_pae = get_data_pae(file_id,config)
+    df_hin = get_data_hin(file_id,config)
+    df_bca = get_data_bca(file_id,config)
+    df_ngo_nko = get_data_ngo_nko(file_id,config)
+    df_spn = get_data_spn(file_id,config)
+    df_ent_positive = get_data_ent_positive(file_id,config)
+    df_sta = get_data_sta(file_id,config)
+    df_pce = get_data_pce(file_id,config)
+    df_pma = get_data_pma(file_id,config)
     # df_other_non_ent = get_data_other_non_ent(file_id)
-    df_svi = get_data_svi(file_id)
-    df_bsn = get_data_bsn(file_id)
+    df_svi = get_data_svi(file_id,config)
+    df_bsn = get_data_bsn(file_id,config)
     
     
     summary = []
     ave = 0
     
     
-    mrsa_esbl = get_mrsa_esbl(file_id)
+    mrsa_esbl = get_mrsa_esbl(file_id,config)
     
     # df_esbl = pd.DataFrame(data=[df_entero[1]], columns=['Organism','Number','Percent'])
     
@@ -1262,8 +1287,8 @@ def compute_summary_report(file_name,file_id):
 
 
 
-def xl_for_review(file_id,file_name,file_year):
-    df = concat_all_df(file_id)
+def xl_for_review(file_id,file_name,file_year,config = 'raw'):
+    df = concat_all_df(file_id,config)
     df['patient_id'] = df['patient_id'].apply(str)
     df['date_admis'] = pd.to_datetime(df['date_admis'])
     df['spec_date'] = pd.to_datetime(df['spec_date'])
@@ -1313,8 +1338,8 @@ def xl_for_review(file_id,file_name,file_year):
 
 
 
-def get_data_completeness(file_id):
-    df = concat_all_df(file_id)
+def get_data_completeness(file_id,config = 'raw'):
+    df = concat_all_df(file_id,config)
     
     df = df[ df['spec_type'].str.lower() != 'qc' ]
     df = df[ df['spec_type'].str.lower() != 'en' ]
@@ -1365,8 +1390,8 @@ def get_data_completeness(file_id):
     return df
 
 
-def get_data_entero(file_id):
-    df = concat_all_df(file_id)
+def get_data_entero(file_id,config = 'raw'):
+    df = concat_all_df(file_id,config)
     comp = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','entero')
     df_list = pd.DataFrame(comp, columns=['ORG'])
     
@@ -1508,8 +1533,8 @@ def get_data_entero(file_id):
     return ret
 
 
-def get_data_non_ent(file_id):
-    df = concat_all_df(file_id)
+def get_data_non_ent(file_id,config = 'raw'):
+    df = concat_all_df(file_id,config)
     comp = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','non_ent')
     df_list = pd.DataFrame(comp, columns=['ORG'])
     
@@ -1616,8 +1641,8 @@ def get_data_non_ent(file_id):
 
 
 
-def get_data_sal_shi(file_id):
-    df = concat_all_df(file_id)
+def get_data_sal_shi(file_id,config = 'raw'):
+    df = concat_all_df(file_id,config)
     comp = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','sal_shi')
     comp_add = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','sal_shi_add')
     df_list = pd.DataFrame(comp, columns=['ORG'])
@@ -1725,8 +1750,8 @@ def get_data_sal_shi(file_id):
     return ret
 
 
-def get_data_ent_vic(file_id):
-    df = concat_all_df(file_id)
+def get_data_ent_vic(file_id,config = 'raw'):
+    df = concat_all_df(file_id,config)
     comp = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','ent_vic')
     df_list = pd.DataFrame(comp, columns=['ORG'])
   
@@ -1803,8 +1828,8 @@ def get_data_ent_vic(file_id):
 
 
 
-def get_data_pae(file_id):
-    df = concat_all_df(file_id)
+def get_data_pae(file_id,config = 'raw'):
+    df = concat_all_df(file_id,config)
     
     df = df[ df['spec_type'].str.lower() != 'qc' ]
     df = df[ df['spec_type'].str.lower() != 'en' ]
@@ -1891,8 +1916,8 @@ def get_data_pae(file_id):
     
 
 
-def get_data_hin(file_id):
-    df = concat_all_df(file_id)
+def get_data_hin(file_id,config = 'raw'):
+    df = concat_all_df(file_id,config)
     
     df = df[ df['spec_type'].str.lower() != 'qc' ]
     df = df[ df['spec_type'].str.lower() != 'en' ]
@@ -1967,8 +1992,8 @@ def get_data_hin(file_id):
     return ret
 
 
-def get_data_bca(file_id):
-    df = concat_all_df(file_id)
+def get_data_bca(file_id,config = 'raw'):
+    df = concat_all_df(file_id,config)
     
     df = df[ df['spec_type'].str.lower() != 'qc' ]
     df = df[ df['spec_type'].str.lower() != 'en' ]
@@ -2073,8 +2098,8 @@ def get_data_nme(file_id):
     return df
 
 
-def get_data_ngo_nko(file_id):
-    df = concat_all_df(file_id)
+def get_data_ngo_nko(file_id,config = 'raw'):
+    df = concat_all_df(file_id,config)
     
     df = df[ df['spec_type'].str.lower() != 'qc' ]
     df = df[ df['spec_type'].str.lower() != 'en' ]
@@ -2144,8 +2169,8 @@ def get_data_ngo_nko(file_id):
     return ret
 
 
-def get_data_spn(file_id):
-    df = concat_all_df(file_id)
+def get_data_spn(file_id,config = 'raw'):
+    df = concat_all_df(file_id,config)
     
     df = df[ df['spec_type'].str.lower() != 'qc' ]
     df = df[ df['spec_type'].str.lower() != 'en' ]
@@ -2220,8 +2245,8 @@ def get_data_spn(file_id):
 
 
 
-def get_data_ent_positive(file_id):
-    df = concat_all_df(file_id)
+def get_data_ent_positive(file_id,config = 'raw'):
+    df = concat_all_df(file_id,config)
     comp = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','ent_positive')
     df_list = pd.DataFrame(comp, columns=['ORG'])
   
@@ -2306,8 +2331,8 @@ def get_data_ent_positive(file_id):
 
 
 
-def get_data_sta(file_id):
-    df = concat_all_df(file_id)
+def get_data_sta(file_id,config = 'raw'):
+    df = concat_all_df(file_id,config)
     comp = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','sta')
     df_list = pd.DataFrame(comp, columns=['ORG'])
   
@@ -2398,8 +2423,8 @@ def get_data_sta(file_id):
     
     return ret
 
-def get_data_pce(file_id):
-    df = concat_all_df(file_id)
+def get_data_pce(file_id,config = 'raw'):
+    df = concat_all_df(file_id,config)
     
     df = df[ df['spec_type'].str.lower() != 'qc' ]
     df = df[ df['spec_type'].str.lower() != 'en' ]
@@ -2465,8 +2490,8 @@ def get_data_pce(file_id):
     
     return ret
 
-def get_data_pma(file_id):
-    df = concat_all_df(file_id)
+def get_data_pma(file_id,config = 'raw'):
+    df = concat_all_df(file_id,config)
     
     df = df[ df['spec_type'].str.lower() != 'qc' ]
     df = df[ df['spec_type'].str.lower() != 'en' ]
@@ -2606,8 +2631,8 @@ def get_data_other_non_ent(file_id):
     
     return df
 
-def get_data_svi(file_id):
-    df = concat_all_df(file_id)
+def get_data_svi(file_id,config = 'raw'):
+    df = concat_all_df(file_id,config)
     comp = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','svi')
     df_list = pd.DataFrame(comp, columns=['ORG'])
   
@@ -2687,8 +2712,8 @@ def get_data_svi(file_id):
 
 
 
-def get_data_bsn(file_id):
-    df = concat_all_df(file_id)
+def get_data_bsn(file_id,config = 'raw'):
+    df = concat_all_df(file_id,config)
     comp = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','bsn')
     df_list = pd.DataFrame(comp, columns=['ORG'])
   
@@ -2770,8 +2795,8 @@ def get_data_bsn(file_id):
     return ret       
 
 
-def get_mrsa_esbl(file_id):
-    df = concat_all_df(file_id)
+def get_mrsa_esbl(file_id,config = 'raw'):
+    df = concat_all_df(file_id,config)
     
     df = df[ df['spec_type'].str.lower() != 'qc' ]
     df = df[ df['spec_type'].str.lower() != 'en' ]
@@ -4450,4 +4475,41 @@ def clean_pat_type(row):
     
     
     return row
+
+
+
+
+
+
+############################################# BIOINFORMATICS VIEWS #######################################################
+
+@login_required(login_url='/arsp_dmu/login')
+@permission_required('auth.can_show_bioinformatics', raise_exception=True)
+def bioinfo_merge(request):
+    if request.method == 'GET':
+        return render(request, 'bioinfo/bioinfo_merge.html')
+    elif request.method == 'POST':
+        raw_data = request.FILES.get('raw_data')    
         
+        df = merge_epi_data(raw_data)
+        file_name = request.FILES['raw_data'].name       
+        # raw data import
+        
+        response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        response['Content-Disposition'] = 'attachment; filename={name}'.format(
+            name=file_name,
+        )
+        
+        writer = pd.ExcelWriter(response, engine='xlsxwriter')
+        
+        df.to_excel(writer,index=False)
+    
+        writer.save()
+    
+       
+        return response
+
+
+############################################# END OF BIOINFO VIEWS #######################################################

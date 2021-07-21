@@ -3,37 +3,69 @@ from whonet.models import *
 from django.forms import model_to_dict
 
 
-def concat_all_df(file_id):
-    orig = RawOrigin.objects.select_related('rawlocation','rawmicrobiology','rawspecimen','rawantidisk','rawantimic','rawantietest').filter(file_ref=file_id)
-    pallobjs = [ model_to_dict(pallobj) for pallobj in RawOrigin.objects.select_related('rawlocation','rawmicrobiology','rawspecimen','rawantidisk','rawantimic','rawantietest').filter(file_ref=file_id)] 
-    # objs_spec = [model_to_dict(obj.rawspecimen) for obj in orig]
-    objs_spec = [model_to_dict(obj.rawspecimen) for obj in orig]
-    objs_location = [model_to_dict(obj.rawlocation) for obj in orig]
-    objs_micro = [model_to_dict(obj.rawmicrobiology) for obj in orig]
-    objs_dsk = [model_to_dict(obj.rawantidisk) for obj in orig]
-    objs_mic = [model_to_dict(obj.rawantimic) for obj in orig]
-    objs_etest = [model_to_dict(obj.rawantietest) for obj in orig]
-    df = pd.DataFrame(pallobjs)
-    df_spec = pd.DataFrame(objs_spec)
-    # df_spec.drop(columns=['id'])
-    df_loc = pd.DataFrame(objs_location)
-    # df_loc.drop(columns=['id'])
-    df_micro = pd.DataFrame(objs_micro)
-    # df_micro.drop(columns=['id'])
-    df_dsk = pd.DataFrame(objs_dsk)
-    # df_dsk.drop(columns=['id'])
-    df_mic = pd.DataFrame(objs_mic)
-    # df_mic.drop(columns=['id'])
-    df_etest = pd.DataFrame(objs_etest)
-    
-    df2 = pd.merge(df_loc,df_spec,on='origin_ref')
-    df2 = pd.merge(df2,df_micro,on='origin_ref')
-    df2 = pd.merge(df2,df_dsk,on='origin_ref')
-    df2 = pd.merge(df2,df_mic,on='origin_ref')
-    df2 = pd.merge(df2,df_etest,on='origin_ref')
-    # df = pd.merge(df,df2,on='origin_ref')
-    # return HttpResponse(df.columns)
-    df = pd.merge(df,df2,right_on='origin_ref',left_on='id')
+def concat_all_df(file_id,config = 'raw'):
+    if config == 'raw':
+        orig = RawOrigin.objects.select_related('rawlocation','rawmicrobiology','rawspecimen','rawantidisk','rawantimic','rawantietest').filter(file_ref=file_id)
+        pallobjs = [ model_to_dict(pallobj) for pallobj in RawOrigin.objects.select_related('rawlocation','rawmicrobiology','rawspecimen','rawantidisk','rawantimic','rawantietest').filter(file_ref=file_id)] 
+        # objs_spec = [model_to_dict(obj.rawspecimen) for obj in orig]
+        objs_spec = [model_to_dict(obj.rawspecimen) for obj in orig]
+        objs_location = [model_to_dict(obj.rawlocation) for obj in orig]
+        objs_micro = [model_to_dict(obj.rawmicrobiology) for obj in orig]
+        objs_dsk = [model_to_dict(obj.rawantidisk) for obj in orig]
+        objs_mic = [model_to_dict(obj.rawantimic) for obj in orig]
+        objs_etest = [model_to_dict(obj.rawantietest) for obj in orig]
+        df = pd.DataFrame(pallobjs)
+        df_spec = pd.DataFrame(objs_spec)
+        # df_spec.drop(columns=['id'])
+        df_loc = pd.DataFrame(objs_location)
+        # df_loc.drop(columns=['id'])
+        df_micro = pd.DataFrame(objs_micro)
+        # df_micro.drop(columns=['id'])
+        df_dsk = pd.DataFrame(objs_dsk)
+        # df_dsk.drop(columns=['id'])
+        df_mic = pd.DataFrame(objs_mic)
+        # df_mic.drop(columns=['id'])
+        df_etest = pd.DataFrame(objs_etest)
+        
+        df2 = pd.merge(df_loc,df_spec,on='origin_ref')
+        df2 = pd.merge(df2,df_micro,on='origin_ref')
+        df2 = pd.merge(df2,df_dsk,on='origin_ref')
+        df2 = pd.merge(df2,df_mic,on='origin_ref')
+        df2 = pd.merge(df2,df_etest,on='origin_ref')
+        # df = pd.merge(df,df2,on='origin_ref')
+        # return HttpResponse(df.columns)
+        df = pd.merge(df,df2,right_on='origin_ref',left_on='id')
+    else:
+        orig = FinalOrigin.objects.select_related('finallocation','finalmicrobiology','finalspecimen','finalantidisk','finalantimic','finalantietest').filter(file_ref_id=file_id)
+        pallobjs = [ model_to_dict(pallobj) for pallobj in FinalOrigin.objects.select_related('finallocation','finalmicrobiology','finalspecimen','finalantidisk','finalantimic','finalantietest').filter(file_ref_id=file_id)] 
+        # objs_spec = [model_to_dict(obj.rawspecimen) for obj in orig]
+        objs_spec = [model_to_dict(obj.finalspecimen) for obj in orig]
+        objs_location = [model_to_dict(obj.finallocation) for obj in orig]
+        objs_micro = [model_to_dict(obj.finalmicrobiology) for obj in orig]
+        objs_dsk = [model_to_dict(obj.finalantidisk) for obj in orig]
+        objs_mic = [model_to_dict(obj.finalantimic) for obj in orig]
+        objs_etest = [model_to_dict(obj.finalantietest) for obj in orig]
+        df = pd.DataFrame(pallobjs)
+        df_spec = pd.DataFrame(objs_spec)
+        # df_spec.drop(columns=['id'])
+        df_loc = pd.DataFrame(objs_location)
+        # df_loc.drop(columns=['id'])
+        df_micro = pd.DataFrame(objs_micro)
+        # df_micro.drop(columns=['id'])
+        df_dsk = pd.DataFrame(objs_dsk)
+        # df_dsk.drop(columns=['id'])
+        df_mic = pd.DataFrame(objs_mic)
+        # df_mic.drop(columns=['id'])
+        df_etest = pd.DataFrame(objs_etest)
+        
+        df2 = pd.merge(df_loc,df_spec,on='origin_ref')
+        df2 = pd.merge(df2,df_micro,on='origin_ref')
+        df2 = pd.merge(df2,df_dsk,on='origin_ref')
+        df2 = pd.merge(df2,df_mic,on='origin_ref')
+        df2 = pd.merge(df2,df_etest,on='origin_ref')
+        # df = pd.merge(df,df2,on='origin_ref')
+        # return HttpResponse(df.columns)
+        df = pd.merge(df,df2,right_on='origin_ref',left_on='id')
     # df = pd.merge(df,df2,right_on='origin_ref',left_on='id')
     # df = pd.concat([df,df2],axis=1,join="inner")
     df = df.replace('nan','')
