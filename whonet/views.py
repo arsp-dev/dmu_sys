@@ -4492,6 +4492,7 @@ def bioinfo_merge(request):
         raw_data = request.FILES.get('raw_data')    
         
         df = merge_epi_data(raw_data)
+        
         file_name = request.FILES['raw_data'].name       
         # raw data import
         
