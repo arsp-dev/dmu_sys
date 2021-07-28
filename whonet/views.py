@@ -20,7 +20,7 @@ from whonet.functions.summary_report_referred import summary_report_referred
 from whonet.functions.summary_report_enterics_fastidious import get_ent_fast
 from whonet.functions.df_helper import concat_all_df, concat_all_df_referred
 from whonet.functions.satscan_func import import_satscan
-from whonet.functions.bioinfo import merge_epi_data
+from whonet.functions.bioinfo import *
 # import datetime
 
 
@@ -4512,5 +4512,41 @@ def bioinfo_merge(request):
        
         return response
 
+
+@login_required(login_url='/arsp_dmu/login')
+@permission_required('auth.can_show_bioinformatics', raise_exception=True)
+def bioinfo_clean_amr(request):
+    if request.method == 'GET':
+        return render(request, 'bioinfo/bioinfo_clean_amr.html')
+    elif request.method == 'POST':
+        raw_data = request.FILES.get('raw_data')    
+        
+        df = clean_amr_data(raw_data)
+        
+        print(df)
+        
+        file_name = request.FILES['raw_data'].name
+
+
+        response = HttpResponse( df.to_csv(index=False,mode = 'w'),content_type='text/csv')
+        response['Content-Disposition'] = "attachment; filename={}".format(file_name)        
+            
+        # raw data import
+        
+        # response = HttpResponse(
+        # content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        # )
+        # response['Content-Disposition'] = 'attachment; filename={name}'.format(
+        #     name=file_name,
+        # )
+        
+        # writer = pd.ExcelWriter(response, engine='xlsxwriter')
+        
+        # df.to_excel(writer,index=False)
+    
+        # writer.save()
+    
+       
+        return response
 
 ############################################# END OF BIOINFO VIEWS #######################################################

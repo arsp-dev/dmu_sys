@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}
-ARSP-DMU | Bioinformatics | Merge Files
+ARSP-DMU | Bioinformatics | Clean AMR Result
 {% endblock title %}
 
 
@@ -9,12 +9,12 @@ ARSP-DMU | Bioinformatics | Merge Files
     <div class="page-breadcrumb">
                 <div class="row">
                     <div class="col-12 d-flex no-block align-items-center">
-                        <h4 class="page-title">Merge File</h4>
+                        <h4 class="page-title">Clean AMR Result</h4>
                         <div class="ml-auto text-right">
                             <nav aria-label="breadcrumb">
                                 <ol class="breadcrumb">
                                     <li class="breadcrumb-item"><a href="{% url 'whonet_landing' %}">Dashboard</a></li>
-                                    <li class="breadcrumb-item active" aria-current="page">Merge Files</li>
+                                    <li class="breadcrumb-item active" aria-current="page">Clean AMR Result</li>
                                 </ol>
                             </nav>
                         </div>
@@ -31,15 +31,15 @@ ARSP-DMU | Bioinformatics | Merge Files
        <div class="card">
             <div class="card-body">
                 <h4 class="card-title">Select Metadata file to import</h4>
-                <h6 class="card-subtitle p-b-10">Import <code>.xlsx</code> only </h6>
-                <h6 class="card-subtitle p-b-10">The file the you will import here will get the <code>AST data from the EPI_DATA</code>  from our database and will merge to your imported file.</h6>
-                <h6 class="card-subtitle p-b-10">Make sure you have the <code>Alternative Sample Id</code> column in your imported file.</h6>
+                <h6 class="card-subtitle p-b-10">Import <code>.csv</code> only. ARIBA outputs .csv files. </h6>
+                <h6 class="card-subtitle p-b-10">Imported file will clean the columns and will retain the "NAME" and all columns containing ".ref_seq".</h6>
+                <h6 class="card-subtitle p-b-10">All column names will be cleaned as well. This tool will remove the ".ref_seq" word to column headers.</h6>
                 <div class="form-group row m-t-10">
                   
                     <div class="col-md-6">
                         <label >File Upload</label>
                         <div class="custom-file">
-                            <form method="post" enctype="multipart/form-data" action="{% url 'bioinfo_merge' %}">
+                            <form method="post" enctype="multipart/form-data" action="{% url 'bioinfo_clean_amr' %}">
                             {% csrf_token %}
                             
                             <input type="file" class="custom-file-input" id="validatedCustomFile" name="raw_data" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required> 

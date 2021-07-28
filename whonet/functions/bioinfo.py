@@ -14,8 +14,15 @@ def merge_epi_data(input):
    df_input = pd.read_excel(input)
    df_merge_col = pd.merge(df_input, epi_data,  on='Alternative sample id', how = 'outer')
    df_merge_col.dropna(subset = ["Sample id"], inplace=True)
-#    df_merge_col = pd.merge(df_input, epi_data,)
    
    df_merge_col = df_merge_col[df_merge_col.columns.drop(list(df_merge_col.filter(regex='Unnamed')))]
     
    return df_merge_col
+
+
+
+def clean_amr_data(input):
+    df = pd.read_csv(input)
+    df.drop([col for col in df.columns if 'ref_seq' not in col and 'name' not in col],axis=1,inplace=True)
+    df.fillna('NO', inplace=True)
+    return df
