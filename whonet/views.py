@@ -1443,7 +1443,7 @@ def get_data_entero(file_id,config = 'raw'):
             if row['amp_nd10'] != '' or row['amp_nm'] != '':
                 ess_amp += 1
             if row['atm_nd30'] != '' or row['atm_nm'] != '':
-                ess_atm += 1
+                ess_atm += 1    
             if row['czo_nd30'] != '' or row['czo_nm'] != '':
                 ess_czo += 1
             if row['fep_nd30'] != '' or row['fep_nm'] != '':
