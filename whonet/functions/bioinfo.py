@@ -12,7 +12,7 @@ epi_data = epi_data.drop(['Sample id'], axis=1)
 
 def merge_epi_data(input):
    df_input = pd.read_excel(input)
-   df_merge_col = pd.merge(df_input, epi_data,  on='Alternative sample id', how = 'outer')
+   df_merge_col = pd.merge(df_input, epi_data,  on='Alternative sample id')
    df_merge_col.dropna(subset = ["Sample id"], inplace=True)
    
    df_merge_col = df_merge_col[df_merge_col.columns.drop(list(df_merge_col.filter(regex='Unnamed')))]
