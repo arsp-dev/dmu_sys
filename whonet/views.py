@@ -2742,6 +2742,8 @@ def get_data_svi(file_id,config = 'raw'):
     svi_lnz = 0
     svi_pen = 0
     svi_van = 0
+    svi_fep = 0
+    svi_ctx = 0
     
     for index,row in df.iterrows():
         if row['organism'] in cmp:
@@ -2750,6 +2752,10 @@ def get_data_svi(file_id,config = 'raw'):
                     svi_amp += 1
                 if row['cro_nd30'] != '' or row['cro_nm'] != '':
                     svi_cro += 1
+                if row['fep_nd30'] != '' or row['fep_nm'] != '':
+                    svi_fep += 1
+                if row['ctx_nd30'] != '' or row['ctx_nm'] != '':
+                    svi_ctx += 1
                 if row['chl_nd30'] != '' or row['chl_nm'] != '':
                     svi_chl += 1
                 if row['cli_nd2'] != '' or row['cli_nm'] != '':
@@ -2766,20 +2772,22 @@ def get_data_svi(file_id,config = 'raw'):
                     
     svi_data = [['Antibiotic','Number tested','Percentage'],
                   ['1. Ampicillin',svi_amp,str(  round(((svi_amp)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
-                  ['2. Cefriaxone',svi_cro,str(  round(((svi_cro)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
-                  ['3. Chloramphenicol',svi_chl,str(  round(((svi_chl)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
-                  ['4. Clindamycin',svi_cli,str(  round(((svi_cli)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
-                  ['5. Erythromycin',svi_ery,str(  round(((svi_ery)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
-                  ['6. Linezolid',svi_lnz,str(  round(((svi_lnz)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
-                  ['7. Penicillin',svi_pen,str(  round(((svi_pen)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
-                  ['8. Vancomycin',svi_van,str(  round(((svi_van)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%']
+                  ['2. Cefepime',svi_fep,str(  round(((svi_fep)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
+                  ['3. Cefotaxime',svi_ctx,str(  round(((svi_ctx)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
+                  ['4. Cefriaxone',svi_cro,str(  round(((svi_cro)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
+                  ['5. Chloramphenicol',svi_chl,str(  round(((svi_chl)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
+                  ['6. Clindamycin',svi_cli,str(  round(((svi_cli)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
+                  ['7. Erythromycin',svi_ery,str(  round(((svi_ery)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
+                  ['8. Linezolid',svi_lnz,str(  round(((svi_lnz)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
+                  ['9. Penicillin',svi_pen,str(  round(((svi_pen)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
+                  ['10. Vancomycin',svi_van,str(  round(((svi_van)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%']
                   ]
     
     ret = []
     df = pd.DataFrame(data=svi_data, columns=['Streptococcus Viridans Group','Number',svi_all])
     
     tmp_svi = round(((round(((svi_amp)/(svi_all))*100,2) + round(((svi_cro)/(svi_all))*100,2) + round(((svi_chl)/(svi_all))*100,2) + round(((svi_cli)/(svi_all))*100,2) + round(((svi_ery)/(svi_all))*100,2) \
-                + round(((svi_lnz)/(svi_all))*100,2) + round(((svi_pen)/(svi_all))*100,2) + round(((svi_van)/(svi_all))*100,2)) / 8),2) if svi_all > 0 else 0
+                + round(((svi_lnz)/(svi_all))*100,2)  + round(((svi_fep)/(svi_all))*100,2)  + round(((svi_ctx)/(svi_all))*100,2) + round(((svi_pen)/(svi_all))*100,2) + round(((svi_van)/(svi_all))*100,2)) / 10),2) if svi_all > 0 else 0
       
     svi_summary = ['Streptococcus Viridans Group',svi_all,str(tmp_svi) + '%']
     
