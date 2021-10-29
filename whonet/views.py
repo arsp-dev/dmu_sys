@@ -1300,15 +1300,15 @@ def xl_for_review(file_id,file_name,file_year,config = 'raw'):
     df['spec_date'] = pd.to_datetime(df['spec_date'])
     df['date_birth'] = pd.to_datetime(df['date_birth'])
     
-    df_date_of_admission = df[ df['date_admis'].dt.year != file_year ]
+    df_date_of_admission = df[df['date_admis'].dt.year != file_year]
     df_spec_date = df[ df['spec_date'].dt.year != file_year]
     df_date_birth = df[ df['date_birth'] > datetime.now()]
     sex = ['m','f']
-    # df_sex = df.apply(lambda row: row if row['sex'] not in sex else '')
+    
     df_sex = df[ ~df['sex'].isin(sex) ]
     df_org = df[ ~df['organism'].isin(org_list) ]
     df_spec_type = df[ ~df['spec_type'].isin(spec_list) ]
-    # df_sex = df[ (df['sex'] != 'm') | (df['sex'] != 'f') ]
+   
     
 
     writer = pd.ExcelWriter('INVALID_CODES_FOR_REVIEW_{}.xlsx'.format(file_name), engine='xlsxwriter')
