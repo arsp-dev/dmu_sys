@@ -2483,7 +2483,7 @@ def get_data_sta(file_id,config = 'raw'):
                 ['11. Trimethoprim-Sulfamethoxazole',sta_sxt,str(  round(((sta_sxt)/(sta_all))*100,2) ) + "%" if sta_all > 0 else '0%'],
                 ['12. Vancomycin',sta_van,str(  round(((sta_van)/(sta_all))*100,2) ) + "%" if sta_all > 0 else '0%'],
                 ['','Additional for Urine',sta_ur],
-                ['1. Nitrofurantoin',sta_nit,str(  round(((sta_nit)/(sta_ur))*100,2) ) + "%" if sta_all > 0 else '0%'],
+                ['1. Nitrofurantoin',sta_nit,str(  round(((sta_nit)/(sta_ur))*100,2) ) + "%" if sta_ur > 0 else '0%'],
                 ]
     
     ret = []
