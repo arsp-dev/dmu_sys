@@ -241,7 +241,7 @@ def summary_report_referred(file_id,file_name,config = 'raw'):
         df_bsn_reffered, cols = remove_null_cols(df_bsn_reffered,['PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','ESBL','CAZ_ND30','CAZ_NM','CAZ_RIS','CTX_ND30','CTX_NM','CTX_RIS','CRO_ND30','CRO_NM','CRO_RIS','FEP_ND30','FEP_NM','FEP_RIS','IPM_ND10','IPM_NM','IPM_RIS','MEM_ND10','MEM_NM','MEM_RIS','ETP_ND10','ETP_NM','ETP_RIS','DOR_ND10','DOR_NM','DOR_RIS','COL_NM','COL_RIS'])
         df_bsn_reffered = df_bsn_reffered[cols]
     
-    enterobact_list = ['CAZ_ND30','CTX_ND30','CRO_ND30','FEP_ND30','IPM_ND10','MEM_ND10','ETP_ND10','CAZ_NM','CTX_NM','CRO_NM','FEP_NM','IPM_NM','MEM_NM','ETP_NM','COL_NM']
+    enterobact_list = ['CAZ_RIS','CTX_RIS','CRO_RIS','FEP_RIS','IPM_RIS','MEM_RIS','ETP_RIS','COL_RIS']
     if len(df_enterobact_all) > 0:
         # df_enterobact_all_concat = df_enterobact_all.apply(lambda row: check_R_entero(row,enterobact_all_list), axis = 1)
         df_enterobact_all = df_enterobact_all.apply(lambda row: check_R_entero(row,enterobact_list), axis = 1)
@@ -573,11 +573,8 @@ def check_R_bsn(row,value_list):
             return row
 
 def check_R_entero(row,value_list):
-    if row['ESBL'] == '+':
-        row['Test'] = 'R'
-        
     for x in value_list:
-        if row[x] == 'R':
+        if row[x] == 'R' or row['ESBL'] == '+':
             row['Test'] = 'R'
             return row
         else:
