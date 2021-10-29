@@ -222,7 +222,7 @@ def summary_report_referred(file_id,file_name,config = 'raw'):
         df_ent_ir = df_ent.apply(lambda row: calculate_R_S(row,value,ent,ent_list), axis = 1)
         df_ent_referred_ir = df_ent_referred_ir.apply(lambda row: calculate_R_S(row,value,ent,ent_list), axis = 1)
     
-    bsn_ant_list = ['AMP_ND10','AMP_NM','PEN_ND10','PEN_NM','VAN_ND30','VAN_NM','LVX_ND5','LVX_NM','CRO_ND30','CRO_NM','LNZ_ND30','LNZ_NM','DAP_ND30','DAP_NM','CLI_ND2','CLI_NM','CHL_ND30','CHL_NM','ERY_ND15','ERY_NM','CTX_ND30','CTX_NM','FEP_ND30','FEP_NM'] 
+    bsn_ant_list = ['AMP_RIS','PEN_RIS','VAN_RIS','LVX_RIS','CRO_RIS','LNZ_RIS','DAP_RIS','CLI_RIS','CHL_RIS','ERY_RIS','CTX_RIS','FEP_RIS'] 
     if len(df_bsn) > 0:
         df_bsn = df_bsn.apply(lambda row: check_R_bsn(row,bsn_ant_list), axis = 1)
         df_bsn = df_bsn[(df_bsn['Test'] == 'I')  | (df_bsn['Test'] == 'R')]
@@ -587,6 +587,7 @@ def check_R_nfo(row,value_list):
     for x in value_list:
         if row['IPM_RIS'] == 'R' \
         or row['MEM_RIS'] == 'R'  \
+        or row['CARBAPENEM'] == '+' \    
         or row['ETP_RIS'] == 'R':
         # or row['DOR_RIS'] == 'R'  \
         # or row['CARBAPENEM'] == 1 \
