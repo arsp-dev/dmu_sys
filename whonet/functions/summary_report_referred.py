@@ -573,8 +573,11 @@ def check_R_bsn(row,value_list):
             return row
 
 def check_R_entero(row,value_list):
+    if row['ESBL'] == '+':
+        row['Test'] = 'R'
+        
     for x in value_list:
-        if row[x] == 'R' or row['ESBL'] == '+':
+        if row[x] == 'R':
             row['Test'] = 'R'
             return row
         else:
