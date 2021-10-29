@@ -585,13 +585,7 @@ pae_list_all = ['IPM_ND10','MEM_ND10','ETP_ND10','DOR_ND10','IPM_NM','MEM_NM','E
 def check_R_nfo(row,value_list):
     row['Test'] = ''
     for x in value_list:
-        if row['IPM_RIS'] == 'R' \
-        or row['MEM_RIS'] == 'R'  \
-        or row['CARBAPENEM'] == '+' \    
-        or row['ETP_RIS'] == 'R':
-        # or row['DOR_RIS'] == 'R'  \
-        # or row['CARBAPENEM'] == 1 \
-        # or row['CARBAPENEM'] == '+':
+        if row['IPM_RIS'] == 'R' or row['MEM_RIS'] == 'R' or row['ETP_RIS'] == 'R' or row['CARBAPENEM'] == '+':
             row['Test'] = 'R'
             return row
         else:
