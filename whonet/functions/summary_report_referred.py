@@ -70,7 +70,7 @@ def summary_report_referred(file_id,file_name,config = 'raw'):
     if len(df_enterobact_all) > 0:
         df_enterobact_all = df_enterobact_all[df_enterobact_all['X_REFERRED'] != '1']
         # df_enterobact_col = df_enterobact_all
-        # df_enterobact_all = df_enterobact_all[df_enterobact_all['ent_fast'].dt.days >= 0]
+        df_enterobact_all = df_enterobact_all[df_enterobact_all['ent_fast'].dt.days >= 0]
     
     df_enterobact_all_referred = df_referred[df_referred['ORGANISM'].isin(['eco','kpn'])]
     df_enterobact_col_referred = df_enterobact_all_referred[df_enterobact_all_referred['X_REFERRED'] == '1']
