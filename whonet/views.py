@@ -1298,7 +1298,7 @@ def xl_for_review(file_id,file_name,file_year,config = 'raw'):
     df['patient_id'] = df['patient_id'].apply(str)
     df['date_admis'] = pd.to_datetime(df['date_admis'])
     df['spec_date'] = pd.to_datetime(df['spec_date'])
-    df['date_birth'] = pd.to_datetime(df['date_birth'])
+    df['date_birth'] = pd.to_datetime(df['date_birth'],errors='coerce')
     
     df_date_of_admission = df[df['date_admis'].dt.year != file_year]
     df_spec_date = df[ df['spec_date'].dt.year != file_year]
