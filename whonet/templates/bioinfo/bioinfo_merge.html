@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}
-ARSP-DMU | Bioinformatics | Merge Files
+ARSP-DMU | Bioinformatics | Import GHRU Files
 {% endblock title %}
 
 
@@ -26,43 +26,163 @@ ARSP-DMU | Bioinformatics | Merge Files
 
 
 {% block content %}
-  <div class="row">
+<div class="row">
     <div class="mx-auto col-md-9 col-lg-9 col-xlg-9">
        <div class="card">
             <div class="card-body">
-                <h4 class="card-title">Select Metadata file to import</h4>
+                <h4 class="card-title">EPIDIMIOLOGY METADATA</h4>
                 <h6 class="card-subtitle p-b-10">Import <code>.xlsx</code> only </h6>
-                <h6 class="card-subtitle p-b-10">The file the you will import here will get the <code>AST data from the EPI_DATA</code>  from our database and will merge to your imported file.</h6>
-                <h6 class="card-subtitle p-b-10">Make sure you have the <code>Alternative Sample Id</code> column in your imported file.</h6>
-                <div class="form-group row m-t-10">
-                  
-                    <div class="col-md-6">
-                        <label >File Upload</label>
-                        <div class="custom-file">
-                            <form method="post" enctype="multipart/form-data" action="{% url 'bioinfo_merge' %}">
-                            {% csrf_token %}
+                <!-- <h6 class="card-subtitle p-b-10">The file the you will import here will get the <code>AST data from the EPI_DATA</code>  from our database and will merge to your imported file.</h6> -->
+                <!-- <h6 class="card-subtitle p-b-10">Make sure you have the <code>Alternative Sample Id</code> column in your imported file.</h6> -->
+                <div class="form-group">
+                    <form method="post" enctype="multipart/form-data" action="{% url 'bioinfo_merge' %}">
+                        {% csrf_token %}
+                        <div class="row mx-auto col-md-9 col-lg-9 col-xlg-9">
+                          
+                                <label >File Upload (metadata)</label>
                             
-                            <input type="file" class="custom-file-input" id="validatedCustomFile" name="raw_data" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required> 
-                            <label class="custom-file-label" for="validatedCustomFile">
-                                <span class="d-inline-block text-truncate w-75">Choose file to import</span>
-                            </label>
-                            
-                        </div>
-                    </div>
+                                    <div class="custom-file">
+                                 
+                                    
+                                        <input type="file" class="custom-file-input" id="validatedCustomFile" name="metadata" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required> 
+                                        <label class="custom-file-label" for="validatedCustomFile">
+                                            <span class="d-inline-block text-truncate w-75">Choose file to import</span>
+                                        </label>
+                                        
+                                    </div>
+                                   
+                             
+                                    <button type="submit" class="btn btn-primary">Submit</button> 
+                       
+                          
                 </div>
+               
             </div>
             <div class="border-top">
                 <div class="card-body">
-                    <button type="submit" class="btn btn-primary">Submit</button>
+                   
+                        Number of rows encoded: {{ epimetadata_count }} <br>
+                        <!-- Years Encoded: <br>
+                        <ul>
+                        {% for epimetadata_year in epimetadata_years %}
+                       
+                            <li>
+                                {{ epimetadata_year.year }}
+                            </li>
+                        {% endfor %}
+                    </ul> -->
+                        
+                   
+                   
+                  
+
                  
                 </div>
                 </form>
             </div>
         </div>
     </div>
+    </div>
+
+    <div class="mx-auto col-md-9 col-lg-9 col-xlg-9">
+        <div class="card">
+             <div class="card-body">
+                 <h4 class="card-title">Retro Qualifyr</h4>
+                 <h6 class="card-subtitle p-b-10">Import <code>.xlsx</code> only </h6>
+                 <!-- <h6 class="card-subtitle p-b-10">The file the you will import here will get the <code>AST data from the EPI_DATA</code>  from our database and will merge to your imported file.</h6> -->
+                 <!-- <h6 class="card-subtitle p-b-10">Make sure you have the <code>Alternative Sample Id</code> column in your imported file.</h6> -->
+                 <div class="form-group">
+                     <form method="post" enctype="multipart/form-data" action="{% url 'bioinfo_merge' %}">
+                         {% csrf_token %}
+                         <div class="row mx-auto col-md-9 col-lg-9 col-xlg-9">
+                           
+                                 <label >File Upload (qualifyr)</label>
+                             
+                                     <div class="custom-file">
+                                  
+                                     
+                                         <input type="file" class="custom-file-input" id="validatedCustomFile" name="qualifyr" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required> 
+                                         <label class="custom-file-label" for="validatedCustomFile">
+                                             <span class="d-inline-block text-truncate w-75">Choose file to import</span>
+                                         </label>
+                                         
+                                     </div>
+                                    
+                              
+                                     <button type="submit" class="btn btn-primary">Submit</button> 
+                        
+                           
+                 </div>
+                
+             </div>
+             <div class="border-top">
+                 <div class="card-body">
+                    
+                        Number of rows encoded: {{ retro_qualifyr_count }} <br>
+                         
+                    
+                    
+                   
+ 
+                  
+                 </div>
+                 </form>
+             </div>
+         </div>
+     </div>
+     </div>
 
 
-    
+
+
+     <div class="mx-auto col-md-9 col-lg-9 col-xlg-9">
+        <div class="card">
+             <div class="card-body">
+                 <h4 class="card-title">MLST</h4>
+                 <h6 class="card-subtitle p-b-10">Import <code>.xlsx</code> only </h6>
+                 <!-- <h6 class="card-subtitle p-b-10">The file the you will import here will get the <code>AST data from the EPI_DATA</code>  from our database and will merge to your imported file.</h6> -->
+                 <!-- <h6 class="card-subtitle p-b-10">Make sure you have the <code>Alternative Sample Id</code> column in your imported file.</h6> -->
+                 <div class="form-group">
+                     <form method="post" enctype="multipart/form-data" action="{% url 'bioinfo_merge' %}">
+                         {% csrf_token %}
+                         <div class="row mx-auto col-md-9 col-lg-9 col-xlg-9">
+                           
+                                 <!-- <label >File Upload (mlst)</label> -->
+                             
+                                     <div class="custom-file col-md-6">
+                                  
+                                     
+                                         <input type="file" class="custom-file-input" id="validatedCustomFile" name="mlst" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required> 
+                                         <label class="custom-file-label" for="validatedCustomFile">
+                                             <span class="d-inline-block text-truncate w-75">Choose file to import</span>
+                                         </label>
+                                         
+                                     </div>
+
+                                     <select name="mlst_organism" class="select2 form-select shadow-none col-md-6" required style=" height: 120px;">
+                                        <option  value=""> </option>
+                                        <option  value="salmonella">Salmonella - All</option>
+                                      </select>
+                                    
+                              
+                                     <button type="submit" class="btn btn-primary">Submit</button> 
+                        
+                           
+                 </div>
+            
+                
+             </div>
+             <div class="border-top">
+                 <div class="card-body">
+                    
+                        Number of rows encoded: {{ retro_qualifyr_count }} <br>
+                
+                 </div>
+                 </form>
+             </div>
+         </div>
+     </div>
+     </div>
   </div>
 
                       

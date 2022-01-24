@@ -30,7 +30,9 @@ urlpatterns = [
     #################### BIOINFORMATICS ENDPOINTS ##################################
     
     path('bioinfo_merge', views.bioinfo_merge,name="bioinfo_merge"),
+    path('bioinfo_ghru', views.bioinfo_ghru,name="bioinfo_ghru"),
     path('bioinfo_clean_amr', views.bioinfo_clean_amr,name="bioinfo_clean_amr"),
+    path('file_merger', views.file_merger,name="file_merger"),
     
     
     #################### END OF BIOINFORMATICS ENDPOINTS ###########################

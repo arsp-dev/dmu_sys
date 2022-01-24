@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}
+ARSP-DMU | Bioinformatics | Create GHRU Reports
+{% endblock title %}
+
+
+{% block breadcrumb %}
+    <div class="page-breadcrumb">
+                <div class="row">
+                    <div class="col-12 d-flex no-block align-items-center">
+                        <h4 class="page-title">Merge File</h4>
+                        <div class="ml-auto text-right">
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="{% url 'whonet_landing' %}">Dashboard</a></li>
+                                    <li class="breadcrumb-item active" aria-current="page">Merge Files</li>
+                                </ol>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+{% endblock breadcrumb %}
+
+
+
+{% block content %}
+<div class="row">
+    <div class="mx-auto col-md-9 col-lg-9 col-xlg-9">
+       <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Create GHRU Report</h4>
+                <h6 class="card-subtitle p-b-10">Select ORGANISMS to begin report creation</h6>
+                <!-- <h6 class="card-subtitle p-b-10">The file the you will import here will get the <code>AST data from the EPI_DATA</code>  from our database and will merge to your imported file.</h6> -->
+                <!-- <h6 class="card-subtitle p-b-10">Make sure you have the <code>Alternative Sample Id</code> column in your imported file.</h6> -->
+                <div class="form-group row">
+                   
+
+                    
+                    <label class="col-md-3 m-t-15">Select ORGANISMS</label>
+                    <div class="col-md-9">
+                        <form method="post" enctype="multipart/form-data" action="{% url 'bioinfo_ghru' %}">
+                            {% csrf_token %}
+                        <select class="form-control m-t-15" multiple="multiple" style="height: 150px;" name="organism">
+                            {% for epimetadata_organism in epimetadata_organisms %}
+                             <option value="{{ epimetadata_organism.wgs_id }}">{{ epimetadata_organism.wgs_id }}</option>
+                            {% endfor %}
+                          
+                        </select>
+                    </div>
+                </div>
+            <div class="border-top">
+                <div class="card-body">
+                   
+                
+                        
+                   
+                    <button type="submit" class="btn btn-primary">Submit</button> 
+                  
+
+                 
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    </div>
+
+  </div>
+
+                      
+{% endblock content %}
+

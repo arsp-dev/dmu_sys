@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}
+ARSP-DMU | Bioinformatics | File Merger
+{% endblock title %}
+
+
+{% block breadcrumb %}
+    <div class="page-breadcrumb">
+                <div class="row">
+                    <div class="col-12 d-flex no-block align-items-center">
+                        <h4 class="page-title">File Merger</h4>
+                        <div class="ml-auto text-right">
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb">
+                                    <li class="breadcrumb-item"><a href="{% url 'whonet_landing' %}">Dashboard</a></li>
+                                    <li class="breadcrumb-item active" aria-current="page">File Merger</li>
+                                </ol>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+{% endblock breadcrumb %}
+
+
+
+{% block content %}
+  <div class="row">
+    <div class="mx-auto col-md-9 col-lg-9 col-xlg-9">
+       <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Select Metadata file to import</h4>
+                <form method="post" enctype="multipart/form-data" action="{% url 'file_merger' %}">
+                    {% csrf_token %}
+                    <div class="col-md-6">
+                        <label >Left</label>
+                        <div class="custom-file">
+                           
+                            
+                            <input type="file" class="custom-file-input" id="validatedCustomFile" name="left" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required> 
+                            <label class="custom-file-label" for="validatedCustomFile">
+                                <span class="d-inline-block text-truncate w-75">Choose file to import</span>
+                            </label>
+                            
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label >Right</label>
+                        <div class="custom-file">
+                           
+                            
+                            <input type="file" class="custom-file-input" id="validatedCustomFile" name="right" accept="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required> 
+                            <label class="custom-file-label" for="validatedCustomFile">
+                                <span class="d-inline-block text-truncate w-75">Choose file to import</span>
+                            </label>
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="border-top">
+                <div class="card-body">
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                 
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    
+  </div>
+
+                      
+{% endblock content %}
+

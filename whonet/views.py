@@ -1099,7 +1099,6 @@ def delete_raw(request,file_id):
 @permission_required('whonet.add_rawfilename', raise_exception=True)
 def delete_referred(request):
     request_file_name = request.POST.get('file_id')
-    print(request_file_name)
     file_name = ReferredFileName.objects.get(id=request_file_name)
     ReferredOrigin.objects.select_related('referredlocation','referredmicrobiology','referredspecimen','referredantidisk','referredantimic','referredantidiskris','referredantimicris').filter(file_ref=file_name).delete()
     ReferredFileName.objects.get(id=request_file_name).delete()
@@ -4572,34 +4571,61 @@ def clean_pat_type(row):
 
 ############################################# BIOINFORMATICS VIEWS #######################################################
 
+
 @login_required(login_url='/arsp_dmu/login')
 @permission_required('auth.can_show_bioinformatics', raise_exception=True)
-def bioinfo_merge(request):
+def bioinfo_ghru(request):
+    epimetadata_organisms = EpiMetaData.objects.values('wgs_id').distinct().exclude(wgs_id__isnull=True).exclude(wgs_id__exact='nan').order_by('wgs_id')
     if request.method == 'GET':
-        return render(request, 'bioinfo/bioinfo_merge.html')
+        return render(request,'bioinfo/bioinfo_ghru.html',{'epimetadata_organisms' : epimetadata_organisms})
     elif request.method == 'POST':
-        raw_data = request.FILES.get('raw_data')    
+        organisms = request.POST.getlist('organism')
+        df,gender,origin,specimen_type,age_group,ast_profile,site,patient_type,year,serotype,sequence_type = create_report(organisms)
         
-        df = merge_epi_data(raw_data)
-        
-        file_name = request.FILES['raw_data'].name       
-        # raw data import
-        
-        response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        )
-        response['Content-Disposition'] = 'attachment; filename={name}'.format(
-            name=file_name,
-        )
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',)
+        response['Content-Disposition'] = 'attachment; filename={name}.xlsx'.format(name='query',)
         
         writer = pd.ExcelWriter(response, engine='xlsxwriter')
         
-        df.to_excel(writer,index=False)
-    
+        # concat_df = pd.concat([concat_df,concat_qc_df])
+        df.to_excel(writer, sheet_name='Sheet1',index=False)
+        gender.to_excel(writer, sheet_name='Gender',index=False)
+        origin.to_excel(writer, sheet_name='Origin',index=False)
+        specimen_type.to_excel(writer, sheet_name='Specimen Type',index=False)
+        age_group.to_excel(writer, sheet_name='Age Group',index=False)
+        ast_profile.to_excel(writer, sheet_name='AST Profile',index=False)
+        site.to_excel(writer, sheet_name='Sentinel Site',index=False)
+        patient_type.to_excel(writer, sheet_name='Patient Type',index=False)
+        year.to_excel(writer, sheet_name='Year',index=False)
+        serotype.to_excel(writer, sheet_name='Serotype',index=False)
+        sequence_type.to_excel(writer, sheet_name='Sequence Type',index=False)
+        
+        
         writer.save()
-    
-       
-        return response
+        
+        return response 
+        # return render(request,'bioinfo/bioinfo_ghru.html',{'epimetadata_organisms' : epimetadata_organisms})
+
+@login_required(login_url='/arsp_dmu/login')
+@permission_required('auth.can_show_bioinformatics', raise_exception=True)
+def bioinfo_merge(request):
+    epimetadata_years = EpiMetaData.objects.values('year').distinct().exclude(year__isnull=True).exclude(year__exact='nan').order_by('year')
+    epimetadata_organisms = EpiMetaData.objects.values('wgs_id').distinct().exclude(wgs_id__isnull=True).exclude(wgs_id__exact='nan').order_by('wgs_id')
+    epimetadata_count = EpiMetaData.objects.all().count()
+    retro_qualifyr_count = RetroQualifyr.objects.all().count()
+    if request.method == 'GET':
+        return render(request, 'bioinfo/bioinfo_merge.html',{'epimetadata_years' : epimetadata_years, 'epimetadata_organisms' : epimetadata_organisms , 'epimetadata_count' : epimetadata_count, 'retro_qualifyr_count' : retro_qualifyr_count})
+    # return render(request,'whonet/whonet_transform.html',{'f_names': f_names,'year_all' : year_all})
+    elif request.method == 'POST':
+        metadata = request.FILES.get('metadata')
+        qualifyr = request.FILES.get('qualifyr')
+        mlst = request.FILES.get('mlst')
+        mlst_organism = request.POST.get('mlst_organism')
+        df = import_data(metadata,qualifyr,mlst,mlst_organism)
+        
+ 
+        
+        return render(request, 'bioinfo/bioinfo_merge.html',{'epimetadata_years' : epimetadata_years, 'epimetadata_organisms' : epimetadata_organisms , 'epimetadata_count' : epimetadata_count, 'retro_qualifyr_count' : retro_qualifyr_count})
 
 
 @login_required(login_url='/arsp_dmu/login')
@@ -4612,7 +4638,6 @@ def bioinfo_clean_amr(request):
         
         df = clean_amr_data(raw_data)
         
-        print(df)
         
         file_name = request.FILES['raw_data'].name
 
@@ -4636,6 +4661,28 @@ def bioinfo_clean_amr(request):
         # writer.save()
     
        
+        return response
+    
+    
+
+@login_required(login_url='/arsp_dmu/login')
+@permission_required('auth.can_show_bioinformatics', raise_exception=True)
+def file_merger(request):
+    if request.method == 'GET':
+        return render(request, 'bioinfo/file_merger.html')
+    elif request.method == 'POST':
+        left = request.FILES.get('left')
+        right = request.FILES.get('right')
+        
+        df_left = pd.DataFrame(pd.read_excel(left))
+        df_right = pd.DataFrame(pd.read_excel(right))
+        
+        df = pd.merge(df_left,df_right,on='sample_id',how="outer")
+        
+        response = HttpResponse( df.to_csv(index=False,mode = 'w'),content_type='text/csv')
+        response['Content-Disposition'] = "attachment; filename={}".format('file_name.csv')  
+        
+        
         return response
 
 ############################################# END OF BIOINFO VIEWS #######################################################

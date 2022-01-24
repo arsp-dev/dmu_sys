@@ -81,7 +81,7 @@ DATABASES = {
         'NAME': 'dmu_whonet',
         'USER': 'postgres',
         'PASSWORD': 'secret123',
-        'HOST': '127.0.0.1',
+        'HOST': '10.10.25.163',
         'PORT': '5432',
     }
 }
