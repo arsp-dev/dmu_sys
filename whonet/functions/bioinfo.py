@@ -5,7 +5,7 @@ import numpy as np
 from django.utils.datastructures import MultiValueDictKeyError
 from datetime import datetime
 import os
-from whonet.functions.insert_rows import import_metadata, import_mlst_salmonella, import_qualifyr
+from whonet.functions.insert_rows import import_metadata, import_mlst_salmonella, import_qualifyr, import_arsp_qualifyr
 from django.forms import model_to_dict
 
 dirpath = os.getcwd()
@@ -34,6 +34,26 @@ def import_data(metadata,qualifyr,mlst,mlst_organism):
   
     
    # return df_metadata
+
+def import_arsp_data(metadata,qualifyr,mlst,mlst_organism):
+   if(metadata is not None):
+     df_metadata = pd.read_excel(metadata)
+    #  EpiMetaData.objects.all().delete()
+     df_metadata_processed = import_metadata(df_metadata.iterrows())
+    
+  
+   
+   if(qualifyr is not None):
+    df_qualifyr = pd.read_excel(qualifyr)
+    #  RetroQualifyr.objectes.all().delete()
+    df_qualifyr_processed = import_arsp_qualifyr(df_qualifyr.iterrows())
+  
+  
+   if(mlst is not None):
+     df_mlst = pd.read_excel(mlst)
+     
+     if(mlst_organism == 'salmonella'):
+        df_mlst_processed = import_mlst_salmonella(df_mlst.iterrows())
 
 
 

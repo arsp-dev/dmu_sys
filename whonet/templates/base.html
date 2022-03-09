@@ -246,6 +246,13 @@
                                <li class="sidebar-item"><a href="{% url 'bioinfo_ghru' %}" class="sidebar-link"><i class="mdi mdi-file-import"></i><span class="hide-menu"> Create GHRU Reports </span></a></li>
                                <li class="sidebar-item"><a href="{% url 'file_merger' %}" class="sidebar-link"><i class="mdi mdi-file-import"></i><span class="hide-menu"> Merge Files </span></a></li>
                            </ul>
+                           <li class="sidebar-item"> <a class="sidebar-link has-arrow waves-effect waves-dark" href="javascript:void(0)" aria-expanded="false"><i class="mdi mdi-earth"></i><span class="hide-menu">ARSP Bioinformatics</span></a>
+                            <ul aria-expanded="false" class="collapse  first-level">
+                                <!-- <li class="sidebar-item"><a href="{% url 'bioinfo_clean_amr' %}" class="sidebar-link"><i class="mdi mdi-file-import"></i><span class="hide-menu"> Clean AMR Result </span></a></li>        -->
+                                <li class="sidebar-item"><a href="{% url 'arsp_bioinfo_import' %}" class="sidebar-link"><i class="mdi mdi-file-import"></i><span class="hide-menu"> Import WGS Files </span></a></li>
+                                <!-- <li class="sidebar-item"><a href="{% url 'bioinfo_ghru' %}" class="sidebar-link"><i class="mdi mdi-file-import"></i><span class="hide-menu"> Create GHRU Reports </span></a></li> -->
+                                <!-- <li class="sidebar-item"><a href="{% url 'file_merger' %}" class="sidebar-link"><i class="mdi mdi-file-import"></i><span class="hide-menu"> Merge Files </span></a></li> -->
+                            </ul>
                        {% endif %}
                         {% if perms.whonet.add_rawfilename %}
                       

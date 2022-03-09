@@ -4686,3 +4686,35 @@ def file_merger(request):
         return response
 
 ############################################# END OF BIOINFO VIEWS #######################################################
+
+
+
+
+
+
+
+############################################# ARSP BIOINFORMATICS VIEWS #######################################################
+
+@login_required(login_url='/arsp_dmu/login')
+@permission_required('auth.can_show_bioinformatics', raise_exception=True)
+def arsp_bioinfo_import(request):
+    arsp_qualifyr_count = ARSPQualifyr.objects.all().count()
+    arsp_distinct = ARSPQualifyr.objects.order_by().values_list('date_sequence', flat=True).distinct()
+    if request.method == 'GET':
+        return render(request, 'arsp_bioinfo/arsp_bioinfo_upload.html')
+    elif request.method == 'POST':
+        left = request.FILES.get('left')
+        metadata = request.FILES.get('metadata')
+        qualifyr = request.FILES.get('qualifyr')
+        mlst = request.FILES.get('mlst')
+        mlst_organism = request.POST.get('mlst_organism')
+        df = import_arsp_data(metadata,qualifyr,mlst,mlst_organism)
+        
+ 
+        
+        return render(request, 'arsp_bioinfo/arsp_bioinfo_upload.html',{'arsp_qualifyr_count' : arsp_qualifyr_count, 'arsp_distinct' : arsp_distinct})
+    
+    
+    
+
+############################################# END OF ARSP BIOINFO VIEWS #######################################################

@@ -36,4 +36,12 @@ urlpatterns = [
     
     
     #################### END OF BIOINFORMATICS ENDPOINTS ###########################
+    
+    
+    #################### ARSP BIOINFORMATICS ENDPOINTS ##################################
+    
+    path('arsp_bioinfo_import', views.arsp_bioinfo_import,name="arsp_bioinfo_import"),
+    
+    
+    #################### END OF ARSP BIOINFORMATICS ENDPOINTS ###########################
 ] 

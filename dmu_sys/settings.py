@@ -81,7 +81,9 @@ DATABASES = {
         'NAME': 'dmu_whonet',
         'USER': 'postgres',
         'PASSWORD': 'secret123',
-        'HOST': '10.10.25.163',
+        ## Change depending on what environment is used : if server use ip if localhost use localhost
+        # 'HOST': '10.10.25.163',
+        'HOST' : 'localhost',
         'PORT': '5432',
     }
 }
