@@ -296,9 +296,13 @@ def whonet_transform_year_all(request):
             df_duplicates = concat_df[concat_df.duplicated(subset=['PATIENT_ID','FIRST_NAME','AGE','LAST_NAME','ORGANISM'], keep="first")]
             # df_duplicates = concat_df[concat_df['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'].duplicated() == True]
             df_duplicates.to_excel(writer, sheet_name='DUPLICATES',index=False)
-    
-        concat_df = concat_df.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep="first")
+        # qc_df = concat_df[concat_df['SPEC_TYPE'] == 'qc']
+        # concat_df = concat_df.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep="first")
         # concat_df = pd.concat([concat_df,concat_qc_df])
+      
+        # concat_df = pd.concat([concat_df,qc_df])
+        
+        
         concat_df.to_excel(writer, sheet_name=site + '_' + year,index=False)
     
     
@@ -398,9 +402,11 @@ def whonet_transform_year(request):
         df_duplicates = concat_df[concat_df.duplicated(subset=['PATIENT_ID','FIRST_NAME','AGE','LAST_NAME','ORGANISM'], keep="first")]
         # df_duplicates = concat_df[concat_df['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'].duplicated() == True]
         df_duplicates.to_excel(writer, sheet_name='DUPLICATES',index=False)
+    # qc_df = concat_df[concat_df['SPEC_TYPE'] == 'qc']
+    # concat_df = concat_df[concat_df['SPEC_TYPE'] != 'qc']    
+    # concat_df = concat_df.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep="first")
     
-    concat_df = concat_df.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep="first")
-    # concat_df = pd.concat([concat_df,concat_qc_df])
+    # concat_df = pd.concat([concat_df,qc_df])
     concat_df.to_excel(writer, sheet_name=site + '_' + year,index=False)
     
     
@@ -3667,7 +3673,6 @@ def set_referred_pd_columns(clm):
 
 def import_referred_data(row_iter,file_name):
     for index, row in  row_iter:
-
         origin = ReferredOrigin(
         
         file_ref = file_name,
