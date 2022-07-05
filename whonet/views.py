@@ -1301,7 +1301,7 @@ def compute_summary_report(file_name,file_id,config = 'raw'):
 def xl_for_review(file_id,file_name,file_year,config = 'raw'):
     df = concat_all_df(file_id,config)
     df['patient_id'] = df['patient_id'].apply(str)
-    df['date_admis'] = pd.to_datetime(df['date_admis'])
+    df['date_admis'] = pd.to_datetime(df['date_admis'], errors='coerce')
     df['spec_date'] = pd.to_datetime(df['spec_date'])
     df['date_birth'] = pd.to_datetime(df['date_birth'],errors='coerce')
     
