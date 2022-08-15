@@ -21,6 +21,11 @@ from whonet.functions.summary_report_enterics_fastidious import get_ent_fast
 from whonet.functions.df_helper import concat_all_df, concat_all_df_referred
 from whonet.functions.satscan_func import import_satscan
 from whonet.functions.bioinfo import *
+from whonet.bacterial_pathogens.blood_positive_grams import BloodPositive
+from whonet.bacterial_pathogens.blood_others import BloodPositiveOthers
+from whonet.bacterial_pathogens.blood_negative_grams import BloodNegative
+from whonet.bacterial_pathogens.combine_df import CombineDataFrame
+
 # import datetime
 
 
@@ -116,22 +121,33 @@ def whonet_data_summary(request):
 @login_required(login_url='/arsp_dmu/login')
 @permission_required('auth.can_clean_create_data_summary_report', raise_exception=True)
 def whonet_data_summary_report(request,file_id):
+   
     options = request.POST.getlist('options')
     file_name = RawFileName.objects.get(id=file_id)
+    blood_positive = BloodPositive(concat_all_df(file_id))
+    blood_others = BloodPositiveOthers(concat_all_df(file_id))
+    blood_negative = BloodNegative(concat_all_df(file_id))
+
+    potential_pathogens = CombineDataFrame(file_name=file_name,
+        blood_dict=blood_positive.create_bacterial_pathogens(),
+        blood_others=blood_others.create_bacterial_pathogens(),
+        blood_negative=blood_negative.create_bacterial_pathogens())
+
     search_file_name = file_name.file_name.split('_')
      
 
     response = HttpResponse(content_type='application/zip')
     zf = zipfile.ZipFile(response, 'w')
     
-    summary_report = compute_summary_report(file_name,file_id)
-    summary_review = xl_for_review(file_id,file_name.file_name,getYearInt(file_name.file_name))
-    summary_referred = summary_report_referred(file_id,file_name)
-    # summary_ent_fast = get_ent_fast(file_id,file_name)
+    # summary_report = compute_summary_report(file_name,file_id)
+    # summary_review = xl_for_review(file_id,file_name.file_name,getYearInt(file_name.file_name))
+    # summary_referred = summary_report_referred(file_id,file_name)
+    # # summary_ent_fast = get_ent_fast(file_id,file_name)
     
-    zf.write(summary_report)
-    zf.write(summary_review)
-    zf.write(summary_referred)
+    # zf.write(summary_report)
+    # zf.write(summary_review)
+    # zf.write(summary_referred)
+    zf.write(potential_pathogens.create_dataframe())
     # zf.write(summary_ent_fast)
 
     zf.close()
@@ -139,9 +155,10 @@ def whonet_data_summary_report(request,file_id):
     
     response['Content-Disposition'] = 'attachment; filename=SUMMARY_REPORT_{}.zip'.format(file_name)
     
-    os.remove('DATA_SUMMARY_{}.xlsx'.format(file_name))
-    os.remove('INVALID_CODES_FOR_REVIEW_{}.xlsx'.format(file_name))
-    os.remove('REFERRED_FOR_REVIEW_{}.xlsx'.format(file_name))
+    # os.remove('DATA_SUMMARY_{}.xlsx'.format(file_name))
+    # os.remove('INVALID_CODES_FOR_REVIEW_{}.xlsx'.format(file_name))
+    # os.remove('REFERRED_FOR_REVIEW_{}.xlsx'.format(file_name))
+    os.remove('POTENTIAL_PATHOGENS_{}.xlsx'.format(file_name))
     # os.remove('ENTERIC_PATHOGENS_FASTIDIOUS_ORGANISM_{}.xlsx'.format(file_name))
     return response
 
@@ -486,7 +503,7 @@ def whonet_import(request):
     # output = mp.Queue()
     
     if request.method == 'POST':
-        raw_data = request.FILES.getlist('raw_data')           
+        raw_data = request.FILES.getlist('raw_data')       
         # raw data import
         results = []
         
