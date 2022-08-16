@@ -139,27 +139,27 @@ def whonet_data_summary_report(request,file_id):
     response = HttpResponse(content_type='application/zip')
     zf = zipfile.ZipFile(response, 'w')
     
-    # summary_report = compute_summary_report(file_name,file_id)
-    # summary_review = xl_for_review(file_id,file_name.file_name,getYearInt(file_name.file_name))
-    # summary_referred = summary_report_referred(file_id,file_name)
-    # # summary_ent_fast = get_ent_fast(file_id,file_name)
+    summary_report = compute_summary_report(file_name,file_id)
+    summary_review = xl_for_review(file_id,file_name.file_name,getYearInt(file_name.file_name))
+    summary_referred = summary_report_referred(file_id,file_name)
+    summary_ent_fast = get_ent_fast(file_id,file_name)
     
-    # zf.write(summary_report)
-    # zf.write(summary_review)
-    # zf.write(summary_referred)
+    zf.write(summary_report)
+    zf.write(summary_review)
+    zf.write(summary_referred)
     zf.write(potential_pathogens.create_dataframe())
-    # zf.write(summary_ent_fast)
+    zf.write(summary_ent_fast)
 
     zf.close()
     
     
     response['Content-Disposition'] = 'attachment; filename=SUMMARY_REPORT_{}.zip'.format(file_name)
     
-    # os.remove('DATA_SUMMARY_{}.xlsx'.format(file_name))
-    # os.remove('INVALID_CODES_FOR_REVIEW_{}.xlsx'.format(file_name))
-    # os.remove('REFERRED_FOR_REVIEW_{}.xlsx'.format(file_name))
+    os.remove('DATA_SUMMARY_{}.xlsx'.format(file_name))
+    os.remove('INVALID_CODES_FOR_REVIEW_{}.xlsx'.format(file_name))
+    os.remove('REFERRED_FOR_REVIEW_{}.xlsx'.format(file_name))
     os.remove('POTENTIAL_PATHOGENS_{}.xlsx'.format(file_name))
-    # os.remove('ENTERIC_PATHOGENS_FASTIDIOUS_ORGANISM_{}.xlsx'.format(file_name))
+    os.remove('ENTERIC_PATHOGENS_FASTIDIOUS_ORGANISM_{}.xlsx'.format(file_name))
     return response
 
 
