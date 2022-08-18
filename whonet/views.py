@@ -158,7 +158,7 @@ def whonet_data_summary_report(request,file_id):
     os.remove('DATA_SUMMARY_{}.xlsx'.format(file_name))
     os.remove('INVALID_CODES_FOR_REVIEW_{}.xlsx'.format(file_name))
     os.remove('REFERRED_FOR_REVIEW_{}.xlsx'.format(file_name))
-    os.remove('POTENTIAL_PATHOGENS_{}.xlsx'.format(file_name))
+    # os.remove('POTENTIAL_PATHOGENS_{}.xlsx'.format(file_name))
     # os.remove('ENTERIC_PATHOGENS_FASTIDIOUS_ORGANISM_{}.xlsx'.format(file_name))
     return response
 
