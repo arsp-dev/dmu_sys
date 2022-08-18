@@ -124,14 +124,14 @@ def whonet_data_summary_report(request,file_id):
    
     options = request.POST.getlist('options')
     file_name = RawFileName.objects.get(id=file_id)
-    blood_positive = BloodPositive(concat_all_df(file_id))
-    blood_others = BloodPositiveOthers(concat_all_df(file_id))
-    blood_negative = BloodNegative(concat_all_df(file_id))
+    # blood_positive = BloodPositive(concat_all_df(file_id))
+    # blood_others = BloodPositiveOthers(concat_all_df(file_id))
+    # blood_negative = BloodNegative(concat_all_df(file_id))
 
-    potential_pathogens = CombineDataFrame(file_name=file_name,
-        blood_dict=blood_positive.create_bacterial_pathogens(),
-        blood_others=blood_others.create_bacterial_pathogens(),
-        blood_negative=blood_negative.create_bacterial_pathogens())
+    # potential_pathogens = CombineDataFrame(file_name=file_name,
+    #     blood_dict=blood_positive.create_bacterial_pathogens(),
+    #     blood_others=blood_others.create_bacterial_pathogens(),
+    #     blood_negative=blood_negative.create_bacterial_pathogens())
 
     search_file_name = file_name.file_name.split('_')
      
@@ -142,13 +142,13 @@ def whonet_data_summary_report(request,file_id):
     summary_report = compute_summary_report(file_name,file_id)
     summary_review = xl_for_review(file_id,file_name.file_name,getYearInt(file_name.file_name))
     summary_referred = summary_report_referred(file_id,file_name)
-    summary_ent_fast = get_ent_fast(file_id,file_name)
+    # summary_ent_fast = get_ent_fast(file_id,file_name)
     
     zf.write(summary_report)
     zf.write(summary_review)
     zf.write(summary_referred)
-    zf.write(potential_pathogens.create_dataframe())
-    zf.write(summary_ent_fast)
+    # zf.write(potential_pathogens.create_dataframe())
+    # zf.write(summary_ent_fast)
 
     zf.close()
     
@@ -159,7 +159,7 @@ def whonet_data_summary_report(request,file_id):
     os.remove('INVALID_CODES_FOR_REVIEW_{}.xlsx'.format(file_name))
     os.remove('REFERRED_FOR_REVIEW_{}.xlsx'.format(file_name))
     os.remove('POTENTIAL_PATHOGENS_{}.xlsx'.format(file_name))
-    os.remove('ENTERIC_PATHOGENS_FASTIDIOUS_ORGANISM_{}.xlsx'.format(file_name))
+    # os.remove('ENTERIC_PATHOGENS_FASTIDIOUS_ORGANISM_{}.xlsx'.format(file_name))
     return response
 
 
