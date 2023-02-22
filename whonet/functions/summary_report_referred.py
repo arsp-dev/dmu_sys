@@ -1,14 +1,23 @@
 from whonet.models import *
 import pandas as pd
-import numpy as np
-from django.utils.datastructures import MultiValueDictKeyError
 from datetime import datetime
 import os
-from django.db import IntegrityError
 from whonet.functions.df_helper import concat_all_df
+from whonet.referred_classes.e_coli import EColi
+from whonet.referred_classes.kpn import Kpn
+from whonet.referred_classes.aba import Aba
+from whonet.referred_classes.pae import Pae
+from whonet.referred_classes.efa_efm import EfaEfm
+from whonet.referred_classes.sau import Sau
+from whonet.referred_classes.sal_shi import SalShi
+from whonet.referred_classes.vic_eco import Vic157
+from whonet.referred_classes.hin_hpi import HinHpi
+from whonet.referred_classes.ngo import Ngo
+from whonet.referred_classes.nme import Nme
+from whonet.referred_classes.spn import Spn
+from whonet.referred_classes.str import Str
 
 dirpath = os.getcwd()
-whonet_data_summary_referred = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_summary_referred.xlsx')
 enterobact_all = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_summary_referred.xlsx','ENTEROBACTERIACEAE_X_SAL_SHI')
 pae = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_summary_referred.xlsx','Pseudomonas_aeruginosa')
 aba = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_summary_referred.xlsx','Acinetobacter_species')
@@ -55,385 +64,218 @@ def summary_report_referred(file_id,file_name,config = 'raw'):
     df_fast_list_review = df[df['ORGANISM'].isin(fast_list_review)]
     
     df['SPEC_DATE'] = pd.to_datetime(df['SPEC_DATE'],errors='ignore')
-    df['comp'] = df['SPEC_DATE'].apply(lambda df: get_date_to_compute(df) )
-    df['ent_fast'] = df['comp'] - df['SPEC_DATE']
-    # df['X_REFERRED'] = df['X_REFERRED'].astype(str)
     df['X_REFERRED'] = df['X_REFERRED'].str.replace('.0', '', regex=False)
-    # df['X_REFERRED'] = pd.to_numeric(df['X_REFERRED'], downcast='signed',errors='ignore')
-    df_referred = df[df['X_REFERRED'] == '1']
-    # df = df[df['X_REFERRED'] != '1']    
-        
-    
-    
-    df_enterobact_all = df[df['ORGANISM'].isin(['eco','kpn'])]
-    df_enterobact_col = df_enterobact_all[df_enterobact_all['X_REFERRED'] != '1']
-    if len(df_enterobact_all) > 0:
-        df_enterobact_all = df_enterobact_all[df_enterobact_all['X_REFERRED'] != '1']
-        # df_enterobact_col = df_enterobact_all
-        df_enterobact_all = df_enterobact_all[df_enterobact_all['ent_fast'].dt.days >= 0]
-    
-    df_enterobact_all_referred = df_referred[df_referred['ORGANISM'].isin(['eco','kpn'])]
-    df_enterobact_col_referred = df_enterobact_all_referred[df_enterobact_all_referred['X_REFERRED'] == '1']
-    if len(df_enterobact_all_referred) > 0:
-        df_enterobact_all_referred = df_enterobact_all_referred[df_enterobact_all_referred['X_REFERRED'] == '1']
-        # df_enterobact_col_referred = df_enterobact_all_referred
-        # df_enterobact_all_referred = df_enterobact_all_referred[df_enterobact_all_referred['ent_fast'].dt.days >= 0]
-    
-    df_pae = df[df['ORGANISM'].isin(['pae'])]
-    df_pae_col = df_pae[df_pae['X_REFERRED'] != '1']
-    if len(df_pae) > 0:
-        df_pae = df_pae[df_pae['X_REFERRED'] != '1']
-        # df_pae_col = df_pae
-        df_pae = df_pae[df_pae['ent_fast'].dt.days >= 0]
-    
-    df_pae_referred = df_referred[df_referred['ORGANISM'].isin(['pae'])]
-    df_pae_col_referred = df_pae_referred[df_pae_referred['X_REFERRED'] == '1']
-    if len(df_pae_referred) > 0:
-        df_pae_referred = df_pae_referred[df_pae_referred['X_REFERRED'] == '1']
-        # df_pae_col_referred = df_pae_referred
-        # df_pae_referred = df_pae_referred[df_pae_referred['ent_fast'].dt.days >= 0]
-    
-    
-    df_aba = df[df['ORGANISM'].isin(['aba'])]
-    
-    df_aba_col =  df_aba[df_aba['X_REFERRED'] != '1']
-    if len(df_aba) > 0:
-        df_aba = df_aba[df_aba['X_REFERRED'] != '1']
-        # df_aba_col = df_aba
-        df_aba = df_aba[df_aba['ent_fast'].dt.days >= 0]
-    
-    
-    df_aba_referred = df_referred[df_referred['ORGANISM'].isin(['aba'])]
-    df_aba_col_referred = df_aba_referred[df_aba_referred['X_REFERRED'] == '1']
-    if len(df_aba_referred) > 0:
-        df_aba_referred = df_aba_referred[df_aba_referred['X_REFERRED'] == '1']
-        # df_aba_col_referred = df_aba_referred
-        # df_aba_referred = df_aba_referred[df_aba_referred['ent_fast'].dt.days >= 0]
-        
-    
-    df_sau = df[df['ORGANISM'].isin(['sau'])]
-    df_sau_ir = df_sau[df_sau['X_REFERRED'] != '1']
-    if len(df_sau) > 0:
-        df_sau = df_sau[df_sau['X_REFERRED'] != '1']
-        # df_sau_ir = df_sau
-        df_sau = df_sau[df_sau['ent_fast'].dt.days >= 0]
-    
-    
-    df_sau_referred = df_referred[df_referred['ORGANISM'].isin(['sau'])]
-    df_sau_ir_referred = df_sau_referred[df_sau_referred['X_REFERRED'] == '1']
-    if len(df_sau_referred) > 0:
-        df_sau_referred = df_sau_referred[df_sau_referred['X_REFERRED'] == '1']
-        # df_sau_ir_referred = df_sau_referred
-        # df_sau_referred = df_sau_referred[df_sau_referred['ent_fast'].dt.days >= 0]
-        
-          
-    df_ent = df[df['ORGANISM'].isin(ent_list_q)]
-    df_ent_ir = df_ent[df_ent['X_REFERRED'] != '1']
-    if len(df_ent) > 0:
-        df_ent = df_ent[df_ent['X_REFERRED'] != '1']
-        # df_ent_ir = df_ent
-        df_ent = df_ent[df_ent['ent_fast'].dt.days >= 0]
-    
-    df_bsn = df[df['ORGANISM'].isin(bsn_list_review)]
-    if len(df_bsn) > 0:
-        df_bsn = df_bsn[df_bsn['X_REFERRED'] != 1]
-    
-    df_bsn_reffered = df_referred[df_referred['ORGANISM'].isin(bsn_list_review)]
-    if len(df_bsn_reffered) > 0:
-        df_bsn_reffered = df_bsn_reffered[df_bsn_reffered['X_REFERRED'] == 1]
-    
-    
-    
-    
-    df_ent_referred = df_referred[df_referred['ORGANISM'].isin(ent_list_q)]
-    df_ent_referred_ir = df_ent_referred[df_ent_referred['X_REFERRED'] == '1']
-    if len(df_ent_referred) > 0:
-        df_ent_referred = df_ent_referred[df_ent_referred['X_REFERRED'] == '1']
-        # df_ent_referred_ir = df_ent_referred
-        # df_ent_referred = df_ent_referred[df_ent_referred['ent_fast'].dt.days >= 0]
-    for value in bsn_list_mic:
-        df_bsn = df_bsn.apply(lambda row: calculate_R_S_MIC(row,value,bsn,bsn_list_mic), axis = 1)
-        df_bsn_reffered = df_bsn_reffered.apply(lambda row: calculate_R_S_MIC(row,value,bsn,bsn_list_mic), axis = 1)
-    
-    for value in bsn_list:
-        df_bsn = df_bsn.apply(lambda row: calculate_R_S(row,value,bsn,bsn_list), axis = 1)
-        df_bsn_reffered = df_bsn_reffered.apply(lambda row: calculate_R_S(row,value,bsn,bsn_list), axis = 1)
-    
-    
-    for value in enterobact_all_list_mic:
-        df_enterobact_all = df_enterobact_all.apply(lambda row: calculate_R_S_MIC(row,value,enterobact_all,enterobact_all_list_mic), axis = 1)
-        df_enterobact_all_referred = df_enterobact_all_referred.apply(lambda row: calculate_R_S_MIC(row,value,enterobact_all,enterobact_all_list_mic), axis = 1)
-        df_enterobact_col_referred = df_enterobact_col_referred.apply(lambda row: calculate_R_S_MIC_COL(row,value,enterobact_all,enterobact_all_list_mic), axis = 1)
-        df_enterobact_col = df_enterobact_col.apply(lambda row: calculate_R_S_MIC_COL(row,value,enterobact_all,enterobact_all_list_mic), axis = 1)
-        
-    for value in enterobact_all_list:
-        df_enterobact_all = df_enterobact_all.apply(lambda row: calculate_R_S(row,value,enterobact_all,enterobact_all_list), axis = 1)
-        df_enterobact_all_referred = df_enterobact_all_referred.apply(lambda row: calculate_R_S(row,value,enterobact_all,enterobact_all_list), axis = 1)
-        df_enterobact_col_referred = df_enterobact_col_referred.apply(lambda row: calculate_R_S(row,value,enterobact_all,enterobact_all_list), axis = 1)
-        df_enterobact_col = df_enterobact_col.apply(lambda row: calculate_R_S(row,value,enterobact_all,enterobact_all_list), axis = 1)
+
+    df = df[ df['SPEC_TYPE'].str.lower() != 'qc' ]
+    df = df[ df['SPEC_TYPE'].str.lower() != 'en' ]
+    df = df[ df['SPEC_TYPE'].str.lower() != 'wa' ]
+    df = df[ df['SPEC_TYPE'].str.lower() != 'fo' ]
+    df = df[ df['SPEC_TYPE'].str.lower() != 'mi' ]
+    df = df[ df['SPEC_TYPE'].str.lower() != 'un' ]
+
+    df_eco = EColi(df[df['X_REFERRED'] != '1'])
+    df_eco = df_eco.process()
+    df_eco_referred = EColi(df[df['X_REFERRED'] == '1'])
+    df_eco_referred = df_eco_referred.process()
+
+
+    df_kpn = Kpn(df[df['X_REFERRED'] != '1'])
+    df_kpn = df_kpn.process()
+    df_kpn_referred = Kpn(df[df['X_REFERRED'] == '1'])
+    df_kpn_referred = df_kpn_referred.process()
+
+
+    df_aba = Aba(df[df['X_REFERRED'] != '1'])
+    df_aba = df_aba.process()
+    df_aba_referred = Aba(df[df['X_REFERRED'] == '1'])
+    df_aba_referred = df_aba_referred.process()
+
+
+    df_pae = Pae(df[df['X_REFERRED'] != '1'])
+    df_pae = df_pae.process()
+    df_pae_referred = Pae(df[df['X_REFERRED'] == '1'])
+    df_pae_referred = df_pae_referred.process()
+
+    df_efa_efm = EfaEfm(df[df['X_REFERRED'] != '1'])
+    df_efa_efm = df_efa_efm.process()
+    df_efa_efm_referred = EfaEfm(df[df['X_REFERRED'] == '1'])
+    df_efa_efm_referred = df_efa_efm_referred.process()
+
+    df_sau = Sau(df[df['X_REFERRED'] != '1'])
+    df_sau = df_sau.process()
+    df_sau_referred = Sau(df[df['X_REFERRED'] == '1'])
+    df_sau_referred = df_sau_referred.process()
+
+    df_sal_shi = SalShi(df[df['X_REFERRED'] != '1'])
+    df_sal_shi = df_sal_shi.process()
+    df_sal_shi_referred = SalShi(df[df['X_REFERRED'] == '1'])
+    df_sal_shi_referred = df_sal_shi_referred.process()
+
+    df_vic_eco = Vic157(df[df['X_REFERRED'] != '1'])
+    df_vic_eco = df_vic_eco.process()
+    df_vic_eco_referred = Vic157(df[df['X_REFERRED'] == '1'])
+    df_vic_eco_referred = df_vic_eco_referred.process()
+
+    df_hin_hpi = HinHpi(df[df['X_REFERRED'] != '1'])
+    df_hin_hpi = df_hin_hpi.process()
+    df_hin_hpi_referred = HinHpi(df[df['X_REFERRED'] == '1'])
+    df_hin_hpi_referred = df_hin_hpi_referred.process()
+
+
+    df_ngo = Ngo(df[df['X_REFERRED'] != '1'])
+    df_ngo = df_ngo.process()
+    df_ngo_referred = Ngo(df[df['X_REFERRED'] == '1'])
+    df_ngo_referred = df_ngo_referred.process()
+
+
+    df_nme = Nme(df[df['X_REFERRED'] != '1'])
+    df_nme = df_nme.process()
+    df_nme_referred = Nme(df[df['X_REFERRED'] == '1'])
+    df_nme_referred = df_nme_referred.process()
+
+
+    df_spn = Spn(df[df['X_REFERRED'] != '1'])
+    df_spn = df_spn.process()
+    df_spn_referred = Spn(df[df['X_REFERRED'] == '1'])
+    df_spn_referred = df_spn_referred.process()
+
+    df_str = Str(df[df['X_REFERRED'] != '1'])
+    df_str = df_str.process()
+    df_str_referred = Str(df[df['X_REFERRED'] == '1'])
+    df_str_referred = df_str_referred.process()
+
+
+
+    # DITO ANG START PAG NG SEMI CLEANED DATA FRAMES
+    # DITO ANG START PAG NG SEMI CLEANED DATA FRAMES
+    # DITO ANG START PAG NG SEMI CLEANED DATA FRAMES
+    # DITO ANG START PAG NG SEMI CLEANED DATA FRAMES
+    # DITO ANG START PAG NG SEMI CLEANED DATA FRAMES
+    # DITO ANG START PAG NG SEMI CLEANED DATA FRAMES
+    # DITO ANG START PAG NG SEMI CLEANED DATA FRAMES
+
+
    
-    for value in pae_list_mic:
-        df_pae = df_pae.apply(lambda row: calculate_R_S_MIC(row,value,pae,pae_list_mic), axis = 1)
-        df_pae_col = df_pae_col.apply(lambda row: calculate_R_S_MIC_COL(row,value,pae,pae_list_mic), axis = 1)
-        df_pae_referred = df_pae_referred.apply(lambda row: calculate_R_S_MIC(row,value,pae,pae_list_mic), axis = 1)
-        df_pae_col_referred = df_pae_col_referred.apply(lambda row: calculate_R_S_MIC_COL(row,value,pae,pae_list_mic), axis = 1)
-  
-  
-    for value in pae_list:
-        df_pae = df_pae.apply(lambda row: calculate_R_S(row,value,pae,pae_list), axis = 1)
-        df_pae_col = df_pae_col.apply(lambda row: calculate_R_S(row,value,pae,pae_list), axis = 1)
-        df_pae_referred = df_pae_referred.apply(lambda row: calculate_R_S(row,value,pae,pae_list), axis = 1)
-        df_pae_col_referred = df_pae_col_referred.apply(lambda row: calculate_R_S(row,value,pae,pae_list), axis = 1)
-   
-    for value in aba_list_mic:
-        df_aba = df_aba.apply(lambda row: calculate_R_S_MIC(row,value,aba,aba_list_mic), axis = 1)
-        df_aba_referred = df_aba_referred.apply(lambda row: calculate_R_S_MIC(row,value,aba,aba_list_mic), axis = 1)
-        df_aba_col = df_aba_col.apply(lambda row: calculate_R_S_MIC_COL(row,value,aba,aba_list_mic), axis = 1)
-        df_aba_col_referred = df_aba_col_referred.apply(lambda row: calculate_R_S_MIC_COL(row,value,aba,aba_list_mic), axis = 1)
-   
-    
-    for value in aba_list:
-        df_aba = df_aba.apply(lambda row: calculate_R_S(row,value,aba,aba_list), axis = 1)
-        df_aba_referred = df_aba_referred.apply(lambda row: calculate_R_S(row,value,aba,aba_list), axis = 1)
-        df_aba_col = df_aba_col.apply(lambda row: calculate_R_S(row,value,aba,aba_list), axis = 1)
-        df_aba_col_referred = df_aba_col_referred.apply(lambda row: calculate_R_S(row,value,aba,aba_list), axis = 1)
-        
-    for value in sau_list_mic:
-        df_sau = df_sau.apply(lambda row: calculate_R_S_MIC(row,value,sau,sau_list_mic), axis = 1)
-        df_sau_referred = df_sau_referred.apply(lambda row: calculate_R_S_MIC(row,value,sau,sau_list_mic), axis = 1)
-        df_sau_ir = df_sau.apply(lambda row: calculate_R_S_MIC(row,value,sau,sau_list_mic), axis = 1)
-        df_sau_ir_referred = df_sau_referred.apply(lambda row: calculate_R_S_MIC(row,value,sau,sau_list_mic), axis = 1)
-    
-    for value in sau_list:
-        df_sau = df_sau.apply(lambda row: calculate_R_S(row,value,sau,sau_list), axis = 1)
-        df_sau_referred = df_sau_referred.apply(lambda row: calculate_R_S(row,value,sau,sau_list), axis = 1)
-        df_sau_ir = df_sau.apply(lambda row: calculate_R_S(row,value,sau,sau_list), axis = 1)
-        df_sau_ir_referred = df_sau_referred.apply(lambda row: calculate_R_S(row,value,sau,sau_list), axis = 1)
-    
-    for value in ent_list_mic:
-        df_ent = df_ent.apply(lambda row: calculate_R_S_MIC(row,value,ent,ent_list_mic), axis = 1)
-        df_ent_referred = df_ent_referred.apply(lambda row: calculate_R_S_MIC(row,value,ent,ent_list_mic), axis = 1)
-        df_ent_ir = df_ent.apply(lambda row: calculate_R_S_MIC(row,value,ent,ent_list_mic), axis = 1)
-        df_ent_referred_ir = df_ent_referred_ir.apply(lambda row: calculate_R_S_MIC(row,value,ent,ent_list_mic), axis = 1)
-    
-    for value in ent_list:
-        df_ent = df_ent.apply(lambda row: calculate_R_S(row,value,ent,ent_list), axis = 1)
-        df_ent_referred = df_ent_referred.apply(lambda row: calculate_R_S(row,value,ent,ent_list), axis = 1)
-        df_ent_ir = df_ent.apply(lambda row: calculate_R_S(row,value,ent,ent_list), axis = 1)
-        df_ent_referred_ir = df_ent_referred_ir.apply(lambda row: calculate_R_S(row,value,ent,ent_list), axis = 1)
-    
-    bsn_ant_list = ['AMP_RIS','PEN_RIS','VAN_RIS','LVX_RIS','CRO_RIS','LNZ_RIS','DAP_RIS','CLI_RIS','CHL_RIS','ERY_RIS','CTX_RIS','FEP_RIS'] 
-    if len(df_bsn) > 0:
-        df_bsn = df_bsn.apply(lambda row: check_R_bsn(row,bsn_ant_list), axis = 1)
-        df_bsn = df_bsn[(df_bsn['Test'] == 'I')  | (df_bsn['Test'] == 'R')]
-        df_bsn.dropna(how = 'all',inplace = True)
-        df_bsn = df_bsn.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep=False)
-        df_bsn = df_bsn.drop(columns=['ORIGIN_REF','FILE_REF','ID','comp','ent_fast','Test'])
-        df_bsn['SPEC_DATE'] = df_bsn['SPEC_DATE'].dt.strftime('%m/%d/%Y')
-        df_bsn, cols = remove_null_cols(df_bsn,['PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','ESBL','CAZ_ND30','CAZ_NM','CAZ_RIS','CTX_ND30','CTX_NM','CTX_RIS','CRO_ND30','CRO_NM','CRO_RIS','FEP_ND30','FEP_NM','FEP_RIS','IPM_ND10','IPM_NM','IPM_RIS','MEM_ND10','MEM_NM','MEM_RIS','ETP_ND10','ETP_NM','ETP_RIS','DOR_ND10','DOR_NM','DOR_RIS','COL_NM','COL_RIS'])
-        df_bsn = df_bsn[cols]
-    
-    if len(df_bsn_reffered) > 0:
-        df_bsn_reffered = df_bsn_reffered.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep=False)
-        df_bsn_reffered = df_bsn_reffered.drop(columns=['ORIGIN_REF','FILE_REF','ID'])
-        df_bsn_reffered['SPEC_DATE'] = df_bsn_reffered['SPEC_DATE'].dt.strftime('%m/%d/%Y')
-      
-        df_bsn_reffered, cols = remove_null_cols(df_bsn_reffered,['PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','ESBL','CAZ_ND30','CAZ_NM','CAZ_RIS','CTX_ND30','CTX_NM','CTX_RIS','CRO_ND30','CRO_NM','CRO_RIS','FEP_ND30','FEP_NM','FEP_RIS','IPM_ND10','IPM_NM','IPM_RIS','MEM_ND10','MEM_NM','MEM_RIS','ETP_ND10','ETP_NM','ETP_RIS','DOR_ND10','DOR_NM','DOR_RIS','COL_NM','COL_RIS'])
-        df_bsn_reffered = df_bsn_reffered[cols]
-    
-    enterobact_list = ['CAZ_RIS','CTX_RIS','CRO_RIS','FEP_RIS','IPM_RIS','MEM_RIS','ETP_RIS','COL_RIS']
-    if len(df_enterobact_all) > 0:
-        # df_enterobact_all_concat = df_enterobact_all.apply(lambda row: check_R_entero(row,enterobact_all_list), axis = 1)
-        df_enterobact_all = df_enterobact_all.apply(lambda row: check_R_entero(row,enterobact_list), axis = 1)
-        # frames = [df_enterobact_all_concat,df_enterobact_all]
-        # df_enterobact_all= pd.concat(frames)
-        df_enterobact_all = df_enterobact_all[df_enterobact_all['Test'] == 'R']
-        df_enterobact_col = df_enterobact_col[(df_enterobact_col['COL_NM'] == 'R')]
-        frames = [df_enterobact_all,df_enterobact_col]
-        df_enterobact_all= pd.concat(frames,sort=False)
-        df_enterobact_all.dropna(how = 'all',inplace = True)
-        df_enterobact_all = df_enterobact_all.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep=False)
-        df_enterobact_all = df_enterobact_all.drop(columns=['ORIGIN_REF','FILE_REF','ID','comp','ent_fast','Test'])
-        df_enterobact_all['SPEC_DATE'] = df_enterobact_all['SPEC_DATE'].dt.strftime('%m/%d/%Y')
-        
-     
-        df_enterobact_all, cols = remove_null_cols(df_enterobact_all,['PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','ESBL','CAZ_ND30','CAZ_NM','CAZ_RIS','CTX_ND30','CTX_NM','CTX_RIS','CRO_ND30','CRO_NM','CRO_RIS','FEP_ND30','FEP_NM','FEP_RIS','IPM_ND10','IPM_NM','IPM_RIS','MEM_ND10','MEM_NM','MEM_RIS','ETP_ND10','ETP_NM','ETP_RIS','DOR_ND10','DOR_NM','DOR_RIS','COL_NM','COL_RIS'])
-        df_enterobact_all = df_enterobact_all[cols]
-    
-    if len(df_enterobact_all_referred) > 0:
-        df_enterobact_all_referred = df_enterobact_all_referred.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep=False)
-        df_enterobact_all_referred = df_enterobact_all_referred.drop(columns=['ORIGIN_REF','FILE_REF','ID'])
-        df_enterobact_all_referred['SPEC_DATE'] = df_enterobact_all_referred['SPEC_DATE'].dt.strftime('%m/%d/%Y')
-      
-        df_enterobact_all_referred, cols = remove_null_cols(df_enterobact_all_referred,['PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','ESBL','CAZ_ND30','CAZ_NM','CAZ_RIS','CTX_ND30','CTX_NM','CTX_RIS','CRO_ND30','CRO_NM','CRO_RIS','FEP_ND30','FEP_NM','FEP_RIS','IPM_ND10','IPM_NM','IPM_RIS','MEM_ND10','MEM_NM','MEM_RIS','ETP_ND10','ETP_NM','ETP_RIS','DOR_ND10','DOR_NM','DOR_RIS','COL_NM','COL_RIS'])
-        df_enterobact_all_referred = df_enterobact_all_referred[cols]
-    
-    pae_list_all = ['IPM_RIS','MEM_RIS','ETP_RIS','COL_RIS']
-    if len(df_pae) > 0:
-        df_pae = df_pae.apply(lambda row: check_R_nfo(row,pae_list_all), axis = 1)
-        df_pae = df_pae[df_pae['Test'] == 'R']
-        df_pae_col = df_pae_col[(df_pae_col['COL_NM'] == 'R')]
-        frames = [df_pae,df_pae_col]
-        df_pae = pd.concat(frames,sort=False)
-        df_pae.dropna(how = 'all',inplace = True)
-        df_pae = df_pae.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep=False)
-        df_pae = df_pae.drop(columns=['ORIGIN_REF','FILE_REF','ID','comp','ent_fast','Test'])
-        df_pae['SPEC_DATE'] = df_pae['SPEC_DATE'].dt.strftime('%m/%d/%Y')
-        
-        df_pae, cols = remove_null_cols(df_pae,['PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','CARBAPENEM','IPM_ND10','IPM_NM','IPM_RIS','MEM_ND10','MEM_NM','MEM_RIS','ETP_ND10','ETP_NM','ETP_RIS','DOR_ND10','DOR_NM','DOR_RIS','COL_NM','COL_RIS'])
-        df_pae = df_pae[cols]
-    
-    if len(df_pae_referred) > 0:
-        df_pae_referred = df_pae_referred.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep=False)
-        df_pae_referred = df_pae_referred.drop(columns=['ORIGIN_REF','FILE_REF','ID'])
-        df_pae_referred['SPEC_DATE'] = df_pae_referred['SPEC_DATE'].dt.strftime('%m/%d/%Y')
-       
-        df_pae_referred, cols = remove_null_cols(df_pae_referred,['PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','CARBAPENEM','IPM_ND10','IPM_NM','IPM_RIS','MEM_ND10','MEM_NM','MEM_RIS','ETP_ND10','ETP_NM','ETP_RIS','DOR_ND10','DOR_NM','DOR_RIS','COL_NM','COL_RIS'])
-        df_pae_referred = df_pae_referred[cols]
-    
-    aba_list_all = ['IPM_RIS','MEM_RIS','ETP_RIS','COL_RIS']
-    if len(df_aba) > 0:
-        df_aba = df_aba.apply(lambda row: check_R_nfo(row,aba_list_all), axis = 1)
-       
-        df_aba = df_aba[df_aba['Test'] == 'R']
-        
-        df_aba_col = df_aba_col[(df_aba_col['COL_NM'] == 'R')]
-        
-        frames = [df_aba,df_aba_col]
-        df_aba = pd.concat(frames,sort=False)
-     
-        df_aba.dropna(how = 'all',inplace = True)
-        df_aba = df_aba.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep='first')
-        df_aba = df_aba.drop(columns=['ORIGIN_REF','FILE_REF','ID','comp','ent_fast','Test'], errors='ignore')
-        df_aba['SPEC_DATE'] = df_aba['SPEC_DATE'].dt.strftime('%m/%d/%Y')
-       
-        
-        df_aba, cols = remove_null_cols(df_aba,['PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','CARBAPENEM','IPM_ND10','IPM_NM','IPM_RIS','MEM_ND10','MEM_NM','MEM_RIS','ETP_ND10','ETP_NM','ETP_RIS','DOR_ND10','DOR_NM','DOR_RIS','COL_NM','COL_RIS'])
-        df_aba = df_aba[cols]
-        
-     
-    if len(df_aba_referred) > 0:
-        df_aba_referred.dropna(how = 'all',inplace = True)
-        df_aba_referred = df_aba_referred.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep='first')
-        df_aba_referred = df_aba_referred.drop(columns=['ORIGIN_REF','FILE_REF','ID'])
-        df_aba_referred['SPEC_DATE'] = df_aba_referred['SPEC_DATE'].dt.strftime('%m/%d/%Y')
-        
-        
-    sau_list_1_7 = ['FOX_RIS','OXA_RIS']
-    sau_list_ir = ['LNZ_RIS','DAP_RIS','VAN_RIS''ERY_RIS','CLI_RIS']
-    if len(df_sau) > 0:
-        # df_sau_concat = df_sau.apply(lambda row: check_R(row,sau_list_all), axis = 1)
-        df_sau = df_sau.apply(lambda row: check_R_sau_1_7(row,sau_list_1_7), axis = 1)
-        df_sau_ir = df_sau_ir.apply(lambda row: check_R_sau_ir(row,sau_list_ir), axis = 1)
-        df_sau = df_sau[df_sau['Test'] == 'R']
-        df_sau_ir = df_sau_ir[df_sau_ir['Test'] == 'R']
-        frames = [df_sau,df_sau_ir]
-        df_sau = pd.concat(frames,sort=False)
-        df_sau.dropna(how = 'all',inplace = True)
-        df_sau = df_sau.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep='first')
-        df_sau = df_sau.drop(columns=['ORIGIN_REF','FILE_REF','ID','comp','ent_fast','Test'])
-        df_sau['SPEC_DATE'] = df_sau['SPEC_DATE'].dt.strftime('%m/%d/%Y')
-        # df_sau = df_sau.dropna(axis=1,how='all')
-      
-        df_sau, cols = remove_null_cols(df_sau,['PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','INDUC_CLI','MRSA','FOX_ND30','FOX_NM','FOX_RIS','OXA_NM','OXA_RIS','LNZ_ND30','LNZ_NM','LNZ_RIS','DAP_ND30','DAP_NM','DAP_RIS','VAN_NM','VAN_RIS','ERY_ND15','ERY_NM','ERY_RIS','CLI_ND2','CLI_NM','CLI_RIS'])
-        df_sau = df_sau[cols]
-    
-    if len(df_sau_referred) > 0:
-        df_sau_referred = df_sau_referred.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep='first')
-        df_sau_referred = df_sau_referred.drop(columns=['ORIGIN_REF','FILE_REF','ID'])
-        df_sau_referred['SPEC_DATE'] = df_sau_referred['SPEC_DATE'].dt.strftime('%m/%d/%Y')
-      
-     
-        df_sau_referred, cols = remove_null_cols(df_sau_referred,['PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','INDUC_CLI','MRSA','FOX_ND30','FOX_NM','FOX_RIS','OXA_NM','OXA_RIS','LNZ_ND30','LNZ_NM','LNZ_RIS','DAP_ND30','DAP_NM','DAP_RIS','VAN_NM','VAN_RIS','ERY_ND15','ERY_NM','ERY_RIS','CLI_ND2','CLI_NM','CLI_RIS'])
-        df_sau_referred = df_sau_referred[cols]
-       
-    ent_list_1_7 = ['STH_RIS','GEH_RIS']
-    ent_list_ir = ['VAN_RIS','LNZ_RIS','DAP_RIS']
-   
-    if len(df_ent) > 0:
-       
-     
-        df_ent = df_ent.apply(lambda row: check_R(row,ent_list_1_7), axis = 1)
-        df_ent_ir = df_ent_ir.apply(lambda row: check_R(row,ent_list_ir), axis = 1)
-        
-        df_ent = df_ent[df_ent['Test'] == 'R']
-      
-        df_ent_ir = df_ent_ir[(df_ent_ir['Test'] == 'R') | (df_ent_ir['Test'] == 'I')]
-        
-        frames = [df_ent,df_ent_ir]
-        df_ent = pd.concat(frames,sort=False)
-        
-    
-  
-        df_ent.dropna(how = 'all',inplace = True)
-        df_ent = df_ent.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep='last')
-        df_ent = df_ent.drop(columns=['ORIGIN_REF','FILE_REF','ID','comp','ent_fast','Test'])
-        df_ent['SPEC_DATE'] = df_ent['SPEC_DATE'].dt.strftime('%m/%d/%Y')
-        # df_ent = df_ent.dropna(axis=1,how='all')
-        cols = ['PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','GEH_ND120','GEH_NM','GEH_RIS','STH_ND300','STH_NM','STH_RIS','VAN_ND30','VAN_NM','VAN_RIS','LNZ_ND30','LNZ_NM','LNZ_RIS','DAP_ND30','DAP_NM','DAP_RIS']
-        # df_ent, cols = remove_null_cols(df_ent,['PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','GEH_ND120','GEH_NM','GEH_RIS','STH_ND300','STH_NM','STH_RIS','VAN_ND30','VAN_NM','VAN_RIS','LNZ_ND30','LNZ_NM','LNZ_RIS','DAP_ND30','DAP_NM','DAP_RIS'])
-        df_ent = df_ent[cols]
-   
-    
-    if len(df_ent_referred) > 0:
-        df_ent_referred = df_ent_referred.drop_duplicates(['PATIENT_ID','LAST_NAME','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM'], keep=False)
-        df_ent_referred = df_ent_referred.drop(columns=['ORIGIN_REF','FILE_REF','ID'])
-        df_ent_referred['SPEC_DATE'] = df_ent_referred['SPEC_DATE'].dt.strftime('%m/%d/%Y')
-      
-        df_ent_referred, cols = remove_null_cols(df_ent_referred,['PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','GEH_ND120','GEH_NM','GEH_RIS','STH_ND300','STH_NM','STH_RIS','VAN_ND30','VAN_NM','VAN_RIS','LNZ_ND30','LNZ_NM','LNZ_RIS','DAP_ND30','DAP_NM','DAP_RIS'])
-        df_ent_referred = df_ent_referred[cols]
-     
-    ent_fast_list = ['LABORATORY','PATIENT_ID','FIRST_NAME','MID_NAME','LAST_NAME','SEX','AGE','DATE_BIRTH','AGE_GRP','PAT_TYPE','DATE_DATA','X_REFERRED','X_RECNUM','DATE_ADMIS','NOSOCOMIAL','DIAGNOSIS','STOCK_NUM','WARD','INSTITUT','DEPARTMENT','WARD_TYPE','SPEC_NUM','SPEC_DATE','SPEC_TYPE','SPEC_CODE','LOCAL_SPEC','ORGANISM','ORG_TYPE']
-    if len(df_ent_list_review) > 0:
-        df_ent_list_review = df_ent_list_review[ent_fast_list]
-    
-    if len(df_fast_list_review) > 0:
-        df_fast_list_review = df_fast_list_review[ent_fast_list]
-        
-        
     
     writer = pd.ExcelWriter('REFERRED_FOR_REVIEW_{}.xlsx'.format(file_name), engine='xlsxwriter')
-    if len(df_enterobact_all) > 0:
-        df_enterobact_all.to_excel(writer,sheet_name='enterobact_all', index=False)
-        
-    if len(df_enterobact_all_referred) > 0:
-        df_enterobact_all_referred.to_excel(writer,sheet_name='enterobact_all referred', index=False)
+    if len(df_eco) > 0:
+        df_eco.to_excel(writer,sheet_name='eco',index=False)
+    if len(df_eco_referred) > 0:
+        df_eco_referred.to_excel(writer,sheet_name='eco_referred',index=False)
+
+    if len(df_kpn) > 0:
+        df_kpn.to_excel(writer,sheet_name='kpn',index=False)
+    if len(df_kpn_referred) > 0:
+        df_kpn_referred.to_excel(writer,sheet_name='kpn_referred',index=False)
     
+
+    if len(df_aba) > 0:
+        df_aba.to_excel(writer,sheet_name='aba',index=False)
+    if len(df_aba_referred) > 0:
+        df_aba_referred.to_excel(writer,sheet_name='aba_referred',index=False)
+
+
     if len(df_pae) > 0:
         df_pae.to_excel(writer,sheet_name='pae',index=False)
-        
-    if len(df_pae_referred) > 0:
-        df_pae_referred.to_excel(writer,sheet_name='pae_referred',index=False)
-    
-    if len(df_aba) > 0:
-        df_aba.to_excel(writer, sheet_name='aba', index=False)
-    
     if len(df_aba_referred) > 0:
-        df_aba_referred.to_excel(writer, sheet_name='aba_referred', index=False)
+        df_pae_referred.to_excel(writer,sheet_name='pae_referred',index=False)
+
+
+    if len(df_efa_efm) > 0:
+        df_efa_efm.to_excel(writer,sheet_name='efa_efm',index=False)
+    if len(df_efa_efm_referred) > 0:
+        df_efa_efm_referred.to_excel(writer,sheet_name='efa_efm_referred',index=False)
     
+
     if len(df_sau) > 0:
-        df_sau.to_excel(writer, sheet_name='sau', index=False)
-    
+        df_sau.to_excel(writer,sheet_name='sau',index=False)
     if len(df_sau_referred) > 0:
-        df_sau_referred.to_excel(writer, sheet_name='sau_referred', index=False)
+        df_sau_referred.to_excel(writer,sheet_name='sau_referred',index=False)
     
-    if len(df_ent) > 0:
-        df_ent.to_excel(writer,sheet_name='ent',index=False)
+
+    if len(df_sal_shi) > 0:
+        df_sal_shi.to_excel(writer,sheet_name='sal_shi',index=False)
+    if len(df_sal_shi_referred) > 0:
+        df_sal_shi_referred.to_excel(writer,sheet_name='sal_shi_referred',index=False)
+
+
+    if len(df_vic_eco) > 0:
+        df_vic_eco.to_excel(writer,sheet_name='vic_eco157',index=False)
+    if len(df_vic_eco_referred) > 0:
+        df_vic_eco_referred.to_excel(writer,sheet_name='vic_eco157_referred',index=False)
         
-    if len(df_ent_referred) > 0:
-        df_ent_referred.to_excel(writer,sheet_name='ent_referred',index=False)
+        
+    if len(df_hin_hpi) > 0:
+        df_hin_hpi.to_excel(writer,sheet_name='hin_hpi',index=False)
+    if len(df_hin_hpi_referred) > 0:
+        df_hin_hpi_referred.to_excel(writer,sheet_name='hin_hpi_referred',index=False)
+
+    if len(df_ngo) > 0:
+        df_ngo.to_excel(writer,sheet_name='ngo',index=False)
+    if len(df_ngo_referred) > 0:
+        df_ngo_referred.to_excel(writer,sheet_name='ngo_referred',index=False)
+
+
+    if len(df_nme) > 0:
+        df_nme.to_excel(writer,sheet_name='nme',index=False)
+    if len(df_nme_referred) > 0:
+        df_nme_referred.to_excel(writer,sheet_name='nme_referred',index=False)
+
+    if len(df_spn) > 0:
+        df_spn.to_excel(writer,sheet_name='spn',index=False)
+    if len(df_spn_referred) > 0:
+        df_spn_referred.to_excel(writer,sheet_name='spn_referred',index=False)
+
+
+    if len(df_str) > 0:
+        df_str.to_excel(writer,sheet_name='str',index=False)
+    if len(df_str_referred) > 0:
+        df_str_referred.to_excel(writer,sheet_name='str_referred',index=False)
+
+    ## for creation all vic and eco 157
+
+
+    # if len(df_enterobact_all) > 0:
+    #     df_enterobact_all.to_excel(writer,sheet_name='enterobact_all', index=False)
+        
+    # if len(df_enterobact_all_referred) > 0:
+    #     df_enterobact_all_referred.to_excel(writer,sheet_name='enterobact_all referred', index=False)
     
-    if len(df_bsn) > 0:
-        df_bsn.to_excel(writer,sheet_name='bsn',index=False)
+    # if len(df_pae) > 0:
+    #     df_pae.to_excel(writer,sheet_name='pae',index=False)
         
-    if len(df_bsn_reffered) > 0:
-        df_bsn_reffered.to_excel(writer,sheet_name='bsn_reffered',index=False)
+    # if len(df_pae_referred) > 0:
+    #     df_pae_referred.to_excel(writer,sheet_name='pae_referred',index=False)
     
-    if len(df_ent_list_review) > 0:
-        df_ent_list_review.to_excel(writer,sheet_name='ENTERICS PATHOGENS', index=False)
+    # if len(df_aba) > 0:
+    #     df_aba.to_excel(writer, sheet_name='aba', index=False)
+    
+    # if len(df_aba_referred) > 0:
+    #     df_aba_referred.to_excel(writer, sheet_name='aba_referred', index=False)
+    
+    # if len(df_sau) > 0:
+    #     df_sau.to_excel(writer, sheet_name='sau', index=False)
+    
+    # if len(df_sau_referred) > 0:
+    #     df_sau_referred.to_excel(writer, sheet_name='sau_referred', index=False)
+    
+    # if len(df_ent) > 0:
+    #     df_ent.to_excel(writer,sheet_name='ent',index=False)
         
-    if len(df_fast_list_review) > 0:
-        df_fast_list_review.to_excel(writer,sheet_name='FASTIDIOUS ORGANISMS', index=False)
+    # if len(df_ent_referred) > 0:
+    #     df_ent_referred.to_excel(writer,sheet_name='ent_referred',index=False)
+    
+    # if len(df_bsn) > 0:
+    #     df_bsn.to_excel(writer,sheet_name='bsn',index=False)
+        
+    # if len(df_bsn_reffered) > 0:
+    #     df_bsn_reffered.to_excel(writer,sheet_name='bsn_reffered',index=False)
+    
+    # if len(df_ent_list_review) > 0:
+    #     df_ent_list_review.to_excel(writer,sheet_name='ENTERICS PATHOGENS', index=False)
+        
+    # if len(df_fast_list_review) > 0:
+    #     df_fast_list_review.to_excel(writer,sheet_name='FASTIDIOUS ORGANISMS', index=False)
     
     writer.save()
     
@@ -447,7 +289,7 @@ def get_date_to_compute(df):
     if pd.isna(df) == False:
         year = int(df.year)
         month = int(df.month)
-        return datetime(year,month,5)
+        return datetime(year,month,3)
 
 def remove_null_cols(df,ant_list):
     for x in ant_list:
