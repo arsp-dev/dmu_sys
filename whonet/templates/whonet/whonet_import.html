@@ -39,7 +39,7 @@ ARSP-DMU | ARSEN | Whonet Import
                             <form method="post" enctype="multipart/form-data" action="{% url 'whonet_import' %}">
                             {% csrf_token %}
                             
-                            <input type="file" class="custom-file-input" id="validatedCustomFile" name="raw_data" accept=".csv" required multiple> 
+                            <input type="file" class="custom-file-input" id="validatedCustomFile" name="raw_data" required multiple> 
                             <label class="custom-file-label" for="validatedCustomFile">
                                 <span class="d-inline-block text-truncate w-75">Choose several files</span>
                             </label>

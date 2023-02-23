@@ -1070,10 +1070,10 @@ def bigwork(file_id,search_file_name,options, year = '', referred = False):
 
 
 def import_raw(raw_data):
-    # try:
-    df = pd.read_csv(raw_data,encoding='iso-8859-1')
-    # except:
-    #     return 'File ' + raw_data.name + ' is invalid format'
+    try:
+    df = pd.read_excel(raw_data)
+    except:
+        return 'File ' + raw_data.name + ' is invalid format'
 
     #File name Model
     # f_names = RawFileName.objects.all()
