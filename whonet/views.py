@@ -1071,7 +1071,7 @@ def bigwork(file_id,search_file_name,options, year = '', referred = False):
 
 def import_raw(raw_data):
     try:
-    df = pd.read_excel(raw_data)
+        df = pd.read_excel(raw_data)
     except:
         return 'File ' + raw_data.name + ' is invalid format'
 
