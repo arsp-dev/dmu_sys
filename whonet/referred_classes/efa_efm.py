@@ -62,8 +62,8 @@ class EfaEfm:
 
 
     def calc_RIS_MIC(self, df : pd.DataFrame) -> pd.DataFrame:
-        for value in self.ast_panel:
-              df = df.apply(lambda row: calculate_R_S_MIC(row,value,abx_panel,self.ast_panel), axis = 1)
+        for value in self.ast_panel_mic:
+              df = df.apply(lambda row: calculate_R_S_MIC(row,value,abx_panel,self.ast_panel_mic), axis = 1)
         return df
 
     

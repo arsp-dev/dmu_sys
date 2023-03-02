@@ -301,7 +301,27 @@ def check_resistant_sal_shi(row):
         return row
 
 
+def check_R_hin_hpn(row):
+    row['COL_NM'] =  row['COL_NM'].replace('>=','')
+    row['COL_NM'] =  row['COL_NM'].replace('<=','')
+    row['COL_NM'] =  row['COL_NM'].replace('>','')
+    row['COL_NM'] =  row['COL_NM'].replace('<','')
 
+    row['POL_NM'] =  row['POL_NM'].replace('>=','')
+    row['POL_NM'] =  row['POL_NM'].replace('<=','')
+    row['POL_NM'] =  row['POL_NM'].replace('>','')
+    row['POL_NM'] =  row['POL_NM'].replace('<','')
+    if  row['COL_NM'] != ''  and row['COL_NM'] not in ['R','I','S']:
+        if float(row['COL_NM']) > 4.0:
+            row['Test'] = 'R'
+            return row
+
+    if  row['POL_NM'] != '' and row['POL_NM'] not in ['R','I','S']:
+        if float(row['POL_NM']) > 4.0 :
+            row['Test'] = 'R'
+            return row
+    row['Test'] = 'None'
+    return row
 
 
 
@@ -324,7 +344,7 @@ def calculate_R_S(row,value,frame,org_list):
                         return row
                     else:
                         return row
-                else:
+                elif frame['S>='][org_list.index(value)] != '':
                     if float(row[value]) <= float(frame['S>='][org_list.index(value)]):
                         row[value.split('_')[0] + '_RIS'] = 'R'
                         return row
@@ -336,9 +356,9 @@ def calculate_R_S(row,value,frame,org_list):
                         return row
                     else:
                         return row
-            else:
+            else:   
                 return row
-        else:
+        else: 
             return row
 
 
@@ -348,7 +368,6 @@ def calculate_R_S_MIC(row,value,frame,org_list):
     row[value] = row[value].replace('<=','')
     row[value] = row[value].replace('>','')
     row[value] = row[value].replace('<','')
-    row[value.split('_')[0] + '_RIS'] = '' 
     if row[value].replace('.','').isdigit() == True:
             if frame['R>='][org_list.index(value)] != '':
                 if float(row[value]) >= float(frame['R>='][org_list.index(value)]):
@@ -363,10 +382,11 @@ def calculate_R_S_MIC(row,value,frame,org_list):
                     row[value.split('_')[0] + '_RIS'] = 'I'
                 
                     return row
-                else:
+                else:               
                     return row             
-    else:
-        return row
+    if value.split('_')[0] + '_RIS' not in row:
+        row[value.split('_')[0] + '_RIS'] = ''
+    return row
 
 
 

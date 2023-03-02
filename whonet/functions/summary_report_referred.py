@@ -206,9 +206,9 @@ def summary_report_referred(file_id,file_name,config = 'raw'):
         
         
     if len(df_hin_hpi) > 0:
-        df_hin_hpi.to_excel(writer,sheet_name='hin_hpi',index=False)
+        df_hin_hpi.to_excel(writer,sheet_name='hin_hpn',index=False)
     if len(df_hin_hpi_referred) > 0:
-        df_hin_hpi_referred.to_excel(writer,sheet_name='hin_hpi_referred',index=False)
+        df_hin_hpi_referred.to_excel(writer,sheet_name='hin_hpn_referred',index=False)
 
     if len(df_ngo) > 0:
         df_ngo.to_excel(writer,sheet_name='ngo',index=False)
