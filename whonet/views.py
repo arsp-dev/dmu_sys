@@ -43,7 +43,10 @@ whonet_data_fields_mic = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whone
 whonet_data_fields_etest = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_fields.xlsx','etest')
 comp = pd.read_excel(dirpath + '/whonet/static/whonet_xl/org_all.xlsx')
 spec_type = pd.read_excel(dirpath + '/whonet/static/whonet_xl/specimen_type.xlsx')
+unique_values = pd.read_excel(dirpath + '/whonet/static/whonet_xl/unique_values.xlsx')
 
+
+from_list = unique_values['FROM'].values.tolist()
 org_list = comp['ORG'].values.tolist()
 spec_list = spec_type['C_ENGLISH'].values.tolist()
 lab_chk = whonet_region_island['LABORATORY'].values.tolist()
@@ -1049,6 +1052,20 @@ def bigwork(file_id,search_file_name,options, year = '', referred = False):
         
         df = df.apply(lambda row:get_hrlab(row,ent_list_mic,ent_list,ent_list_pos), axis = 1)
     
+    if 'pav' in options:
+      
+        df = df.apply(lambda row:recode_pav(row), axis = 1)
+        # cols_to_replace = ['esbl','beta_lact','induc_cli']
+        # to_blank = ['P','N','+','-','p','n']
+        # df[cols_to_replace] = df[cols_to_replace].replace(to_blank, '')
+    
+    if 'mic_recoding' in options:
+        df = df.apply(lambda row:recode_mic(row,unique_values,from_list), axis = 1)
+    cols_to_replace = df.filter(regex='_nm$').columns
+    to_blank = ['<','>=R','I','nan','R','S','r','s']
+    df[cols_to_replace] = df[cols_to_replace].replace(to_blank, '', regex=True)
+
+    
     
 
         
@@ -1466,53 +1483,53 @@ def get_data_entero(file_id,config = 'raw'):
     for index,row in df.iterrows():
         if row['organism'] in cmp:
             ess_all += 1
-            if row['amk_nd30'] != '' or row['amk_nm'] != '':
+            if row['amk_nd30'] != '' or row['amk_nm'] != '' or row['amk_ne'] != '':
                 ess_amk += 1
-            if row['amc_nd20'] != '' or row['amc_nm'] != '':
+            if row['amc_nd20'] != '' or row['amc_nm'] != '' or row['amc_ne'] != '':
                 ess_amc += 1
-            if row['amp_nd10'] != '' or row['amp_nm'] != '':
+            if row['amp_nd10'] != '' or row['amp_nm'] != '' or row['amp_ne'] != '':
                 ess_amp += 1
-            if row['atm_nd30'] != '' or row['atm_nm'] != '':
+            if row['atm_nd30'] != '' or row['atm_nm'] != '' or row['atm_nm'] != '':
                 ess_atm += 1    
-            if row['czo_nd30'] != '' or row['czo_nm'] != '':
+            if row['czo_nd30'] != '' or row['czo_nm'] != '' or row['czo_ne'] != '':
                 ess_czo += 1
-            if row['fep_nd30'] != '' or row['fep_nm'] != '':
+            if row['fep_nd30'] != '' or row['fep_nm'] != '' or row['fep_ne'] != '':
                 ess_fep += 1
-            if row['ctx_nd30'] != '' or row['ctx_nm'] != '':
+            if row['ctx_nd30'] != '' or row['ctx_nm'] != '' or row['ctx_ne'] != '':
                 ess_ctx += 1
-            if row['fox_nd30'] != '' or row['fox_nm'] != '':
+            if row['fox_nd30'] != '' or row['fox_nm'] != '' or row['fox_ne'] != '':
                 ess_fox += 1
-            if row['caz_nd30'] != '' or row['caz_nm'] != '':
+            if row['caz_nd30'] != '' or row['caz_nm'] != '' or row['caz_ne'] != '':
                 ess_caz += 1
-            if row['cro_nd30'] != '' or row['cro_nm'] != '':
+            if row['cro_nd30'] != '' or row['cro_nm'] != '' or row['cro_ne'] != '':
                 ess_cro += 1
-            if row['cxa_nd30'] != '' or row['cxa_nm'] != '':
+            if row['cxa_nd30'] != '' or row['cxa_nm'] != '' or row['cxa_ne'] != '':
                 ess_cxa += 1
-            if row['cip_nd5'] != '' or row['cip_nm'] != '':
+            if row['cip_nd5'] != '' or row['cip_nm'] != '' or row['cip_ne'] != '':
                 ess_cip += 1
-            if row['etp_nd10'] != '' or row['etp_nm'] != '':
+            if row['etp_nd10'] != '' or row['etp_nm'] != '' or row['etp_ne'] != '':
                 ess_etp += 1
-            if row['gen_nd10'] != '' or row['gen_nm'] != '':
+            if row['gen_nd10'] != '' or row['gen_nm'] != '' or row['gen_ne'] != '':
                 ess_gen += 1
-            if row['ipm_nd10'] != '' or row['ipm_nm'] != '':
+            if row['ipm_nd10'] != '' or row['ipm_nm'] != '' or row['ipm_ne'] != '':
                 ess_ipm += 1
-            if row['mem_nd10'] != '' or row['mem_nm'] != '':
+            if row['mem_nd10'] != '' or row['mem_nm'] != '' or row['mem_ne'] != '':
                 ess_mem += 1
-            if row['tzp_nd100'] != '' or row['tzp_nm'] != '':
+            if row['tzp_nd100'] != '' or row['tzp_nm'] != '' or row['tzp_ne'] != '':
                 ess_tzp += 1
-            if row['tcy_nd30'] != '' or row['tcy_nm'] != '':
+            if row['tcy_nd30'] != '' or row['tcy_nm'] != '' or row['tcy_ne'] != '':
                 ess_tcy += 1
-            if row['tob_nd10'] != '' or row['tob_nm'] != '':
+            if row['tob_nd10'] != '' or row['tob_nm'] != '' or row['tob_ne'] != '':
                 ess_tob += 1
-            if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '':
+            if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '' or row['sxt_ne'] != '':
                 ess_sxt += 1
             if row['spec_type'] == 'ur':
                 ess_ur += 1
-            if (row['czo_nd30'] != '' or row['czo_nm'] != '') and (row['spec_type'] == 'ur'):
+            if (row['czo_nd30'] != '' or row['czo_nm'] != '' or row['czo_ne'] != '') and (row['spec_type'] == 'ur'):
                 ess_czo_ur += 1
-            if (row['nit_nd300'] != '' or row['nit_nm'] != '') and (row['spec_type'] == 'ur'):
+            if (row['nit_nd300'] != '' or row['nit_nm'] != '' or row['nit_ne'] != '') and (row['spec_type'] == 'ur'):
                 ess_nit += 1
-            if row['col_nd10'] != '' or row['col_nm'] != '':
+            if row['col_nd10'] != '' or row['col_nm'] != '' or row['col_ne'] != '':
                 ess_col += 1
             
             
@@ -1611,37 +1628,37 @@ def get_data_non_ent(file_id,config = 'raw'):
     for index,row in df.iterrows():
             if row['organism'] in cmp:
                   non_ent_all += 1
-                  if row['amk_nd30'] != '' or row['amk_nm'] != '':
+                  if row['amk_nd30'] != '' or row['amk_nm'] != '' or row['amk_ne'] != '':
                         non_ent_amk += 1
-                  if row['sam_nd10'] != '' or row['sam_nm'] != '':
+                  if row['sam_nd10'] != '' or row['sam_nm'] != '' or row['sam_ne'] != '':
                         non_ent_sam += 1
-                  if row['fep_nd30'] != '' or row['fep_nm'] != '':
+                  if row['fep_nd30'] != '' or row['fep_nm'] != '' or row['fep_ne'] != '':
                         non_ent_fep += 1
-                  if row['caz_nd30'] != '' or row['caz_nm'] != '':
+                  if row['caz_nd30'] != '' or row['caz_nm'] != '' or row['caz_ne'] != '':
                         non_ent_caz += 1
-                  if row['ctx_nd30'] != '' or row['ctx_nm'] != '':
+                  if row['ctx_nd30'] != '' or row['ctx_nm'] != '' or row['ctx_ne'] != '':
                         non_ent_ctx += 1
-                  if row['cro_nd30'] != '' or row['cro_nm'] != '':
+                  if row['cro_nd30'] != '' or row['cro_nm'] != '' or row['cro_ne'] != '':
                         non_ent_cro += 1
-                  if row['cip_nd5'] != '' or row['cip_nm'] != '':
+                  if row['cip_nd5'] != '' or row['cip_nm'] != '' or row['cip_ne'] != '':
                         non_ent_cip += 1
-                  if row['col_nd10'] != '' or row['col_nm'] != '':
+                  if row['col_nd10'] != '' or row['col_nm'] != '' or row['col_ne'] != '':
                         non_ent_col += 1
-                  if row['ipm_nd10'] != '' or row['ipm_nm'] != '':
+                  if row['ipm_nd10'] != '' or row['ipm_nm'] != '' or row['ipm_ne'] != '':
                         non_ent_ipm += 1
-                  if row['mem_nd10'] != '' or row['mem_nm'] != '':
+                  if row['mem_nd10'] != '' or row['mem_nm'] != '' or row['mem_ne'] != '':
                         non_ent_mem += 1
-                  if row['mno_nd30'] != '' or row['mno_nm'] != '':
+                  if row['mno_nd30'] != '' or row['mno_nm'] != '' or row['mno_ne'] != '':
                         non_ent_mno += 1
-                  if row['gen_nd10'] != '' or row['gen_nm'] != '':
+                  if row['gen_nd10'] != '' or row['gen_nm'] != '' or row['gen_ne'] != '':
                         non_ent_gen += 1
-                  if row['tzp_nd100'] != '' or row['tzp_nm'] != '':
+                  if row['tzp_nd100'] != '' or row['tzp_nm'] != '' or row['tzp_ne'] != '':
                         non_ent_tzp += 1
-                  if row['tob_nd10'] != '' or row['tob_nm'] != '':
+                  if row['tob_nd10'] != '' or row['tob_nm'] != '' or row['tob_ne'] != '':
                         non_ent_tob += 1
-                  if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '':
+                  if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '' or row['sxt_ne'] != '':
                         non_ent_sxt += 1
-                  if (row['tcy_nd30'] != '' or row['tcy_nm'] != '') and row['spec_type'] == 'ur':
+                  if (row['tcy_nd30'] != '' or row['tcy_nm'] != '' or row['tcy_ne'] != '') and row['spec_type'] == 'ur':
                         non_ent_tet += 1
                   if row['spec_type'] == 'ur':
                         non_ent_ur += 1
@@ -1730,35 +1747,35 @@ def get_data_sal_shi(file_id,config = 'raw'):
     for index,row in df.iterrows():
              if row['organism'] in cmp:
                   ent_all += 1
-                  if row['amc_nd20'] != '' or row['amc_nm'] != '':
+                  if row['amc_nd20'] != '' or row['amc_nm'] != '' or row['amc_ne'] != '':
                         ent_amc += 1
-                  if row['amp_nd10'] != '' or row['amp_nm'] != '':
+                  if row['amp_nd10'] != '' or row['amp_nm'] != '' or row['amp_ne'] != '':
                         ent_amp += 1
-                  if row['atm_nd30'] != '' or row['atm_nm'] != '':
+                  if row['atm_nd30'] != '' or row['atm_nm'] != '' or row['atm_ne'] != '':
                         ent_atm += 1
-                  if row['fep_nd30'] != '' or row['fep_nm'] != '':
+                  if row['fep_nd30'] != '' or row['fep_nm'] != '' or row['fep_ne'] != '':
                         ent_fep += 1
-                  if row['ctx_nd30'] != '' or row['ctx_nm'] != '':
+                  if row['ctx_nd30'] != '' or row['ctx_nm'] != '' or row['ctx_ne'] != '':
                         ent_ctx += 1
-                  if row['fox_nd30'] != '' or row['fox_nm'] != '':
+                  if row['fox_nd30'] != '' or row['fox_nm'] != '' or row['fox_ne'] != '':
                         ent_fox += 1
-                  if row['cro_nd30'] != '' or row['cro_nm'] != '':
+                  if row['cro_nd30'] != '' or row['cro_nm'] != '' or row['cro_ne'] != '':
                         ent_cro += 1
-                  if row['chl_nd30'] != '' or row['chl_nm'] != '':
+                  if row['chl_nd30'] != '' or row['chl_nm'] != '' or row['chl_ne'] != '':
                         ent_chl += 1
-                  if row['cip_nd5'] != '' or row['cip_nm'] != '':
+                  if row['cip_nd5'] != '' or row['cip_nm'] != '' or row['cip_ne'] != '':
                         ent_cip += 1
-                  if row['etp_nd10'] != '' or row['etp_nm'] != '':
+                  if row['etp_nd10'] != '' or row['etp_nm'] != '' or row['etp_ne'] != '':
                         ent_etp += 1
-                  if row['ipm_nd10'] != '' or row['ipm_nm'] != '':
+                  if row['ipm_nd10'] != '' or row['ipm_nm'] != '' or row['ipm_ne'] != '':
                         ent_ipm += 1
-                  if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '':
+                  if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '' or row['sxt_ne'] != '':
                         ent_sxt += 1
     
     for index,row in df.iterrows():
             if row['organism'] in cmp_add:
                   ent_azm_all += 1
-                  if row['azm_nd15'] != '' or row['azm_nm']:
+                  if row['azm_nd15'] != '' or row['azm_nm'] or row['azm_ne']:
                         ent_azm += 1
     
     ent_data_sal_shi = [['Antibiotic','Number tested','Percentage'],
@@ -1831,19 +1848,19 @@ def get_data_ent_vic(file_id,config = 'raw'):
     for index,row in df.iterrows():
             if row['organism'] in cmp:
                   ent_vic_all += 1
-                  if row['amp_nd10'] != '' or row['amp_nm'] != '':
+                  if row['amp_nd10'] != '' or row['amp_nm'] != '' or row['amp_ne'] != '':
                         ent_vic_amp += 1
                   if row['azm_nm'] != '':
                         ent_vic_azm += 1
-                  if row['chl_nd30'] != '' or row['chl_nm'] != '':
+                  if row['chl_nd30'] != '' or row['chl_nm'] != '' or row['chl_ne'] != '':
                         ent_vic_chl += 1
-                  if row['dox_nm'] != '':
+                  if row['dox_nm'] != '' or row['dox_ne'] != '':
                         ent_vic_dox += 1
-                  if row['sss_nd200'] != '' or row['sss_nm'] != '':
+                  if row['sss_nd200'] != '' or row['sss_nm'] != '' or row['sss_ne'] != '':
                         ent_vic_sss += 1
-                  if row['tcy_nd30'] != '' or row['tcy_nm'] != '':
+                  if row['tcy_nd30'] != '' or row['tcy_nm'] != '' or row['tcy_ne'] != '':
                         ent_vic_tet += 1
-                  if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '':
+                  if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '' or row['sxt_ne'] != '':
                         ent_vic_sxt += 1
     
     ent_data_vic = [['Antibiotic','Number tested','Percentage'],
@@ -1910,29 +1927,29 @@ def get_data_pae(file_id,config = 'raw'):
     for index,row in df.iterrows():
         if row['organism'] == 'pae':
                 pae_all += 1
-                if row['amk_nd30'] != '' or row['amk_nm'] != '':
+                if row['amk_nd30'] != '' or row['amk_nm'] != '' or row['amk_ne'] != '':
                     pae_amk += 1
-                if row['atm_nd30'] != '' or row['atm_nm'] != '':
+                if row['atm_nd30'] != '' or row['atm_nm'] != '' or row['atm_ne'] != '':
                     pae_atm += 1
-                if row['fep_nd30'] != '' or row['fep_nm'] != '':
+                if row['fep_nd30'] != '' or row['fep_nm'] != '' or row['fep_ne'] != '':
                     pae_fep += 1
-                if row['caz_nd30'] != '' or row['caz_nm'] != '':
+                if row['caz_nd30'] != '' or row['caz_nm'] != '' or row['caz_ne'] != '':
                     pae_caz += 1
-                if row['cip_nd5'] != '' or row['cip_nm'] != '':
+                if row['cip_nd5'] != '' or row['cip_nm'] != '' or row['cip_ne'] != '':
                     pae_cip += 1
-                if row['col_nd10'] != '' or row['col_nm'] != '':
+                if row['col_nd10'] != '' or row['col_nm'] != '' or row['col_ne'] != '':
                     pae_col += 1
-                if row['ipm_nd10'] != '' or row['ipm_nm'] != '':
+                if row['ipm_nd10'] != '' or row['ipm_nm'] != '' or row['ipm_ne'] != '':
                     pae_ipm += 1
-                if row['lvx_nd5'] != '' or row['lvx_nm'] != '':
+                if row['lvx_nd5'] != '' or row['lvx_nm'] != '' or row['lvx_ne'] != '':
                     pae_lev += 1
-                if row['mem_nd10'] != '' or row['mem_nm'] != '':
+                if row['mem_nd10'] != '' or row['mem_nm'] != '' or row['mem_ne'] != '':
                     pae_mem += 1
-                if row['gen_nd10'] != '' or row['gen_nm'] != '':
+                if row['gen_nd10'] != '' or row['gen_nm'] != '' or row['gen_ne'] != '':
                     pae_gen += 1
-                if row['tzp_nd100'] != '' or row['tzp_nm'] != '':
+                if row['tzp_nd100'] != '' or row['tzp_nm'] != '' or row['tzp_ne'] != '':
                     pae_tzp += 1
-                if row['tob_nd10'] != '' or row['tob_nm'] != '':
+                if row['tob_nd10'] != '' or row['tob_nm'] != '' or row['tob_ne'] != '':
                     pae_tob += 1
     
     
@@ -2002,23 +2019,23 @@ def get_data_hin(file_id,config = 'raw'):
     for index,row in df.iterrows():
             if row['organism'].lower() == 'hin' or row['organism'].lower()  == 'hxt' or row['organism'].lower()  == 'hxb' or row['organism'].lower()  == 'hib' or row['organism'].lower()  == 'hpi':
                   hin_all += 1
-                  if row['amc_nd20'] != '' or row['amc_nm'] != '':
+                  if row['amc_nd20'] != '' or row['amc_nm'] != '' or row['amc_ne'] != '':
                         hin_amc += 1
-                  if row['amp_nd10'] != '' or row['amp_nm'] != '':
+                  if row['amp_nd10'] != '' or row['amp_nm'] != '' or row['amp_ne'] != '':
                         hin_amp += 1
-                  if row['sam_nd10'] != '' or row['sam_nm'] != '':
+                  if row['sam_nd10'] != '' or row['sam_nm'] != '' or row['sam_ne'] != '':
                         hin_sam += 1
-                  if row['azm_nd15'] != '' or row['azm_nm'] != '':
+                  if row['azm_nd15'] != '' or row['azm_nm'] != '' or row['azm_ne'] != '':
                         hin_azm += 1
-                  if row['cro_nd30'] != '' or row['cro_nm'] != '':
+                  if row['cro_nd30'] != '' or row['cro_nm'] != '' or row['cro_ne'] != '':
                         hin_cro += 1
-                  if (row['cip_nd5'] != '' or row['cip_nm'] != '') or (row['lvx_nd5'] != '' or row['lvx_nm'] != ''):
+                  if (row['cip_nd5'] != '' or row['cip_nm'] != '' or row['cip_ne'] != '') or (row['lvx_nd5'] != '' or row['lvx_nm'] != '' or row['lvx_ne'] != ''):
                         hin_cip_lev += 1
-                  if row['mem_nd10'] != '' or row['mem_nm'] != '':
+                  if row['mem_nd10'] != '' or row['mem_nm'] != '' or row['mem_ne'] != '':
                         hin_mem += 1
-                  if row['tcy_nd30'] != '' or row['tcy_nm'] != '':
+                  if row['tcy_nd30'] != '' or row['tcy_nm'] != '' or row['tcy_ne'] != '':
                         hin_tet += 1
-                  if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '':
+                  if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '' or row['sxt_ne'] != '':
                         hin_sxt += 1
 
     hin_fast_data = [['Antibiotic','Number tested','Percentage'],
@@ -2071,11 +2088,11 @@ def get_data_bca(file_id,config = 'raw'):
     for index,row in df.iterrows():
         if row['organism'] == 'bca':
                 mox_all += 1
-                if row['amc_nd20'] != '' or row['amc_nm'] != '':
+                if row['amc_nd20'] != '' or row['amc_nm'] != '' or row['amc_ne'] != '':
                     mox_amc += 1
-                if row['cxa_nm'] != '':
+                if row['cxa_nm'] != '' or row['cxa_ne'] != '':
                     mox_cxa += 1
-                if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '': 
+                if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '' or row['sxt_ne'] != '': 
                     mox_sxt += 1
                     
     mox_fast_data = [['Antibiotic','Number tested','Percentage'],
@@ -2128,17 +2145,17 @@ def get_data_nme(file_id,config = 'raw'):
     for index,row in df.iterrows():
         if row['organism'] in cmp:
                 nme_all += 1
-                if row['amp_nm'] != '':
+                if row['amp_nm'] != '' or row['amp_ne'] != '':
                     nme_amp += 1
-                if row['azm_nd15'] != '' or row['azm_nm'] != '':
+                if row['azm_nd15'] != '' or row['azm_nm'] != '' or row['azm_ne'] != '':
                     nme_azm += 1
-                if row['cro_nd30'] != '' or row['cro_nm'] != '':
+                if row['cro_nd30'] != '' or row['cro_nm'] != '' or row['cro_ne'] != '':
                     nme_cro += 1
-                if row['cip_nd5'] != '' or row['cip_nm'] != '':
+                if row['cip_nd5'] != '' or row['cip_nm'] != '' or row['cip_ne'] != '':
                     nme_cip += 1
-                if row['mem_nd10'] != '' or row['mem_nm'] != '':
+                if row['mem_nd10'] != '' or row['mem_nm'] != '' or row['mem_ne'] != '':
                     nme_mem += 1
-                if row['pen_nm'] != '':
+                if row['pen_nm'] != '' or row['pen_ne'] != '':
                     nme_pen += 1
                     
     nme_fast_data = [['Antibiotic','Number tested','Percentage'],
@@ -2190,21 +2207,21 @@ def get_data_ngo_nko(file_id,config = 'raw'):
     for index,row in df.iterrows():
         if row['organism'] == 'ngo' or row['organism'] == 'nko':
                 ngo_all += 1
-                if row['azm_nm'] != '':
+                if row['azm_nm'] != '' or row['azm_ne'] != '':
                     ngo_azm += 1
-                if row['cfm_nd5'] != '' or row['cfm_nm'] != '':
+                if row['cfm_nd5'] != '' or row['cfm_nm'] != '' or row['cfm_ne'] != '':
                     ngo_cfm += 1
-                if row['cro_nd30'] != '' or row['cro_nm'] != '':
+                if row['cro_nd30'] != '' or row['cro_nm'] != '' or row['cro_ne'] != '':
                     ngo_cro += 1
-                if row['cip_nd5'] != '' or row['cip_nm'] != '':
+                if row['cip_nd5'] != '' or row['cip_nm'] != '' or row['cip_ne'] != '':
                     ngo_cip += 1
-                if row['gen_nd10'] != '' or row['gen_nm'] != '':
+                if row['gen_nd10'] != '' or row['gen_nm'] != '' or row['gen_ne'] != '':
                     ngo_gen += 1
-                if row['nal_nd30'] != '' or row['nal_nm'] != '':
+                if row['nal_nd30'] != '' or row['nal_nm'] != '' or row['nal_ne'] != '':
                     ngo_nal += 1
-                if row['spt_nd100'] != '' or row['spt_nm'] != '':
+                if row['spt_nd100'] != '' or row['spt_nm'] != '' or row['spt_ne'] != '':
                     ngo_spe += 1
-                if row['tcy_nd30'] != '' or row['tcy_nm'] != '':
+                if row['tcy_nd30'] != '' or row['tcy_nm'] != '' or row['tcy_ne'] != '':
                     ngo_tet += 1
                     
     ngo_fast_data = [['Antibiotic','Number tested','Percentage'],
@@ -2267,31 +2284,31 @@ def get_data_spn(file_id,config = 'raw'):
     for index,row in df.iterrows():
         if row['organism'] == 'spn':
                 spn_all += 1
-                if row['ipm_nm']:
+                if row['ipm_nm'] or row['ipm_ne']:
                     spn_imp += 1
-                if row['cro_nm'] != '':
+                if row['cro_nm'] != '' or row['cro_ne'] != '':
                     spn_cro += 1
-                if row['cli_nd2'] != '' or row['cli_nm'] != '':
+                if row['cli_nd2'] != '' or row['cli_nm'] != '' or row['cli_ne'] != '':
                     spn_cli += 1
-                if row['ery_nd15'] != '' or row['ery_nm'] != '':
+                if row['ery_nd15'] != '' or row['ery_nm'] != '' or row['ery_ne'] != '':
                     spn_ery += 1
-                if row['lvx_nd5'] != '' or row['lvx_nm'] != '':
+                if row['lvx_nd5'] != '' or row['lvx_nm'] != '' or row['lvx_ne'] != '':
                     spn_lev += 1
-                if row['mem_nm'] != '':
+                if row['mem_nm'] != '' or row['mem_ne'] != '':
                     spn_mem += 1
-                if row['oxa_nd1'] != '' or row['oxa_nm'] != '':
+                if row['oxa_nd1'] != '' or row['oxa_nm'] != '' or row['oxa_ne'] != '':
                     spn_oxa += 1
-                if row['pen_nm'] != '':
+                if row['pen_nm'] != '' or row['pen_ne'] != '':
                     spn_pen += 1
-                if row['tcy_nd30'] != '' or row['tcy_nm'] != '':
+                if row['tcy_nd30'] != '' or row['tcy_nm'] != '' or row['tcy_ne'] != '':
                     spn_tet += 1
-                if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '':
+                if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '' or row['sxt_ne'] != '':
                     spn_sxt += 1
-                if row['van_nd30'] != '' or row['van_nm'] != '':
+                if row['van_nd30'] != '' or row['van_nm'] != '' or row['van_ne'] != '':
                     spn_van += 1
-                if row['rif_nd5'] != '' or row['rif_nm'] != '':
+                if row['rif_nd5'] != '' or row['rif_nm'] != '' or row['rif_ne'] != '':
                     spn_rif += 1
-                if row['lnz_nd30'] != '' or row['lnz_nm'] != '':
+                if row['lnz_nd30'] != '' or row['lnz_nm'] != '' or row['lnz_ne'] != '':
                     spn_lnz += 1
     
     spn_fast_data = [['Antibiotic','Number tested','Percentage'],
@@ -2364,29 +2381,29 @@ def get_data_ent_positive(file_id,config = 'raw'):
     for index,row in df.iterrows():
         if row['organism'] in cmp:
                 ent_positive_all += 1
-                if row['amp_nd10'] != '' or row['amp_nm'] != '':
+                if row['amp_nd10'] != '' or row['amp_nm'] != '' or row['amp_ne'] != '':
                     ent_positive_amp += 1
-                if row['dap_nm'] != '':
+                if row['dap_nm'] != '' or row['dap_ne'] != '':
                     ent_positive_dap += 1
-                if row['geh_nd120'] != '' or row['geh_nm'] != '':
+                if row['geh_nd120'] != '' or row['geh_nm'] != '' or row['geh_ne'] != '':
                     ent_positive_geh += 1
-                if row['lnz_nd30'] != '' or row['lnz_nm'] != '':
+                if row['lnz_nd30'] != '' or row['lnz_nm'] != '' or row['lnz_ne'] != '':
                     ent_positive_lnz += 1
-                if row['pen_nd10'] != '' or row['pen_nm'] != '':
+                if row['pen_nd10'] != '' or row['pen_nm'] != '' or row['pen_ne'] != '':
                     ent_positive_pen += 1
-                if row['sth_nd300'] != '' or row['sth_nm'] != '': 
+                if row['sth_nd300'] != '' or row['sth_nm'] != '' or row['sth_ne'] != '': 
                     ent_positive_sth += 1
-                if row['van_nd30'] != '' or row['van_nm'] != '':
+                if row['van_nd30'] != '' or row['van_nm'] != '' or row['van_ne'] != '':
                     ent_positive_van += 1
                 if row['spec_type'] == 'ur':
                     ent_positive_ur += 1
-                if (row['cip_nd5'] != '' or row['cip_nm'] != '') and row['spec_type'] == 'ur':
+                if (row['cip_nd5'] != '' or row['cip_nm'] != '' or row['cip_ne'] != '') and row['spec_type'] == 'ur':
                     ent_positive_cip += 1
-                if (row['lvx_nd5'] != '' or row['lvx_nm'] != '') and row['spec_type'] == 'ur':
+                if (row['lvx_nd5'] != '' or row['lvx_nm'] != '' or row['lvx_ne'] != '') and row['spec_type'] == 'ur':
                     ent_positive_lvx += 1
-                if (row['tcy_nd30'] != '' or row['tcy_nm'] != '') and row['spec_type'] == 'ur':
+                if (row['tcy_nd30'] != '' or row['tcy_nm'] != '' or row['tcy_ne'] != '') and row['spec_type'] == 'ur':
                     ent_positive_tcy += 1
-                if (row['nit_nd300'] != '' or row['nit_nm'] != '') and row['spec_type'] == 'ur':
+                if (row['nit_nd300'] != '' or row['nit_nm'] != '' or row['nit_ne'] != '') and row['spec_type'] == 'ur':
                     ent_positive_nit += 1
     ent_positive_data = [['Antibiotic','Number tested','Percentage'],
                         ['1. Ampicillin',ent_positive_amp,str(  round(((ent_positive_amp)/(ent_positive_all))*100,2) ) + "%" if ent_positive_all > 0 else '0%'],
@@ -2461,33 +2478,33 @@ def get_data_sta(file_id,config = 'raw'):
     for index,row in df.iterrows():
         if row['organism']  in cmp:
                 sta_all += 1
-                if row['fox_nd30'] != '' or row['fox_nm'] != '':
+                if row['fox_nd30'] != '' or row['fox_nm'] != '' or row['fox_ne'] != '':
                     sta_fox += 1
-                if row['oxa_nd1'] != '' or row['oxa_nm'] != '':
+                if row['oxa_nd1'] != '' or row['oxa_nm'] != '' or row['oxa_ne'] != '':
                     sta_oxa += 1
-                if row['cip_nd5'] != '' or row['cip_nm'] != '':
+                if row['cip_nd5'] != '' or row['cip_nm'] != '' or row['cip_ne'] != '':
                     sta_cip += 1
-                if row['cli_nd2'] != '' or row['cli_nm'] != '':
+                if row['cli_nd2'] != '' or row['cli_nm'] != '' or row['cli_ne'] != '':
                     sta_cli += 1
-                if row['dap_nm'] != '':
+                if row['dap_nm'] != '' or row['dap_ne'] != '':
                     sta_dap += 1
-                if row['ery_nd15'] != '' or row['ery_nm'] != '':
+                if row['ery_nd15'] != '' or row['ery_nm'] != '' or row['ery_ne'] != '':
                     sta_ery += 1
-                if row['lnz_nd30'] != '' or row['lnz_nm'] != '':
+                if row['lnz_nd30'] != '' or row['lnz_nm'] != '' or row['lnz_ne'] != '':
                     sta_lnz += 1
-                if row['pen_nd10'] != '' or row['pen_nm'] != '':
+                if row['pen_nd10'] != '' or row['pen_nm'] != '' or row['pen_ne'] != '':
                     sta_pen += 1
-                if row['rif_nd5'] != '' or row['rif_nm'] != '':
+                if row['rif_nd5'] != '' or row['rif_nm'] != '' or row['rif_ne'] != '':
                     sta_rif += 1
-                if row['tcy_nd30'] != '' or row['tcy_nm'] != '':
+                if row['tcy_nd30'] != '' or row['tcy_nm'] != '' or row['tcy_ne'] != '':
                     sta_tet += 1
-                if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '':
+                if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '' or row['sxt_ne'] != '':
                     sta_sxt += 1 
-                if row['van_nm'] != '':
+                if row['van_nm'] != '' or row['van_ne'] != '':
                     sta_van += 1
                 if row['spec_type'] == 'ur':
                     sta_ur += 1
-                if (row['nit_nd300'] != '' or row['nit_nm'] != '') and row['spec_type'] == 'ur':
+                if (row['nit_nd300'] != '' or row['nit_nm'] != '' or row['nit_ne'] != '') and row['spec_type'] == 'ur':
                     sta_nit += 1 
                     
                     
@@ -2553,17 +2570,17 @@ def get_data_pce(file_id,config = 'raw'):
     for index,row in df.iterrows():
         if row['organism'] == 'pce':
                 pce_all += 1
-                if row['caz_nd30'] != '' or row['caz_nm'] != '':
+                if row['caz_nd30'] != '' or row['caz_nm'] != '' or row['caz_ne'] != '':
                     pce_caz += 1
-                if row['chl_nm'] != '':
+                if row['chl_nm'] != '' or row['chl_ne'] != '':
                     pce_chl += 1
-                if row['lvx_nm'] != '':
+                if row['lvx_nm'] != '' or row['lvx_ne'] != '':
                     pce_lev += 1
-                if row['mem_nd10'] != '' or row['mem_nm'] != '':
+                if row['mem_nd10'] != '' or row['mem_nm'] != '' or row['mem_ne'] != '':
                     pce_mem += 1
-                if row['mno_nd30'] != '' or row['mno_nm'] != '':
+                if row['mno_nd30'] != '' or row['mno_nm'] != '' or row['mno_ne'] != '':
                     pce_mno += 1
-                if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '':
+                if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '' or row['sxt_ne'] != '':
                     pce_sxt += 1
     
     pce_data = [['Antibiotic','Number tested','Percentage'],
@@ -2617,15 +2634,15 @@ def get_data_pma(file_id,config = 'raw'):
     for index,row in df.iterrows():
         if row['organism'] == 'pma':
                 pma_all += 1
-                if row['caz_nm'] != '':
+                if row['caz_nm'] != '' or row['caz_ne'] != '':
                     pma_caz += 1
-                if row['chl_nm'] != '':
+                if row['chl_nm'] != '' or row['chl_ne'] != '':
                     pma_chl += 1
-                if row['lvx_nd5'] != '' or row['lvx_nm'] != '':
+                if row['lvx_nd5'] != '' or row['lvx_nm'] != '' or row['lvx_ne'] != '':
                     pma_lev += 1
-                if row['mno_nd30'] != '' or row['mno_nm'] != '':
+                if row['mno_nd30'] != '' or row['mno_nm'] != '' or row['mno_ne'] != '':
                     pma_mno += 1
-                if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '':
+                if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '' or row['sxt_ne'] != '':
                     pma_sxt += 1 
     
     pma_data = [['Antibiotic','Number tested','Percentage'],
@@ -2689,27 +2706,27 @@ def get_data_other_non_ent(file_id):
     for index,row in df.iterrows():
         if row['organism'] in cmp:
                 other_all += 1
-                if row['amk_nd30'] != '' or row['amk_nm'] != '':
+                if row['amk_nd30'] != '' or row['amk_nm'] != '' or row['amk_ne'] != '':
                     other_amk += 1
-                if row['atm_nd30'] != '' or row['atm_nm'] != '':
+                if row['atm_nd30'] != '' or row['atm_nm'] != '' or row['atm_ne'] != '':
                     other_atm += 1   
-                if row['fep_nd30'] != '' or row['fep_nm'] != '':
+                if row['fep_nd30'] != '' or row['fep_nm'] != '' or row['fep_ne'] != '':
                     other_fep += 1 
-                if (row['ctx_nd30'] != '' or row['ctx_nm'] != '') or (row['cro_nd30'] != '' or row['cro_nm'] != '') or (row['caz_nd30'] != '' or row['caz_nm'] != ''):
+                if (row['ctx_nd30'] != '' or row['ctx_nm'] != '' or row['ctx_ne'] != '') or (row['cro_nd30'] != '' or row['cro_nm'] != '' or row['cro_ne'] != '') or (row['caz_nd30'] != '' or row['caz_nm'] != '' or row['caz_ne'] != ''):
                     other_ctx_cro_caz += 1
-                if row['chl_nd30'] != '' or row['chl_nm'] != '':
+                if row['chl_nd30'] != '' or row['chl_nm'] != '' or row['chl_ne'] != '':
                     other_chl += 1
-                if (row['cip_nd5'] != '' or row['cip_nm'] != '') or (row['lvx_nd5'] != '' or row['lvx_nm'] != ''):
+                if (row['cip_nd5'] != '' or row['cip_nm'] != '' or row['cip_ne'] != '') or (row['lvx_nd5'] != '' or row['lvx_nm'] != '' or row['lvx_ne'] != ''):
                     other_cip_lev += 1 
-                if (row['gen_nd10'] != '' or row['gen_nm'] != '') or (row['tob_nd10'] != '' or row['tob_nm'] != ''):
+                if (row['gen_nd10'] != '' or row['gen_nm'] != '' or row['gen_ne'] != '') or (row['tob_nd10'] != '' or row['tob_nm'] != '' or row['tob_ne'] != ''):
                     other_gen_tob += 1
-                if (row['ipm_nd10'] != '' or row['ipm_nm'] != '') or (row['mem_nd10'] != '' or row['mem_nm'] != ''):
+                if (row['ipm_nd10'] != '' or row['ipm_nm'] != '' or row['ipm_ne'] != '') or (row['mem_nd10'] != '' or row['mem_nm'] != '' or row['mem_ne'] != ''):
                     other_imp_mem += 1
-                if row['tzp_nd100'] != '' or row['tzp_nm'] != '':
+                if row['tzp_nd100'] != '' or row['tzp_nm'] != '' or row['tzp_ne'] != '':
                     other_tzp += 1 
-                if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '':
+                if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '' or row['sxt_ne'] != '':
                     other_sxt += 1
-                if (row['tcy_nd30'] != '' or row['tcy_nm'] != '') and row['spec_type'] == 'ur':
+                if (row['tcy_nd30'] != '' or row['tcy_nm'] != '' or row['tcy_ne'] != '') and row['spec_type'] == 'ur':
                     other_tet += 1 
                 if row['spec_type'] == 'ur':  
                     other_ur += 1
@@ -2770,25 +2787,25 @@ def get_data_svi(file_id,config = 'raw'):
     for index,row in df.iterrows():
         if row['organism'] in cmp:
                 svi_all += 1
-                if row['amp_nm'] != '':
+                if row['amp_nm'] != '' or row['amp_ne'] != '':
                     svi_amp += 1
-                if row['cro_nd30'] != '' or row['cro_nm'] != '':
+                if row['cro_nd30'] != '' or row['cro_nm'] != '' or row['cro_ne'] != '':
                     svi_cro += 1
-                if row['fep_nd30'] != '' or row['fep_nm'] != '':
+                if row['fep_nd30'] != '' or row['fep_nm'] != '' or row['fep_ne'] != '':
                     svi_fep += 1
-                if row['ctx_nd30'] != '' or row['ctx_nm'] != '':
+                if row['ctx_nd30'] != '' or row['ctx_nm'] != '' or row['ctx_ne'] != '':
                     svi_ctx += 1
-                if row['chl_nd30'] != '' or row['chl_nm'] != '':
+                if row['chl_nd30'] != '' or row['chl_nm'] != '' or row['chl_ne'] != '':
                     svi_chl += 1
-                if row['cli_nd2'] != '' or row['cli_nm'] != '':
+                if row['cli_nd2'] != '' or row['cli_nm'] != '' or row['cli_ne'] != '':
                     svi_cli += 1
-                if row['ery_nd15'] != '' or row['ery_nm'] != '':
+                if row['ery_nd15'] != '' or row['ery_nm'] != '' or row['ery_ne'] != '':
                     svi_ery += 1
-                if row['lnz_nd30'] != '' or row['lnz_nm'] != '':
+                if row['lnz_nd30'] != '' or row['lnz_nm'] != '' or row['lnz_ne'] != '':
                     svi_lnz += 1
-                if row['pen_nm'] != '':
+                if row['pen_nm'] != '' or row['pen_ne'] != '':
                     svi_pen += 1
-                if row['van_nd30'] != '' or row['van_nm'] != '':
+                if row['van_nd30'] != '' or row['van_nm'] != '' or row['van_ne'] != '':
                     svi_van += 1
                     
                     
@@ -2858,23 +2875,23 @@ def get_data_bsn(file_id,config = 'raw'):
     for index,row in df.iterrows():
         if row['organism'] in cmp:
                 bsn_all += 1
-                if (row['amp_nd10'] != '' or row['amp_nm'] != '') or (row['pen_nd10'] != '' or row['pen_nm'] != ''):
+                if (row['amp_nd10'] != '' or row['amp_nm'] != '' or row['amp_ne'] != '') or (row['pen_nd10'] != '' or row['pen_nm'] != '' or row['pen_ne'] != ''):
                     bsn_amp_pen += 1
-                if (row['fep_nd30'] != '' or row['fep_nm'] != '') or (row['ctx_nd30'] != '' or row['ctx_nm'] != '') or (row['cro_nd30'] != '' or row['cro_nm'] != ''):
+                if (row['fep_nd30'] != '' or row['fep_nm'] != '' or row['fep_ne'] != '') or (row['ctx_nd30'] != '' or row['ctx_nm'] != '' or row['ctx_ne'] != '') or (row['cro_nd30'] != '' or row['cro_nm'] != '' or row['cro_ne'] != ''):
                     bsn_fep_ctx_cro += 1
-                if row['chl_nd30'] != '' or row['chl_nm'] != '':
+                if row['chl_nd30'] != '' or row['chl_nm'] != '' or row['chl_ne'] != '':
                     bsn_chl += 1 
-                if row['cli_nd2'] != '' or row['cli_nm'] != '':
+                if row['cli_nd2'] != '' or row['cli_nm'] != '' or row['cli_ne'] != '':
                     bsn_cli += 1
-                if row['dap_nm'] != '':
+                if row['dap_nm'] != '' or row['dap_ne'] != '':
                     bsn_dap += 1
-                if row['ery_nd15'] != '' or row['ery_nm'] != '':
+                if row['ery_nd15'] != '' or row['ery_nm'] != '' or row['ery_ne'] != '':
                     bsn_ery += 1
-                if row['lvx_nd5'] != '' or row['lvx_nm'] != '':
+                if row['lvx_nd5'] != '' or row['lvx_nm'] != '' or row['lvx_ne'] != '':
                     bsn_lev += 1
-                if row['lnz_nd30'] != '' or row['lnz_nm'] != '':
+                if row['lnz_nd30'] != '' or row['lnz_nm'] != '' or row['lnz_ne'] != '':
                     bsn_lnz += 1
-                if row['van_nd30'] != '' or row['van_nm'] != '':
+                if row['van_nd30'] != '' or row['van_nm'] != '' or row['van_ne'] != '':
                     bsn_van += 1  
     
     bsn_data = [['Antibiotic','Number tested','Percentage'],
@@ -4556,6 +4573,29 @@ def get_hrlab(row,mic,dsk,organism):
             return row
     else:
         return row
+
+def recode_mic(row,unique_values,from_list):
+    mic_list = ['czo_nm','fep_nm','cfm_nm','cfp_nm','ctx_nm','fox_nm','caz_nm','cro_nm','cxm_nm','cxa_nm','cep_nm','chl_nm','cip_nm','clr_nm','cli_nm','col_nm','sxt_nm','dap_nm','dor_nm',
+    'etp_nm','ery_nm','gen_nm','geh_nm','ipm_nm','kan_nm','lvx_nm','lnz_nm','mem_nm','mno_nm','mfx_nm','nal_nm','net_nm','nit_nm','nor_nm','nov_nm','ofx_nm','oxa_nm','pen_nm','pip_nm',
+    'tzp_nm','pol_nm','qda_nm','rif_nm','spt_nm','str_nm','sth_nm','tcy_nm','tic_nm','tcc_nm','tgc_nm','tob_nm','van_nm','fos_nm','dox_nm','sss_nm']
+    
+
+    for i in mic_list:
+        if row[i] != '':
+            if row[i] in from_list:
+                row[i] = unique_values['TO'][from_list.index(row[i])]
+                return row
+    return row
+
+def recode_pav(row):
+    recode_list = ['P','N','+','-','p','n']
+    pheno_list = ['esbl','beta_lact','induc_cli']
+    for i in pheno_list:
+        if row[i] not in recode_list:
+            row[i] = ''
+            return row
+
+    return row
 
 def clean_gender(row):
     sex = ['m','f']
