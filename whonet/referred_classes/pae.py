@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from datetime import datetime
-from whonet.functions.summary_report_helper import get_date_to_compute, calculate_R_S, calculate_R_S_MIC, remove_null_cols, check_R_to_aminoglycoside_pae, check_R_to_col_pae, check_R_to_carbapenems_pae
+from whonet.functions.summary_report_helper import get_date_to_compute, calculate_R_S, calculate_R_S_MIC, remove_null_cols, check_R_to_aminoglycoside_pae, check_R_to_col_pae, check_R_to_carbapenems_pae, check_R_beta_lactam_pae
 dirpath = os.getcwd()
 abx_panel = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_summary_referred_2023.xlsx','pae')
 
@@ -31,6 +31,9 @@ class Pae:
         df_carbapenems = self.intermidiate_resistant_to_carbapenems(df_referral_days)
         frames.append(df_carbapenems)
 
+        df_beta_lactam = self.intermidiate_resistant_beta_lactam(df[df['ORGANISM'].isin(['pae'])])
+        frames.append(df_beta_lactam)
+
 
       
 
@@ -44,7 +47,11 @@ class Pae:
             # df = df.drop(columns=['ORIGIN_REF','FILE_REF','ID','comp','ent_fast'])
             df = df.drop(columns=['ORIGIN_REF','FILE_REF','ID','comp','ent_fast','Test'])
             df['SPEC_DATE'] = df['SPEC_DATE'].dt.strftime('%m/%d/%Y')
-            df, cols = remove_null_cols(df,['Test','PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','X_REFERRED','ESBL','AMK_ND30','AMK_NM','AMK_RIS','GEN_ND10','GEN_NM','GEN_RIS','TOB_ND10','TOB_NM','TOB_RIS','IPM_ND10','IPM_NM','IPM_RIS','MEM_ND10','MEM_NM','MEM_RIS','COL_NM','POL_NM'])
+            df, cols = remove_null_cols(df,['Test','PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE',
+                                            'ORGANISM','X_REFERRED','ESBL','AMK_ND30','AMK_NM','AMK_RIS','GEN_ND10','GEN_NM','GEN_RIS',
+                                            'TOB_ND10','TOB_NM','TOB_RIS','IPM_ND10','IPM_NM','IPM_RIS','MEM_ND10','MEM_NM','MEM_RIS',
+                                            'CZA_ND30','CZA_NM','CZA_RIS','IMR_ND10','IMR_NM','IMR_RIS','FDC_ND','FDC_NM','FDC_RIS',
+                                            'CZT_ND30','CZT_NM','CZT_RIS','COL_NM','POL_NM'])
             df = df[cols]
             return df
         return df
@@ -76,6 +83,9 @@ class Pae:
     
     def intermidiate_resistant_to_carbapenems(self, df: pd.DataFrame) -> pd.DataFrame:
         return df.apply(lambda row: check_R_to_carbapenems_pae(row),axis = 1)
+    
+    def intermidiate_resistant_beta_lactam(self, df: pd.DataFrame) -> pd.DataFrame:
+        return df.apply(lambda row: check_R_beta_lactam_pae(row), axis = 1)
     
    
     def col_resistant(self, df: pd.DataFrame) -> pd.DataFrame:

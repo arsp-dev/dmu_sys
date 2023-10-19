@@ -136,6 +136,14 @@ def concat_all_df(file_id,config = 'raw'):
     df['fos_nd200'] = df['fos_nd200'].str.replace('.0', '', regex=False)
     df['dox_nd30'] = df['dox_nd30'].str.replace('.0', '', regex=False)
     df['sss_nd200'] = df['sss_nd200'].str.replace('.0', '', regex=False)
+    df['fdc_nd'] = df['fdc_nd'].str.replace('.0', '', regex=False)
+    df['cza_nd30'] = df['cza_nd30'].str.replace('.0', '', regex=False)
+    df['imr_nd10'] = df['imr_nd10'].str.replace('.0', '', regex=False)
+    df['plz_nd'] = df['plz_nd'].str.replace('.0', '', regex=False)
+    df['czt_nd30'] = df['czt_nd30'].str.replace('.0', '', regex=False)
+    df['mev_nd20'] = df['mev_nd20'].str.replace('.0', '', regex=False)
+    df['tzd_nd'] = df['tzd_nd'].str.replace('.0', '', regex=False)
+    
       
     df['comment'] = df['comment'].str.replace('/^=/', '', regex=True)
 
@@ -262,6 +270,13 @@ def concat_all_df_referred(file_id):
     df['fos_nd200'] = df['fos_nd200'].str.replace('.0', '', regex=False)
     df['dox_nd30'] = df['dox_nd30'].str.replace('.0', '', regex=False)
     df['sss_nd200'] = df['sss_nd200'].str.replace('.0', '', regex=False)
+    df['fdc_nd'] = df['fdc_nd'].str.replace('.0', '', regex=False)
+    df['cza_nd30'] = df['cza_nd30'].str.replace('.0', '', regex=False)
+    df['imr_nd10'] = df['imr_nd10'].str.replace('.0', '', regex=False)
+    df['plz_nd'] = df['plz_nd'].str.replace('.0', '', regex=False)
+    df['czt_nd30'] = df['czt_nd30'].str.replace('.0', '', regex=False)
+    df['mev_nd20'] = df['mev_nd20'].str.replace('.0', '', regex=False)
+    df['tzd_nd'] = df['tzd_nd'].str.replace('.0', '', regex=False)
       
     df['comment'] = df['comment'].str.replace('/^=/', '', regex=True)
 

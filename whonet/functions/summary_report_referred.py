@@ -16,6 +16,8 @@ from whonet.referred_classes.ngo import Ngo
 from whonet.referred_classes.nme import Nme
 from whonet.referred_classes.spn import Spn
 from whonet.referred_classes.str import Str
+from whonet.referred_classes.pma import Pme
+from whonet.referred_classes.sau_oth import SauOthers
 
 dirpath = os.getcwd()
 enterobact_all = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_summary_referred.xlsx','ENTEROBACTERIACEAE_X_SAL_SHI')
@@ -77,6 +79,11 @@ def summary_report_referred(file_id,file_name,config = 'raw'):
     df_eco = df_eco.process()
     df_eco_referred = EColi(df[df['X_REFERRED'] == '1'])
     df_eco_referred = df_eco_referred.process()
+
+    df_pma = Pme(df[df['X_REFERRED'] != '1'])
+    df_pma = df_pma.process()
+    df_pma_referred = Pme(df[df['X_REFERRED'] == '1'])
+    df_pma_referred = df_pma_referred.process()
 
 
     df_kpn = Kpn(df[df['X_REFERRED'] != '1'])
@@ -145,6 +152,12 @@ def summary_report_referred(file_id,file_name,config = 'raw'):
     df_str_referred = df_str_referred.process()
 
 
+    df_sau_oth = SauOthers(df[df['X_REFERRED'] != '1'])
+    df_sau_oth = df_sau_oth.process()
+    df_sau_oth_referred = SauOthers(df[df['X_REFERRED'] == '1'])
+    df_sau_oth_referred = df_sau_oth_referred.process()
+
+
 
     # DITO ANG START PAG NG SEMI CLEANED DATA FRAMES
 
@@ -171,8 +184,13 @@ def summary_report_referred(file_id,file_name,config = 'raw'):
 
     if len(df_pae) > 0:
         df_pae.to_excel(writer,sheet_name='pae',index=False)
-    if len(df_aba_referred) > 0:
+    if len(df_pae_referred) > 0:
         df_pae_referred.to_excel(writer,sheet_name='pae_referred',index=False)
+
+    if len(df_pma) > 0:
+        df_pma.to_excel(writer,sheet_name='pma',index=False)
+    if len(df_pma_referred) > 0:
+        df_pma_referred.to_excel(writer,sheet_name='pma_referred',index=False)
 
 
     if len(df_efa_efm) > 0:
@@ -185,6 +203,11 @@ def summary_report_referred(file_id,file_name,config = 'raw'):
         df_sau.to_excel(writer,sheet_name='sau',index=False)
     if len(df_sau_referred) > 0:
         df_sau_referred.to_excel(writer,sheet_name='sau_referred',index=False)
+    
+    if len(df_sau_oth) > 0:
+        df_sau_oth.to_excel(writer,sheet_name='sau_others',index=False)
+    if len(df_sau_oth_referred) > 0:
+        df_sau_oth_referred.to_excel(writer,sheet_name='sau_others_referred',index=False)
     
 
     if len(df_sal_shi) > 0:
@@ -200,9 +223,9 @@ def summary_report_referred(file_id,file_name,config = 'raw'):
         
         
     if len(df_hin_hpi) > 0:
-        df_hin_hpi.to_excel(writer,sheet_name='hin_hpn',index=False)
+        df_hin_hpi.to_excel(writer,sheet_name='hin_hpi',index=False)
     if len(df_hin_hpi_referred) > 0:
-        df_hin_hpi_referred.to_excel(writer,sheet_name='hin_hpn_referred',index=False)
+        df_hin_hpi_referred.to_excel(writer,sheet_name='hin_hpi_referred',index=False)
 
     if len(df_ngo) > 0:
         df_ngo.to_excel(writer,sheet_name='ngo',index=False)

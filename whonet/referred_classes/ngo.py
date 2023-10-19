@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from whonet.functions.summary_report_helper import remove_null_cols, calculate_R_S, calculate_R_S_MIC
+from whonet.functions.summary_report_helper import remove_null_cols, calculate_R_S, calculate_R_S_MIC, check_R_ngo_phenotype_of_interest
 dirpath = os.getcwd()
 abx_panel = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_summary_referred_2023.xlsx','ngo')
 
@@ -14,8 +14,17 @@ class Ngo:
 
     def process(self) -> pd.DataFrame:
         df = self.df
+        frames = []
         df = self.calc_RIS(df)
         df = self.calc_RIS_MIC(df)
+
+        df_refer_all = self.ngo_phenotype_of_interest(df)
+        frames.append(df_refer_all)
+
+
+        df = self.concat_df(frames)
+        # df = df.loc[df['Test'] == 'R']
+
         if len(df) > 0:
             df.dropna(how = 'all',inplace = True)
             df = df.drop_duplicates(subset=['PATIENT_ID','SPEC_DATE','ORGANISM'])
@@ -35,6 +44,13 @@ class Ngo:
         for value in self.ast_panel_mic:
               df = df.apply(lambda row: calculate_R_S_MIC(row,value,abx_panel,self.ast_panel_mic), axis = 1)
         return df
+    
+    def ngo_phenotype_of_interest(self, df: pd.DataFrame) -> pd.DataFrame:
+        return df.apply(lambda row: check_R_ngo_phenotype_of_interest(row),axis = 1)
+    
+    
+    def concat_df(self,df_array: list) -> pd.DataFrame:
+        return pd.concat(df_array,sort=False)
 
 
 

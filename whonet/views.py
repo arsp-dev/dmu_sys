@@ -1089,6 +1089,7 @@ def bigwork(file_id,search_file_name,options, year = '', referred = False):
 def import_raw(raw_data):
     try:
         df = pd.read_excel(raw_data)
+        df.rename(columns = {'SXT_ND1.2':'SXT_ND1_2'}, inplace = True)
     except:
         return 'File ' + raw_data.name + ' is invalid format'
 
@@ -3263,6 +3264,22 @@ def import_raw_data(row_iter,file_name):
             dox_nd30 = row['DOX_ND30'],
             
             sss_nd200 = row['SSS_ND200'],
+
+            fdc_nd  = row['FDC_ND'],
+            
+            cza_nd30  = row['CZA_ND30'],
+            
+            imr_nd10  = row['IMR_ND10'],
+            
+            plz_nd  = row['PLZ_ND'],
+            
+            czt_nd30  = row['CZT_ND30'],
+            
+            mev_nd20  = row['MEV_ND20'],
+
+            tzd_nd  = row['TZD_ND'],
+
+            amx_nd30  = row['AMX_ND30'],
             
             
             
@@ -3398,6 +3415,22 @@ def import_raw_data(row_iter,file_name):
             dox_nm = row['DOX_NM'],
             
             sss_nm = row['SSS_NM'],
+
+            fdc_nm  = row['FDC_NM'],
+            
+            cza_nm = row['CZA_NM'],
+            
+            imr_nm = row['IMR_NM'],
+            
+            plz_nm  = row['PLZ_NM'],
+            
+            czt_nm  = row['CZT_NM'],
+            
+            mev_nm  = row['MEV_NM'],
+
+            tzd_nm  = row['TZD_NM'],
+
+            amx_nm  = row['AMX_NM'],
         )
         
         ant_mic.save()
@@ -3530,6 +3563,22 @@ def import_raw_data(row_iter,file_name):
             dox_ne = row['DOX_NE'],
             
             sss_ne = row['SSS_NE'],
+
+            fdc_ne  = row['FDC_NE'],
+            
+            cza_ne = row['CZA_NE'],
+            
+            imr_ne = row['IMR_NE'],
+            
+            plz_ne  = row['PLZ_NE'],
+            
+            czt_ne  = row['CZT_NE'],
+            
+            mev_ne  = row['MEV_NE'],
+
+            tzd_ne  = row['TZD_NE'],
+
+            amx_ne  = row['AMX_NE'],
         )
         
         ant_est.save()
@@ -3983,7 +4032,21 @@ def import_referred_data(row_iter,file_name):
             
             sss_nd200 = row['SSS_ND200'],
             
+            fdc_nd  = row['FDC_ND'],
             
+            cza_nd30  = row['CZA_ND30'],
+            
+            imr_nd10  = row['IMR_ND10'],
+            
+            plz_nd  = row['PLZ_ND'],
+            
+            czt_nd30  = row['CZT_ND30'],
+            
+            mev_nd20  = row['MEV_ND20'],
+
+            tzd_nd  = row['TZD_ND'],
+
+            amx_nd30  = row['AMX_ND30'],
             
         )
         
@@ -4117,6 +4180,25 @@ def import_referred_data(row_iter,file_name):
                 dox_nd30_ris = row['DOX_ND30_RIS'],
                 
                 sss_nd200_ris = row['SSS_ND200_RIS'],
+                
+
+            fdc_nd_ris = row['FDC_ND_RIS'],
+            
+            cza_nd30_ris  = row['CZA_ND30_RIS'],
+            
+            imr_nd10_ris  = row['IMR_ND10_RIS'],
+            
+            plz_nd_ris  = row['PLZ_ND_RIS'],
+            
+            czt_nd30_ris  = row['CZT_ND30_RIS'],
+            
+            mev_nd20_ris  = row['MEV_ND20_RIS'],
+
+
+            tzd_nd_ris  = row['TZD_ND_RIS'],
+
+            amx_nd30_ris  = row['AMX_ND30_RIS'],
+                
                 
                 
                 
@@ -4252,6 +4334,22 @@ def import_referred_data(row_iter,file_name):
             dox_nm = row['DOX_NM'],
             
             sss_nm = row['SSS_NM'],
+
+            fdc_nm  = row['FDC_NM'],
+            
+            cza_nm = row['CZA_NM'],
+            
+            imr_nm = row['IMR_NM'],
+            
+            plz_nm  = row['PLZ_NM'],
+            
+            czt_nm  = row['CZT_NM'],
+            
+            mev_nm  = row['MEV_NM'],
+
+            tzd_nm  = row['TZD_NM'],
+            amx_nm  = row['AMX_NM'],
+
         )
         
         ant_mic.save()
@@ -4384,6 +4482,21 @@ def import_referred_data(row_iter,file_name):
             dox_nm_ris = row['DOX_NM_RIS'],
             
             sss_nm_ris = row['SSS_NM_RIS'],
+
+            fdc_nm_ris  = row['FDC_NM_RIS'],
+            
+            cza_nm_ris = row['CZA_NM_RIS'],
+            
+            imr_nm_ris = row['IMR_NM_RIS'],
+            
+            plz_nm_ris  = row['PLZ_NM_RIS'],
+            
+            czt_nm_ris  = row['CZT_NM_RIS'],
+            
+            mev_nm_ris  = row['MEV_NM_RIS'],
+
+            tzd_nm_ris  = row['TZD_NM_RIS'],
+            amx_nm_ris  = row['AMX_NM_RIS'],
         )
         
         ant_micris.save()

@@ -1,17 +1,19 @@
 import os
 import pandas as pd
 from datetime import datetime
-from whonet.functions.summary_report_helper import get_date_to_compute, calculate_R_S, calculate_R_S_MIC, remove_null_cols, check_R_to_col_aba, check_R_to_carbapenems_aba
+from whonet.functions.summary_report_helper import get_date_to_compute, calculate_R_S, calculate_R_S_MIC, remove_null_cols, clean_sau_oth, clean_sau_days_oth
 dirpath = os.getcwd()
-abx_panel = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_summary_referred_2023.xlsx','aba')
+abx_panel = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_summary_referred_2023.xlsx','sau')
 
+class SauOthers:
 
-class Aba:
     def __init__(self, df : pd.DataFrame, num_of_days : int = 3) -> None:
-        self.df = df
+        org_list = ['pps', 'psd', 'sae', 'sai', 'sap', 'sc+', 'sca', 'scg', 'scl', 'scn', 'scp', 'scu', 'sde', 'sep', 'seq', 'sfe', 'sgl', 'shl', 'sho', 'shy', 'sit', 'skl', 'slc', 'sle', 'slu', 'sms', 'snb', 'sps', 'spv', 'ssb', 'ssf', 'ssi', 'ssr', 'sta', 'stc', 'stt', 'sul', 'sur', 'swa', 'sxy']
+        self.df = df[df['ORGANISM'].isin(org_list)]
         self.num_of_days = num_of_days
         self.ast_panel = abx_panel['WHON5_CODE'].values.tolist()
         self.ast_panel_mic = abx_panel['WHON5_CODE_MIC'].values.tolist()
+    
 
     def process(self) -> pd.DataFrame:
         df = self.df
@@ -19,19 +21,18 @@ class Aba:
         df = self.calc_RIS(df)
         df = self.calc_RIS_MIC(df)
 
-        df_col = self.col_resistant(df[df['ORGANISM'].isin(['aba'])])
-        frames.append(df_col)
 
         df_referral_days = self.df_referral_days_based_on_phenotype_of_interest(df)
 
-        df_carbapenems = self.intermidiate_resistant_to_carbapenems(df_referral_days)
-        frames.append(df_carbapenems)
+        df_pheno_of_interest = self.resistant_clean_sau_days(df_referral_days)
+        frames.append(df_pheno_of_interest)
 
+        df_refer_all = self.resistant_clean_sau(df)
+        frames.append(df_refer_all)
 
-       
 
         df = self.concat_df(frames)
-        
+        # df = df.loc[df['Test'] == 'R']
         
         if len(df) > 0:
             df.dropna(how = 'all',inplace = True)
@@ -40,7 +41,7 @@ class Aba:
             # df = df.drop(columns=['ORIGIN_REF','FILE_REF','ID','comp','ent_fast'])
             df = df.drop(columns=['ORIGIN_REF','FILE_REF','ID','comp','ent_fast','Test'])
             df['SPEC_DATE'] = df['SPEC_DATE'].dt.strftime('%m/%d/%Y')
-            df, cols = remove_null_cols(df,['Test','PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','X_REFERRED','ESBL','IPM_ND10','IPM_NM','IPM_RIS','MEM_ND10','MEM_NM','MEM_RIS','FDC_ND30','FDC_NM','FDC_RIS','COL_NM','POL_NM'])
+            df, cols = remove_null_cols(df,['Test','PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','X_REFERRED','ESBL','INDUC_CLI','FOX_ND30','FOX_NM','FOX_RIS','OXA_NM','OXA10.10_RIS','LNZ_ND30','LNZ_NM','LNZ_RIS','DAP_NM','DAP_RIS'])
             df = df[cols]
             return df
         return df
@@ -49,7 +50,7 @@ class Aba:
 
 
     def df_referral_days_based_on_phenotype_of_interest(self, df : pd.DataFrame) -> pd.DataFrame:
-        df = df[df['ORGANISM'].isin(['aba'])]
+        df = df
         df['comp'] = df['SPEC_DATE'].apply(lambda df: get_date_to_compute(df,self.num_of_days))
         df['ent_fast'] = df['comp'] - df['SPEC_DATE']
         return df[df['ent_fast'].dt.days >= 0]
@@ -67,13 +68,26 @@ class Aba:
         return df
 
     
-    def intermidiate_resistant_to_carbapenems(self, df: pd.DataFrame) -> pd.DataFrame:
-        return df.apply(lambda row: check_R_to_carbapenems_aba(row),axis = 1)
+    def resistant_clean_sau_days(self, df: pd.DataFrame) -> pd.DataFrame:
+        return df.apply(lambda row: clean_sau_days_oth(row), axis = 1)
     
+    def resistant_clean_sau(self, df: pd.DataFrame) -> pd.DataFrame:
+        return df.apply(lambda row: clean_sau_oth(row),axis = 1)
     
-    def col_resistant(self, df: pd.DataFrame) -> pd.DataFrame:
-        return df.apply(lambda row: check_R_to_col_aba(row), axis = 1)
-
+   
 
     def concat_df(self,df_array: list) -> pd.DataFrame:
         return pd.concat(df_array,sort=False)
+    
+
+    
+
+
+    
+
+    ################ create another classes for NON referred and referred
+
+
+
+    
+

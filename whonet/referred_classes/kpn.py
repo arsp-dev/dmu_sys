@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from datetime import datetime
-from whonet.functions.summary_report_helper import get_date_to_compute, calculate_R_S, calculate_R_S_MIC, remove_null_cols, check_R_to_aminoglycoside_kpn, check_R_to_col_kpn, check_R_to_carbapenems_kpn
+from whonet.functions.summary_report_helper import get_date_to_compute, calculate_R_S, calculate_R_S_MIC, remove_null_cols, check_R_to_aminoglycoside_kpn, check_R_to_col_kpn, check_R_to_carbapenems_kpn, check_R_beta_lactam_kpn, check_R_to_cephalosporins_kpn
 dirpath = os.getcwd()
 abx_panel = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_summary_referred_2023.xlsx','kpn')
 
@@ -30,6 +30,12 @@ class Kpn:
         df_carbapenems = self.intermidiate_resistant_to_carbapenems(df_referral_days)
         frames.append(df_carbapenems)
 
+        df_cephalosporins = self.intermidiate_resistant_to_cephalosporins(df_referral_days)
+        frames.append(df_cephalosporins)
+
+        df_beta_lactam = self.intermidiate_resistant_beta_lactam(df[df['ORGANISM'].isin(['kpn'])])
+        frames.append(df_beta_lactam)
+
 
 
         df = self.concat_df(frames)
@@ -42,7 +48,11 @@ class Kpn:
             # df = df.drop(columns=['ORIGIN_REF','FILE_REF','ID','comp','ent_fast'])
             df = df.drop(columns=['ORIGIN_REF','FILE_REF','ID','comp','ent_fast','Test'])
             df['SPEC_DATE'] = df['SPEC_DATE'].dt.strftime('%m/%d/%Y')
-            df, cols = remove_null_cols(df,['Test','PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','X_REFERRED','ESBL','GEN_ND10','GEN_NM','GEN_RIS','TOB_ND10','TOB_NM','TOB_RIS','IPM_ND10','IPM_NM','IPM_RIS','MEM_ND10','MEM_NM','MEM_RIS','ETP_ND10','ETP_NM','ETP_RIS','COL_NM','POL_NM'])
+            df, cols = remove_null_cols(df,['Test','PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE',
+                                            'ORGANISM','X_REFERRED','ESBL','GEN_ND10','GEN_NM','GEN_RIS','TOB_ND10','TOB_NM','TOB_RIS',
+                                            'IPM_ND10','IPM_NM','IPM_RIS','MEM_ND10','MEM_NM','MEM_RIS','ETP_ND10','ETP_NM','ETP_RIS',
+                                            'CZA_ND30','CZA_NM','CZA_RIS','IMR_ND10','IMR_NM','IMR_RIS','MEV_ND20','MEV_NM','MEV_RIS',
+                                            'FDC_ND','FDC_NM','FDC_RIS','PLZ_ND','PLZ_NM','PLZ_RIS','COL_NM','POL_NM'])
             df = df[cols]
             return df
         return df
@@ -79,6 +89,12 @@ class Kpn:
     
     def col_resistant(self, df: pd.DataFrame) -> pd.DataFrame:
         return df.apply(lambda row: check_R_to_col_kpn(row), axis = 1)
+    
+    def intermidiate_resistant_beta_lactam(self, df: pd.DataFrame) -> pd.DataFrame:
+        return df.apply(lambda row: check_R_beta_lactam_kpn(row), axis = 1)
+    
+    def intermidiate_resistant_to_cephalosporins(self, df: pd.DataFrame) -> pd.DataFrame:
+        return df.apply(lambda row: check_R_to_cephalosporins_kpn(row),axis = 1)
 
 
     def concat_df(self,df_array: list) -> pd.DataFrame:
