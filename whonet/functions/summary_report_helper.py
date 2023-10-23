@@ -351,8 +351,8 @@ def clean_sau_days(row):
         if row[x] == 'R' or row[x] == 'I':
             row['Test'] = 'R'
             return row
-        row['Test'] = 'None'
-        return row
+    row['Test'] = 'None'
+    return row
 
 
 def clean_sau(row):
@@ -371,6 +371,14 @@ def clean_sau(row):
             row['DAP_RIS'] = ''
     else:
         row['DAP_RIS'] = ''
+
+    value_list = ['LNZ_RIS','TZD_RIS','VAN_RIS','DAP_RIS']
+    for x in value_list:
+        if row[x] == 'R' or row[x] == 'I':
+            row['Test'] = 'R'
+            return row
+    row['Test'] = 'None'
+    return row
 
 
 def clean_sau_days_oth(row):
@@ -395,8 +403,8 @@ def clean_sau_days_oth(row):
         if row[x] == 'R' or row[x] == 'I':
             row['Test'] = 'R'
             return row
-        row['Test'] = 'None'
-        return row
+    row['Test'] = 'None'
+    return row
 
 
 def clean_sau_oth(row):
@@ -423,8 +431,8 @@ def clean_sau_oth(row):
         if row[x] == 'R' or row[x] == 'I' or row['INDUC_CLI'] == '+':
             row['Test'] = 'R'
             return row
-        row['Test'] = 'None'
-        return row
+    row['Test'] = 'None'
+    return row
 
 def check_R_hin_hpn_phenotype_of_interest(row):
     if row['AMP_RIS'] == 'R' and row['BETA_LACT'] == '-':
@@ -436,8 +444,8 @@ def check_R_hin_hpn_phenotype_of_interest(row):
         if row[x] == 'R' or row[x] == 'I':
             row['Test'] = 'R'
             return row
-        row['Test'] = 'None'
-        return row
+    row['Test'] = 'None'
+    return row
     
 
 def check_R_nme_phenotype_of_interest(row):
@@ -446,8 +454,8 @@ def check_R_nme_phenotype_of_interest(row):
         if row[x] == 'R' or row[x] == 'I':
             row['Test'] = 'R'
             return row
-        row['Test'] = 'None'
-        return row
+    row['Test'] = 'None'
+    return row
     
 def check_R_spn_phenotype_of_interest(row):
     value_list = ['CTX_RIS','CRO_RIS','VAN_RIS','CIP_RIS','LVX_RIS','PEN_RIS','AMX_RIS']
@@ -455,8 +463,8 @@ def check_R_spn_phenotype_of_interest(row):
         if row[x] == 'R' or row[x] == 'I' or row['INDUC_CLI'] == '+':
             row['Test'] = 'R'
             return row
-        row['Test'] = 'None'
-        return row
+    row['Test'] = 'None'
+    return row
 
 
 
