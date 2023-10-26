@@ -39,6 +39,7 @@ class Kpn:
 
 
         df = self.concat_df(frames)
+        df = df[df['SPEC_TYPE'].isin(["bl", "ti", "sf", "ab", "ga", "dr", "fl", "am", "at", "fn", "se", "pf", "di", "pd", "dn", "hf", "jf", "kf", "pu", "su", "ur", "wd", "ul", "as", "sp"])]
         
         
         if len(df) > 0:
@@ -49,10 +50,13 @@ class Kpn:
             df = df.drop(columns=['ORIGIN_REF','FILE_REF','ID','comp','ent_fast','Test'])
             df['SPEC_DATE'] = df['SPEC_DATE'].dt.strftime('%m/%d/%Y')
             df, cols = remove_null_cols(df,['Test','PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE',
-                                            'ORGANISM','X_REFERRED','ESBL','GEN_ND10','GEN_NM','GEN_RIS','TOB_ND10','TOB_NM','TOB_RIS',
+                                            'ORGANISM','X_REFERRED','ESBL',
+                                            'AMK_ND30','AMK_NM','AMK_RIS','CRO_ND30','CRO_NM','CRO_RIS','CAZ_ND30','CAZ_NM','CAZ_RIS','CTX_ND30','CTX_NM','CTX_RIS',
+                                            'FEP_ND30','FEP_NM','FEP_RIS','GEN_ND10','GEN_NM','GEN_RIS',
+                                            'TOB_ND10','TOB_NM','TOB_RIS',
                                             'IPM_ND10','IPM_NM','IPM_RIS','MEM_ND10','MEM_NM','MEM_RIS','ETP_ND10','ETP_NM','ETP_RIS',
                                             'CZA_ND30','CZA_NM','CZA_RIS','IMR_ND10','IMR_NM','IMR_RIS','MEV_ND20','MEV_NM','MEV_RIS',
-                                            'FDC_ND','FDC_NM','FDC_RIS','PLZ_ND','PLZ_NM','PLZ_RIS','COL_NM','POL_NM'])
+                                            'FDC_ND','FDC_NM','FDC_RIS','PLZ_ND','PLZ_NM','PLZ_RIS','COL_NM','COL_RIS','POL_NM','POL_RIS'])
             df = df[cols]
             return df
         return df

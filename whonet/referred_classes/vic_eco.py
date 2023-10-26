@@ -10,6 +10,7 @@ class Vic157:
 
     def process(self) -> pd.DataFrame:
         df = self.df
+        df = df[df['SPEC_TYPE'].isin(["re","st"])]
         if len(df) > 0:
             df.dropna(how = 'all',inplace = True)
             df = df.drop_duplicates(subset=['PATIENT_ID','SPEC_DATE','ORGANISM'])

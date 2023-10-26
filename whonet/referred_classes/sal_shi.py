@@ -29,6 +29,7 @@ class SalShi:
 
 
         df = self.concat_df(frames)
+        df = df[df['SPEC_TYPE'].isin(["bl", "ti", "sf", "ab", "ga", "dr", "fl", "am", "at", "fn", "se", "pf", "di", "pd", "dn", "hf", "jf", "kf", "pu", "su", "ur", "wd", "ul", "as","st","re"])]
         
         if len(df) > 0:
             df.dropna(how = 'all',inplace = True)

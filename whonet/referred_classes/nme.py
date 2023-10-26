@@ -23,6 +23,7 @@ class Nme:
 
 
         df = self.concat_df(frames)
+        df = df[df['SPEC_TYPE'].isin(["bl", "ti", "sf", "ab", "ga", "dr", "fl", "am", "at", "fn", "se", "pf", "di", "pd", "dn", "hf", "jf", "kf", "pu", "su", "wd", "ul", "as","sp","ta","ue","va"])]
         # df = df.loc[df['Test'] == 'R']
         
         if len(df) > 0:

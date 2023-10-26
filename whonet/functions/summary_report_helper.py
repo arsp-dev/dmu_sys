@@ -458,7 +458,7 @@ def check_R_nme_phenotype_of_interest(row):
     return row
     
 def check_R_spn_phenotype_of_interest(row):
-    value_list = ['CTX_RIS','CRO_RIS','VAN_RIS','CIP_RIS','LVX_RIS','PEN_RIS','AMX_RIS']
+    value_list = ['CTX_RIS','CRO_RIS','VAN_RIS','CIP_RIS','LNZ_RIS','PEN_RIS','AMX_RIS']
     for x in value_list:
         if row[x] == 'R' or row[x] == 'I' or row['INDUC_CLI'] == '+':
             row['Test'] = 'R'
@@ -551,21 +551,29 @@ def calculate_R_S(row,value,frame,org_list):
 
 
 def calculate_R_S_MIC(row,value,frame,org_list):
-    row[value] = row[value].replace('>=','')
-    row[value] = row[value].replace('<=','')
-    row[value] = row[value].replace('>','')
-    row[value] = row[value].replace('<','')
-    if row[value].replace('.','').isdigit() == True:
+    chk = row[value]
+    tmp_value = row[value]
+    x = 0
+    if '>' in str(chk):
+        x = frame['R>='][org_list.index(value)]
+
+    tmp_value = row[value].replace('>=','')
+    tmp_value = tmp_value.replace('<=','')
+    tmp_value = tmp_value.replace('>','')
+    tmp_value = tmp_value.replace('<','')
+
+    if tmp_value.replace('.','').isdigit() == True:
+            tmp_value = float(tmp_value) + float(x)
             if frame['R>='][org_list.index(value)] != '':
-                if float(row[value]) >= float(frame['R>='][org_list.index(value)]):
+                if float(tmp_value) >= float(frame['R>='][org_list.index(value)]):
                     row[value.split('_')[0] + '_RIS'] =  'R' 
                       
                     return row
-                elif float(row[value]) <= float(frame['S<='][org_list.index(value)]):
+                elif float(tmp_value) <= float(frame['S<='][org_list.index(value)]):
                     row[value.split('_')[0] + '_RIS'] = 'S'
                  
                     return row
-                elif float(row[value]) < float(frame['R>='][org_list.index(value)]) and float(row[value]) > float(frame['S<='][org_list.index(value)]):
+                elif float(tmp_value) < float(frame['R>='][org_list.index(value)]) and float(tmp_value) > float(frame['S<='][org_list.index(value)]):
                     row[value.split('_')[0] + '_RIS'] = 'I'
                 
                     return row

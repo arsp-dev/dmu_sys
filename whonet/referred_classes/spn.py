@@ -24,6 +24,7 @@ class Spn:
 
 
         df = self.concat_df(frames)
+        df = df[df['SPEC_TYPE'].isin(["bl", "ti", "sf", "ab", "ga", "dr", "fl", "am", "at", "fn", "se", "pf", "di", "pd", "dn", "hf", "jf", "kf", "pu", "su", "wd", "ul", "as","ta","ey","ea","no","sp"])]
         # df = df.loc[df['Test'] == 'R']
         
         if len(df) > 0:
@@ -33,7 +34,7 @@ class Spn:
             # df = df.drop(columns=['ORIGIN_REF','FILE_REF','ID','comp','ent_fast'])
             df = df.drop(columns=['ORIGIN_REF','FILE_REF','ID','Test'])
             df['SPEC_DATE'] = df['SPEC_DATE'].dt.strftime('%m/%d/%Y')
-            df, cols = remove_null_cols(df,['Test','PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','X_REFERRED','INDUC_CLI','AMK_ND30','AMK_NM','AMK_RIS','GEN_ND10','GEN_NM','GEN_RIS','TOB_ND10','TOB_NM','TOB_RIS','IPM_ND10','IPM_NM','IPM_RIS','MEM_ND10','MEM_NM','MEM_RIS','ETP_ND10','ETP_NM','ETP_RIS','CTX_ND30','CTX_NM','CTX_RIS','CRO_ND30','CRO_NM','CRO_RIS','FEP_ND30','FEP_NM','FEP_RIS','COL_NM','POL_NM'])
+            df, cols = remove_null_cols(df,['Test','PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','X_REFERRED','INDUC_CLI','AMK_ND30','AMK_NM','AMK_RIS','GEN_ND10','GEN_NM','GEN_RIS','TOB_ND10','TOB_NM','TOB_RIS','IPM_ND10','IPM_NM','IPM_RIS','MEM_ND10','MEM_NM','MEM_RIS','ETP_ND10','ETP_NM','ETP_RIS','CTX_ND30','CTX_NM','CTX_RIS','CRO_ND30','CRO_NM','CRO_RIS','FEP_ND30','FEP_NM','FEP_RIS','LNZ_ND30','LNZ_NM','LNZ_RIS','COL_NM','POL_NM'])
             df = df[cols]
             return df
         return df

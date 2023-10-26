@@ -23,6 +23,7 @@ class Ngo:
 
 
         df = self.concat_df(frames)
+        df = df[df['SPEC_TYPE'].isin(["ur","sf", "ab", "ga", "dr", "fl", "am", "at", "fn", "se", "pf", "di", "pd", "dn", "hf", "jf", "kf", "pu", "su","ue","va","ta","ey"])]
         # df = df.loc[df['Test'] == 'R']
 
         if len(df) > 0:
