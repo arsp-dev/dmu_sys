@@ -32,7 +32,7 @@ class SauOthers:
 
 
         df = self.concat_df(frames)
-        df = df[df['SPEC_TYPE'].isin(["bl", "ti", "sf", "ab", "ga", "dr", "fl", "am", "at", "fn", "se", "pf", "di", "pd", "dn", "hf", "jf", "kf", "pu", "su", "ur", "wd", "ul", "as", "ta"])]
+        df = df[df['SPEC_TYPE'].isin(["sep", "shl", "slu", "sap", "ur","ssf"])]
         # df = df.loc[df['Test'] == 'R']
         
         if len(df) > 0:
@@ -42,7 +42,7 @@ class SauOthers:
             # df = df.drop(columns=['ORIGIN_REF','FILE_REF','ID','comp','ent_fast'])
             df = df.drop(columns=['ORIGIN_REF','FILE_REF','ID','comp','ent_fast','Test'])
             df['SPEC_DATE'] = df['SPEC_DATE'].dt.strftime('%m/%d/%Y')
-            df, cols = remove_null_cols(df,['Test','PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','X_REFERRED','ESBL','INDUC_CLI','FOX_ND30','FOX_NM','FOX_RIS','OXA_NM','OXA10.10_RIS','LNZ_ND30','LNZ_NM','LNZ_RIS','DAP_NM','DAP_RIS'])
+            df, cols = remove_null_cols(df,['Test','PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','X_REFERRED','ESBL','INDUC_CLI','LNZ_ND30','LNZ_NM','LNZ_RIS','DAP_NM','DAP_RIS','VAN_NM','VAN_RIS'])
             df = df[cols]
             return df
         return df

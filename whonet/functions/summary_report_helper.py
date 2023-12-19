@@ -551,6 +551,8 @@ def calculate_R_S(row,value,frame,org_list):
 
 
 def calculate_R_S_MIC(row,value,frame,org_list):
+    if value.split('_')[0] + '_RIS' not in row:
+        row[value.split('_')[0] + '_RIS'] = ''
     chk = row[value]
     tmp_value = row[value]
     x = 0
@@ -578,9 +580,10 @@ def calculate_R_S_MIC(row,value,frame,org_list):
                 
                     return row
                 else:               
-                    return row             
-    if value.split('_')[0] + '_RIS' not in row:
-        row[value.split('_')[0] + '_RIS'] = ''
+                    return row
+            return row             
+    
+    
     return row
 
 
