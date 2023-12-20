@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime
 from whonet.functions.summary_report_helper import get_date_to_compute, calculate_R_S, calculate_R_S_MIC, remove_null_cols, clean_sau_oth, clean_sau_days_oth
 dirpath = os.getcwd()
-abx_panel = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_summary_referred_2023.xlsx','sau')
+abx_panel = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_summary_referred_2023.xlsx','sau_oth')
 
 class SauOthers:
 
