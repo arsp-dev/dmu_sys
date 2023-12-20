@@ -361,12 +361,12 @@ def clean_sau(row):
     row['DAP_NM'] =  row['DAP_NM'].replace('>','')
     row['DAP_NM'] =  row['DAP_NM'].replace('<','')
     if row['DAP_NM'] not in ['R','I','S'] and row['DAP_NM'] != '':
-        if float(row['DAP_NM']) >= 1:
+        if float(row['DAP_NM']) > 1:
             row['DAP_RIS'] = 'R'
-        elif float(row['DAP_NM']) <= 0.5:
+        elif float(row['DAP_NM']) <= 1:
             row['DAP_RIS'] = 'S'
-        elif float(row['DAP_NM']) > 0.5 and float(row['DAP_NM']) < 1:
-            row['DAP_RIS'] = 'I'
+        # elif float(row['DAP_NM']) > 0.5 and float(row['DAP_NM']) < 1:
+        #     row['DAP_RIS'] = 'I'
         else:
             row['DAP_RIS'] = ''
     else:
@@ -413,12 +413,12 @@ def clean_sau_oth(row):
     row['DAP_NM'] =  row['DAP_NM'].replace('>','')
     row['DAP_NM'] =  row['DAP_NM'].replace('<','')
     if row['DAP_NM'] not in ['R','I','S'] and row['DAP_NM'] != '':
-        if float(row['DAP_NM']) >= 1:
+        if float(row['DAP_NM']) > 1:
             row['DAP_RIS'] = 'R'
-        elif float(row['DAP_NM']) <= 0.5:
+        elif float(row['DAP_NM']) <= 1:
             row['DAP_RIS'] = 'S'
-        elif float(row['DAP_NM']) > 0.5 and float(row['DAP_NM']) < 1:
-            row['DAP_RIS'] = 'I'
+        # elif float(row['DAP_NM']) > 0.5 and float(row['DAP_NM']) < 1:
+        #     row['DAP_RIS'] = 'I'
         else:
             row['DAP_RIS'] = ''
     else:
