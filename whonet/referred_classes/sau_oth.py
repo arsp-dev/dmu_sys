@@ -32,7 +32,8 @@ class SauOthers:
 
 
         df = self.concat_df(frames)
-        df = df[df['SPEC_TYPE'].isin(["sep", "shl", "slu", "sap", "ur","ssf"])]
+        # df = df[df['SPEC_TYPE'].isin(["sep", "shl", "slu", "sap", "ur","ssf"])]
+        df = df[df['ORGANISM'].isin(["sep", "shl", "slu", "sap","ssf"])]
         # df = df.loc[df['Test'] == 'R']
         
         if len(df) > 0:
@@ -45,6 +46,7 @@ class SauOthers:
             df, cols = remove_null_cols(df,['Test','PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','X_REFERRED','ESBL','INDUC_CLI','LNZ_ND30','LNZ_NM','LNZ_RIS','DAP_NM','DAP_RIS','VAN_NM','VAN_RIS'])
             df = df[cols]
             return df
+        
         return df
 
 
