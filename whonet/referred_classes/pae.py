@@ -52,7 +52,7 @@ class Pae:
                                             'ORGANISM','X_REFERRED','ESBL','AMK_ND30','AMK_NM','AMK_RIS','GEN_ND10','GEN_NM','GEN_RIS',
                                             'TOB_ND10','TOB_NM','TOB_RIS','IPM_ND10','IPM_NM','IPM_RIS','MEM_ND10','MEM_NM','MEM_RIS',
                                             'CZA_ND30','CZA_NM','CZA_RIS','IMR_ND10','IMR_NM','IMR_RIS','FDC_ND','FDC_NM','FDC_RIS',
-                                            'CZT_ND30','CZT_NM','CZT_RIS','COL_NM','POL_NM'])
+                                            'CZT_ND30','CZT_NM','CZT_RIS','COL_NM','COL_RIS','POL_NM','POL_RIS'])
             df = df[cols]
             return df
         return df
