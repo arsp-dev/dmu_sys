@@ -581,7 +581,7 @@ def calculate_R_S_MIC(row,value,frame,org_list):
                     return row
                 else:               
                     return row
-            return row             
+            # return row             
     
     
     return row

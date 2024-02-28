@@ -36,6 +36,7 @@ aba = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_summary_refe
 ent = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_summary_referred.xlsx','Enterococcus species_v2')
 ent_pos = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','ent_positive_v2')
 whonet_region_island = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_region_island.xlsx')
+sentinel_site_esbl = pd.read_excel(dirpath + '/whonet/static/whonet_xl/sentinel_site_esbl.xlsx')
 whonet_organism = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_organism.xlsx')
 whonet_specimen = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_specimen.xlsx')
 whonet_data_fields = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_fields.xlsx')
@@ -50,6 +51,7 @@ from_list = unique_values['FROM'].values.tolist()
 org_list = comp['ORG'].values.tolist()
 spec_list = spec_type['C_ENGLISH'].values.tolist()
 lab_chk = whonet_region_island['LABORATORY'].values.tolist()
+esbl_site = sentinel_site_esbl['Site'].values.tolist()
 org_chk = whonet_organism['ORGANISM'].values.tolist()
 spec_chk = whonet_specimen['SPEC_TYPE'].values.tolist()
 data_fields = whonet_data_fields['Data fields'].values.tolist()
@@ -202,7 +204,8 @@ def whonet_transform(request):
     retYear = []
     
     for ret in f_names:
-        retArray.append(ret.split('_')[1])
+        if '_' in ret:
+            retArray.append(ret.split('_')[1])
           
     f_names = list(dict.fromkeys(retArray))
     f_names.sort()
@@ -362,10 +365,14 @@ def whonet_transform_year(request):
     tmp_year_df = []
     qc_df = []
     
+    withReferred = False
+    if 'X_REFERRED' in options:
+        withReferred = True
+
     writer = pd.ExcelWriter(response, engine='xlsxwriter')
     
     for val in coll:
-        df = bigwork(val.id,val.file_name.split('_'),options)
+        df = bigwork(val.id,val.file_name.split('_'),options,referred=withReferred)
         tmp_year_df.append(df)
         df['SPEC_DATE'] = pd.to_datetime(df['SPEC_DATE'],errors='ignore')
         df = df[df['SPEC_DATE'].dt.year == int(year)]
@@ -394,6 +401,9 @@ def whonet_transform_year(request):
     
     crt_year = tmp_df
     tmp_year = []
+
+
+
     if 'CORRECT_YEAR' in options:
         crt_year['SPEC_DATE'] = pd.to_datetime(crt_year['SPEC_DATE'],errors='ignore')
         # crt_year['SPEC_DATE'] = crt_year[crt_year['SPEC_DATE'].dt.year != int(year) ]
@@ -428,7 +438,11 @@ def whonet_transform_year(request):
     
     # concat_df = pd.concat([concat_df,qc_df])
     concat_df.to_excel(writer, sheet_name=site + '_' + year,index=False)
+
+    if 'X_REFERRED' in options:
+        referred_concat = concat_df[concat_df['X_REFERRED'] == '1']
     
+        referred_concat.to_excel(writer, sheet_name=site + '_' + year + '-REFERRED',index=False)
     
     writer.save()
     
@@ -674,10 +688,10 @@ def getYearInt(file_name):
 
 def bigwork(file_id,search_file_name,options, year = '', referred = False):
     start_time = datetime.now()
-    if referred:
-        df = concat_all_df_referred(file_id)
-    else:
-        df = concat_all_df(file_id)
+    # if referred:
+    #     df = concat_all_df_referred(file_id)
+    # else:
+    df = concat_all_df(file_id)
     
     # df.columns = map(str.lower, df.columns) 
 
@@ -689,7 +703,7 @@ def bigwork(file_id,search_file_name,options, year = '', referred = False):
         df = df.apply(lambda row: patient_id_transform(row), axis=1)
     
   
-    #removing rows if x_referred == 1
+    # removing rows if x_referred == 1
     if 'X_REFERRED' in options:
         if referred == False:
             df = df[df['x_referred'] != '1']
@@ -741,9 +755,83 @@ def bigwork(file_id,search_file_name,options, year = '', referred = False):
     x_growth = []
     
     
-    start_time = datetime.now() 
+    start_time = datetime.now()
+
+    ## cleaning of data
+    columns_to_check = [
+        'amc_nm', 'amk_nm', 'amp_nm', 'amx_nm', 'atm_nm', 'azm_nm', 'caz_nm',
+        'cec_nm', 'cep_nm', 'cfm_nm', 'cfp_nm', 'chl_nm', 'cip_nm', 'cli_nm',
+        'clr_nm', 'col_nm', 'cro_nm', 'ctx_nm', 'cxa_nm', 'cxm_nm', 'cza_nm',
+        'czo_nm', 'czt_nm', 'dap_nm', 'dor_nm', 'dox_nm', 'ery_nm', 'etp_nm',
+        'fdc_nm', 'fep_nm', 'fos_nm', 'fox_nm', 'geh_nm', 'gen_nm', 'imr_nm',
+        'ipm_nm', 'kan_nm', 'lnz_nm', 'lvx_nm', 'man_nm', 'mem_nm', 'mev_nm',
+        'mfx_nm', 'mno_nm', 'nal_nm', 'net_nm', 'nit_nm', 'nor_nm', 'nov_nm',
+        'ofx_nm', 'oxa_nm', 'pen_nm', 'pip_nm', 'plz_nm', 'pol_nm', 'qda_nm',
+        'rif_nm', 'sam_nm', 'spt_nm', 'sss_nm', 'sth_nm', 'str_nm', 'sxt_nm',
+        'tcc_nm', 'tcy_nm', 'tgc_nm', 'tic_nm', 'tob_nm', 'tzd_nm', 'tzp_nm', 'van_nm'
+    ]
+
+    numbers = [
+    0.001, 0.002, 0.004, 0.008, 0.016, 0.032, 0.064,
+    0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256
+    ]
+
+    def transform_value(value, column_name):
+        # Transform 'R', 'I', 'S' to '' except for 'GEH_NM' and 'STH_NM'
+        if column_name not in ['pen_nm', 'oxa_nm'] and value in ['R', 'I', 'S']:
+            return ''
+        # Remove '.0' from the end of strings and transform '*/' or '.' to ''
+        elif isinstance(value, str):
+            if value.endswith('.0'):
+                return value[:-2]
+            elif value == '*/' or value == '.':
+                return ''
+        return value
+
+    # Applying the function to each column in the list
+    for col in columns_to_check:
+        df[col] = df[col].apply(lambda x: transform_value(x, col))
+
+    
+    # Function to process cell values
+    def process_cell_value(cell_value):
+        # Check if cell value directly matches any value in the numbers list
+        try:
+            # Extract numeric value from cell, handling '>=' or similar prefixes
+            numeric_part = float(re.sub("[^0-9.]", "", cell_value))
+            if numeric_part in numbers:
+                return cell_value  # Return unchanged if it's in the list
+
+            # If not directly in the list, find the closest upper limit
+            for i in range(len(numbers)):
+                if numeric_part < numbers[i]:
+                    return str(numbers[i])  # Return the closest higher value
+
+            # If the value is greater than the largest number in the list
+            if numeric_part > numbers[-1] and numeric_part <= 2048:
+                return '>256'  # Transform to empty string as per requirement
+
+            # If the value is greater than the largest number in the list
+            if numeric_part > 2048:
+                return ''  # Transform to empty string as per requirement
+
+        except ValueError:
+            # If conversion to float fails, return the cell value unchanged
+            return cell_value
+
+        # Catch-all for any other condition, return the cell value unchanged
+        return cell_value
+
+    # Apply the transformation to specified columns
+    for col in columns_to_check:
+        if col not in ['sth_nm','geh_nm','pen_nm','oxa_nm']:
+            df[col] = df[col].apply(lambda x: process_cell_value(str(x)) if pd.notnull(x) else x)
+
+
+
+
     if 'Origin' in options:
-        df = df.apply(lambda row: origin_transform(row,lab_chk,whonet_region_island), axis = 1)
+        df = df.apply(lambda row: origin_transform(row,lab_chk,whonet_region_island,sentinel_site_esbl,esbl_site), axis = 1)
         
     if 'Nosocomial' in options:
         df['ward_type'] = df['ward_type'].str.lower()
@@ -937,9 +1025,9 @@ def bigwork(file_id,search_file_name,options, year = '', referred = False):
                             df.loc[index,'oxa_nd1'] = 'S'
                         if row['fox_nd30'] != '' and float(getfloat(row['fox_nd30'])) <= 21:
                             df.loc[index,'oxa_nd1'] = 'R'
-                        if row['fox_nm'] != '' and float(getfloat(row['fox_nm'])) <= 4:
+                        if row['fox_nm'].isdigit() == True and row['fox_nm'] != '' and float(getfloat(row['fox_nm'])) <= 4:
                             df.loc[index,'oxa_nm'] = 'S'
-                        if row['fox_nm'] != '' and float(getfloat(row['fox_nm'])) > 8:
+                        if row['fox_nm'].isdigit() == True and row['fox_nm'] != '' and float(getfloat(row['fox_nm'])) > 8:
                             df.loc[index,'oxa_nm'] = 'R'
             if row['organism'] == 'sau':
                 if row['fox_nd30'] == 'R' or row['oxa_nm'] == 'R' or row['fox_nm'] == 'R':
@@ -1214,7 +1302,7 @@ def compute_summary_report(file_name,file_id,config = 'raw'):
     df_pce = get_data_pce(file_id,config)
     df_pma = get_data_pma(file_id,config)
     df_nme = get_data_nme(file_id,config)
-    # df_other_non_ent = get_data_other_non_ent(file_id)
+    df_other_non_ent = get_data_other_non_ent(file_id,config)
     df_svi = get_data_svi(file_id,config)
     df_bsn = get_data_bsn(file_id,config)
     
@@ -1227,9 +1315,14 @@ def compute_summary_report(file_name,file_id,config = 'raw'):
     
     # df_esbl = pd.DataFrame(data=[df_entero[1]], columns=['Organism','Number','Percent'])
     
+    
     if len(df_entero) == 3:
         summary.append(df_entero[1])
         ave += df_entero[2]
+    
+    if len(df_other_non_ent) == 3:
+        summary.append(df_other_non_ent[1])
+        ave += df_other_non_ent[2]
     
     if len(df_nme) == 3:
         summary.append(df_nme[1])
@@ -1320,7 +1413,7 @@ def compute_summary_report(file_name,file_id,config = 'raw'):
     df_pce[0].to_excel(writer, sheet_name='pce', index=False)
     df_pma[0].to_excel(writer, sheet_name='pma', index=False)
     df_nme[0].to_excel(writer, sheet_name='nme',index=False)
-    # df_other_non_ent.to_excel(writer, sheet_name='other non ent', index=False)
+    df_other_non_ent[0].to_excel(writer, sheet_name='other non ent', index=False)
     df_svi[0].to_excel(writer, sheet_name='svi', index=False)
     df_bsn[0].to_excel(writer, sheet_name='bsn', index=False)
     # df_esbl.to_excel(writer, sheet_name='esbl', index=False)
@@ -1436,6 +1529,67 @@ def get_data_completeness(file_id,config = 'raw'):
     return df
 
 
+def get_data_aec(file_id,config = 'raw'):
+    df = concat_all_df(file_id,config)
+    # comp = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','entero')
+    # df_list = pd.DataFrame(comp, columns=['ORG'])
+    
+    # cmp = df_list.to_numpy()
+    
+    df = df[ df['spec_type'].str.lower() != 'qc' ]
+    df = df[ df['spec_type'].str.lower() != 'en' ]
+    df = df[ df['spec_type'].str.lower() != 'wa' ]
+    df = df[ df['spec_type'].str.lower() != 'fo' ]
+    df = df[ df['spec_type'].str.lower() != 'mi' ]
+    
+    df = df[~df['comment'].str.contains('light growth',regex=True,flags=re.IGNORECASE)]
+    df = df[~df['comment'].str.contains('lg',regex=True,flags=re.IGNORECASE)]
+    df = df[~df['growth'].str.contains('lg',regex=True,flags=re.IGNORECASE)]
+    df = df[~df['growth'].str.contains('lcc',regex=True,flags=re.IGNORECASE)]
+
+    aec_all = 0
+    aec_pen = 0
+    aec_cro = 0
+    aec_van = 0
+
+    for index,row in df.iterrows():
+        if row['organism'] in ['avi','aun','aec']:
+            aec_all += 1
+            if row['cro_nd30'] != '' or row['cro_nm'] != '' or row['cro_ne'] != '':
+                aec_cro += 1
+            if row['pen_nm'] != '' or row['pen_ne'] != '':
+                aec_pen += 1
+            if row['van_nd30'] != '' or row['van_nm'] != '' or row['van_ne'] != '':
+                aec_van += 1
+
+    data_aec = [['Antibiotic','Number tested','Percentage'],
+                          ['1. Penicillin',aec_pen,str(  round(((aec_pen)/(aec_all))*100,2) ) + "%" if aec_all > 0 else '0%'],
+                          ['2. Ceftriaxone',aec_cro,str(  round(((aec_cro)/(aec_all))*100,2) ) + "%" if aec_all > 0 else '0%'],
+                          ['3. Vancomycin',aec_van,str(  round(((aec_van)/(aec_all))*100,2) ) + "%" if aec_all > 0 else '0%'],
+                          ]
+
+    ret = []
+    
+    df = pd.DataFrame(data=data_aec, columns=['Aerococcus sp.','Number',aec_all])
+    
+    tmp_aec_data_summary = round(((  round(((aec_pen)/(aec_all))*100,2)  + round(((aec_cro)/(aec_all))*100,2) \
+                            + round(((aec_van)/(aec_all)) *100,2)) / 3) ,2) if aec_all > 0 else 0
+
+
+
+
+
+
+    aec_data_summary = ['Aerococcus sp.',aec_all,str(tmp_aec_data_summary) + '%']
+    
+    ret = []
+    ret.append(df)
+    if aec_all > 0:
+        ret.append(aec_data_summary)
+        ret.append(tmp_aec_data_summary)
+    
+    return ret
+
 def get_data_entero(file_id,config = 'raw'):
     df = concat_all_df(file_id,config)
     comp = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','entero')
@@ -1480,6 +1634,14 @@ def get_data_entero(file_id,config = 'raw'):
     ess_col = 0
     ess_all = 0
     ess_ur = 0
+    ess_fdc = 0
+    ess_cza = 0
+    ess_imr = 0
+    ess_plz = 0
+    ess_czt = 0
+    ess_lvx = 0
+    ess_pol = 0
+    ess_add_abx = 0
     
     for index,row in df.iterrows():
         if row['organism'] in cmp:
@@ -1524,56 +1686,135 @@ def get_data_entero(file_id,config = 'raw'):
                 ess_tob += 1
             if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '' or row['sxt_ne'] != '':
                 ess_sxt += 1
+            if row['lvx_nd5'] != '' or row['lvx_nm'] != '' or row['lvx_ne'] != '':
+                ess_lvx += 1
+            if row['fdc_nd'] != '' or row['fdc_nm'] != '' or row['fdc_ne'] != '':
+                ess_fdc += 1
+            if row['cza_nd30'] != '' or row['cza_nm'] != '' or row['cza_nm'] != '':
+                ess_cza += 1
+            if row['imr_nd10'] != '' or row['imr_nm'] != '' or row['imr_ne'] != '':
+                ess_imr += 1
+            if row['plz_nd'] != '' or row['plz_nm'] != '' or row['plz_ne'] != '':
+                ess_plz += 1
+            if row['czt_nd30'] != '' or row['czt_nm'] != '' or row['czt_ne'] != '':
+                ess_czt += 1
             if row['spec_type'] == 'ur':
                 ess_ur += 1
             if (row['czo_nd30'] != '' or row['czo_nm'] != '' or row['czo_ne'] != '') and (row['spec_type'] == 'ur'):
                 ess_czo_ur += 1
             if (row['nit_nd300'] != '' or row['nit_nm'] != '' or row['nit_ne'] != '') and (row['spec_type'] == 'ur'):
                 ess_nit += 1
-            if row['col_nd10'] != '' or row['col_nm'] != '' or row['col_ne'] != '':
+            if row['col_nd10'] != '' or row['col_nm'] != '' or row['col_ne'] != '' or row['pol_nd300'] != '' or row['pol_nm'] != '' or row['pol_ne'] != '':
+                ess_add_abx += 1
                 ess_col += 1
             
-            
+
+    avg_ess_amp = round(((ess_amp)/(ess_all))*100,2) if ess_all > 0 else 0
+    avg_ess_amc = round(((ess_amc)/(ess_all))*100,2) if ess_all > 0 else 0
+    avg_ess_czo = round(((ess_czo)/(ess_all))*100,2) if ess_all > 0 else 0
+    avg_ess_ctx = round(((ess_ctx)/(ess_all))*100,2) if ess_all > 0 else 0
+    avg_ess_cip = round(((ess_cip)/(ess_all))*100,2) if ess_all > 0 else 0
+    avg_ess_gen = round(((ess_gen)/(ess_all))*100,2) if ess_all > 0 else 0
+    avg_ess_lvx = round(((ess_lvx)/(ess_all))*100,2) if ess_all > 0 else 0
+    avg_ess_tzp = round(((ess_tzp)/(ess_all))*100,2) if ess_all > 0 else 0
+    avg_ess_sxt = round(((ess_sxt)/(ess_all))*100,2) if ess_all > 0 else 0
+    avg_ess_amk = round(((ess_amk)/(ess_all))*100,2) if ess_all > 0 else 0
+    avg_ess_fep = round(((ess_fep)/(ess_all))*100,2) if ess_all > 0 else 0
+    avg_ess_fox = round(((ess_fox)/(ess_all))*100,2) if ess_all > 0 else 0
+    avg_ess_cxa = round(((ess_cxa)/(ess_all))*100,2) if ess_all > 0 else 0
+    avg_ess_etp = round(((ess_etp)/(ess_all))*100,2) if ess_all > 0 else 0
+    avg_ess_ipm = round(((ess_ipm)/(ess_all))*100,2) if ess_all > 0 else 0
+    avg_ess_mem = round(((ess_mem)/(ess_all))*100,2) if ess_all > 0 else 0
+    avg_ess_tcy = round(((ess_tcy)/(ess_all))*100,2) if ess_all > 0 else 0
+    avg_ess_tob = round(((ess_tob)/(ess_all))*100,2) if ess_all > 0 else 0
+    avg_ess_fdc = round(((ess_fdc)/(ess_all))*100,2) if ess_all > 0 else 0
+    avg_ess_cza = round(((ess_cza)/(ess_all))*100,2) if ess_all > 0 else 0
+    avg_ess_imr = round(((ess_imr)/(ess_all))*100,2) if ess_all > 0 else 0
+    avg_ess_plz = round(((ess_plz)/(ess_all))*100,2) if ess_all > 0 else 0
+    avg_ess_atm = round(((ess_atm)/(ess_all))*100,2) if ess_all > 0 else 0
+    avg_ess_caz = round(((ess_caz)/(ess_all))*100,2) if ess_all > 0 else 0
+    avg_ess_czt = round(((ess_czt)/(ess_all))*100,2) if ess_all > 0 else 0
+    avg_ess_col = round(((ess_col)/(ess_add_abx))*100,2) if ess_add_abx > 0 else 0
+    avg_ess_czo_ur = round(((ess_czo_ur)/(ess_ur))*100,2) if ess_ur > 0 else 0
+    avg_ess_nit = round(((ess_nit)/(ess_ur))*100,2) if ess_ur > 0 else 0
+    avg_ess_cro = round(((ess_cro)/(ess_all))*100,2) if ess_ur > 0 else 0
+
+
+
     ess_data_ent = [['Antibiotic','Number tested','Percentage'],
-                   ['1. Amikacin',ess_amk,str(  round(((ess_amk)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
-                   ['2. Amoxicillin-Clavulanate',ess_amc, str(  round(((ess_amc)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
-                   ['3. Ampicillin',ess_amp,str(  round(((ess_amp)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
-                   ['4. Aztreonam',ess_atm,str(  round(((ess_atm)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
-                   ['5. Cefazolin',ess_czo,str(  round(((ess_czo)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
-                   ['6. Cefepime',ess_fep,str(  round(((ess_fep)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
-                   ['7. Cefotaxime',ess_ctx,str(  round(((ess_ctx)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
-                   ['8. Cefoxitin',ess_fox,str(  round(((ess_fox)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
-                   ['9. Ceftazidime',ess_caz,str(  round(((ess_caz)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
-                   ['10. Ceftriaxone',ess_cro,str(  round(((ess_cro)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
-                   ['11. Cefuroxime',ess_cxa,str(  round(((ess_cxa)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
-                   ['12. Ciprofloxacin',ess_cip,str(  round(((ess_cip)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
-                   ['13. Ertapenem',ess_etp,str(  round(((ess_etp)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
-                   ['14. Gentamicin',ess_gen,str(  round(((ess_gen)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
-                   ['15. Imipenem',ess_ipm,str(  round(((ess_ipm)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
-                   ['16. Meropenem',ess_mem,str(  round(((ess_mem)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
-                   ['17. Piperacillin-tazobactam',ess_tzp,str(  round(((ess_tzp)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
-                   ['18. Tetracycline',ess_tcy,str(  round(((ess_tcy)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
-                   ['19. Tobramycin',ess_tob,str(  round(((ess_tob)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
-                   ['20. Trimethoprim-sulfamethoxazole',ess_sxt,str(  round(((ess_sxt)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
-                   ['21. Colistin',ess_col,str(  round(((ess_col)/(ess_all))*100,2) ) + "%" if ess_all > 0 else '0%'],
+                   ['1. Ampicillin',ess_amp,str(  avg_ess_amp ) + "%"],
+                   ['2. Amoxicillin-clavulanic acid',ess_amc, str(  avg_ess_amc ) + "%"],
+                   ['3. Cefazolin',ess_czo,str( avg_ess_czo ) + "%"],
+                   ['4. Cefotaxime',ess_ctx,str(  avg_ess_ctx ) + "%"],
+                   ['5. Ceftriaxone',ess_cro,str( avg_ess_cro  ) + "%"],
+                   ['6. Ciprofloxacin',ess_cip,str(  avg_ess_cip ) + "%"],
+                   ['7. Gentamicin',ess_gen,str( avg_ess_gen ) + "%"],
+                   ['8. Levofloxacin',ess_lvx,str(  avg_ess_lvx ) + "%"],
+                   ['9. Piperacillin-tazobactam',ess_tzp,str( avg_ess_tzp ) + "%"],
+                   ['10. Trimethoprim-sulfamethoxazole',ess_sxt,str( avg_ess_sxt ) + "%"],
+                   ['11. Amikacin',ess_amk,str(  avg_ess_amk ) + "%"],
+                   ['12. Cefepime',ess_fep,str(  avg_ess_fep ) + "%"],
+                   ['13. Cefoxitin',ess_fox,str( avg_ess_fox ) + "%" ],
+                   ['14. Cefuroxime',ess_cxa,str(  avg_ess_cxa ) + "%"],
+                   ['15. Ertapenem',ess_etp,str(  avg_ess_etp ) + "%"],
+                   ['16. Imipenem',ess_ipm,str(  avg_ess_ipm ) + "%"],
+                   ['17. Meropenem',ess_mem,str(  avg_ess_mem ) + "%"],
+                   ['18. Tetracycline',ess_tcy,str(  avg_ess_tcy ) + "%"],
+                   ['19. Tobramycin',ess_tob,str(  avg_ess_tob ) + "%"],
+                   ['20. Cefiderocol',ess_fdc,str( avg_ess_fdc ) + "%"],
+                   ['21. Ceftazidime-avibactam',ess_cza,str( avg_ess_cza ) + "%"],
+                   ['22. Imipenem-relebactam',ess_imr,str(  avg_ess_imr ) + "%"],
+                   ['23. Plazomicin',ess_plz,str(  avg_ess_plz ) + "%"],
+                   ['24. Aztreonam',ess_atm,str(  avg_ess_atm ) + "%"],
+                   ['25. Ceftazidime',ess_caz,str(  avg_ess_caz ) + "%"],
+                   ['26. Ceftolozane-tazobactam',ess_czt,str(  avg_ess_czt ) + "%"],     
                    ['','Additional for Urine',ess_ur],
-                   ['1. Cefazolin',ess_czo_ur,str(  round(((ess_czo_ur)/(ess_ur))*100,2) ) + "%" if ess_ur > 0 else '0%'],
-                   ['2. Nitrofurantoin',ess_nit,str(  round(((ess_nit)/(ess_ur))*100,2) ) + "%" if ess_ur > 0 else '0%']]
+                   ['1. Cefazolin',ess_czo_ur,str(  avg_ess_czo_ur ) + "%"],
+                   ['2. Nitrofurantoin',ess_nit,str(  avg_ess_nit ) + "%"],
+                   ['','Additional Antibiotic/s',ess_add_abx],
+                   ['1. Colistin or Polymyxin B',ess_col,str(  avg_ess_col ) + "%"],               
+                   ]
+    
               
     
     ret = []
+
+    add_to_compute_if_greater_0 = 0
+    if ess_fdc > 0:
+        add_to_compute_if_greater_0 += 1
+    if ess_cza > 0:
+        add_to_compute_if_greater_0 += 1
+    if ess_imr > 0:
+        add_to_compute_if_greater_0 += 1
+    if ess_plz > 0:
+        add_to_compute_if_greater_0 += 1
+    if ess_czt > 0:
+        add_to_compute_if_greater_0 += 1
+    
+    div = 24 + add_to_compute_if_greater_0
+    
+
     
     df = pd.DataFrame(data=ess_data_ent, columns=['ENTEROBACTERIACEAE','Number',ess_all])  
-    
-    tmp_ess_data_summary =  round(((round(((ess_amk)/(ess_all))*100,2) +  round(((ess_amc)/(ess_all))*100,2) +  round(((ess_amp)/(ess_all))*100,2) \
-                             + round(((ess_atm)/(ess_all))*100,2) + round(((ess_czo)/(ess_all))*100,2) + round(((ess_fep)/(ess_all))*100,2) \
-                             + round(((ess_ctx)/(ess_all))*100,2) + round(((ess_fox)/(ess_all))*100,2) +  round(((ess_caz)/(ess_all))*100,2) \
-                             + round(((ess_cro)/(ess_all))*100,2) + round(((ess_cxa)/(ess_all))*100,2) +  round(((ess_cip)/(ess_all))*100,2) \
-                             + round(((ess_etp)/(ess_all))*100,2) + round(((ess_gen)/(ess_all))*100,2) +  round(((ess_ipm)/(ess_all))*100,2) \
-                             + round(((ess_mem)/(ess_all))*100,2) + round(((ess_tzp)/(ess_all))*100,2) +  round(((ess_sxt)/(ess_all))*100,2) \
-                             + round(((ess_col)/(ess_all))*100,2) if ess_all > 0 else 0 + round(((ess_czo_ur)/(ess_ur))*100,2) + round(((ess_nit)/(ess_ur))*100,2)) / 23),2) if ess_all > 0 else 0
+    ess_avg_all = avg_ess_amp + avg_ess_amc + avg_ess_czo + avg_ess_ctx + \
+    avg_ess_cip + avg_ess_gen + avg_ess_lvx + avg_ess_tzp + avg_ess_sxt + avg_ess_amk + \
+    avg_ess_fep + avg_ess_fox + avg_ess_cxa + avg_ess_etp + avg_ess_ipm + avg_ess_mem + \
+    avg_ess_tcy + avg_ess_tob + avg_ess_fdc + avg_ess_cza + avg_ess_imr + avg_ess_plz +  \
+    avg_ess_atm + avg_ess_caz + avg_ess_czt + avg_ess_col + avg_ess_czo_ur + avg_ess_nit  + avg_ess_cro 
+
+    # tmp_ess_data_summary  = round(round(((round(ess_avg_all,2))/(div))*100,2))
+    tmp_ess_data_summary  = round((ess_avg_all / div),2)
+    # tmp_ess_data_summary =  round(((round(((ess_amk)/(ess_all))*100,2) +  round(((ess_amc)/(ess_all))*100,2) +  round(((ess_amp)/(ess_all))*100,2) +  round(((ess_cro)/(ess_all))*100,2) \
+    #                          + round(((ess_atm)/(ess_all))*100,2) + round(((ess_czo)/(ess_all))*100,2) + round(((ess_fep)/(ess_all))*100,2) \
+    #                          + round(((ess_ctx)/(ess_all))*100,2) + round(((ess_fox)/(ess_all))*100,2) +  round(((ess_caz)/(ess_all))*100,2) \
+    #                          + round(((ess_cxa)/(ess_all))*100,2) +  round(((ess_cip)/(ess_all))*100,2) +  round(((ess_tcy)/(ess_all))*100,2) +  round(((ess_tob)/(ess_all))*100,2) \
+    #                          + round(((ess_etp)/(ess_all))*100,2) + round(((ess_gen)/(ess_all))*100,2) +  round(((ess_ipm)/(ess_all))*100,2) \
+    #                          + round(((ess_mem)/(ess_all))*100,2) + round(((ess_tzp)/(ess_all))*100,2) +  round(((ess_sxt)/(ess_all))*100,2) \
+    #                          + round(((ess_fdc)/(ess_all))*100,2) + round(((ess_cza)/(ess_all))*100,2) +  round(((ess_imr)/(ess_all))*100,2) \
+    #                          + round(((ess_plz)/(ess_all))*100,2) + round(((ess_czt)/(ess_all))*100,2) +  round(((ess_lvx)/(ess_all))*100,2) \
+    #                          if ess_all > 0 else 0 + round(((ess_czo_ur)/(ess_ur))*100,2) + round(((ess_nit)/(ess_ur))*100,2)  + round(((ess_col)/(ess_add_abx))*100,2)) / div ),2) if ess_all > 0 else 0
       
-                             
+   
       
       
     ess_data_summary = ['ENTEROBACTERIACEAE',ess_all,str(tmp_ess_data_summary) + '%']
@@ -1624,6 +1865,9 @@ def get_data_non_ent(file_id,config = 'raw'):
     non_ent_ctx = 0
     non_ent_cro = 0
     non_ent_tob = 0
+    non_ent_lvx = 0
+    non_ent_fdc = 0
+    non_ent_add_abx = 0
     non_ent_ur = 0 
     
     for index,row in df.iterrows():
@@ -1643,8 +1887,9 @@ def get_data_non_ent(file_id,config = 'raw'):
                         non_ent_cro += 1
                   if row['cip_nd5'] != '' or row['cip_nm'] != '' or row['cip_ne'] != '':
                         non_ent_cip += 1
-                  if row['col_nd10'] != '' or row['col_nm'] != '' or row['col_ne'] != '':
+                  if row['col_nd10'] != '' or row['col_nm'] != '' or row['col_ne'] != '' or row['pol_nd300'] != '' or row['pol_nm'] != '' or row['pol_ne'] != '':
                         non_ent_col += 1
+                        non_ent_add_abx += 1
                   if row['ipm_nd10'] != '' or row['ipm_nm'] != '' or row['ipm_ne'] != '':
                         non_ent_ipm += 1
                   if row['mem_nd10'] != '' or row['mem_nm'] != '' or row['mem_ne'] != '':
@@ -1663,35 +1908,57 @@ def get_data_non_ent(file_id,config = 'raw'):
                         non_ent_tet += 1
                   if row['spec_type'] == 'ur':
                         non_ent_ur += 1
+                  if row['lvx_nd5'] != '' or row['lvx_nm'] != '' or row['lvx_ne'] != '':
+                        non_ent_lvx += 1
+                  if row['fdc_nd'] != '' or row['fdc_nm'] != '' or row['fdc_ne'] != '':
+                        non_ent_fdc += 1
     
     non_ent_data = [['Antibiotic','Number tested','Percentage'],
-                      ['1. Amikacin',non_ent_amk,str(  round(((non_ent_amk)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
-                      ['2. Amipicillin-Sulbactam',non_ent_sam,str(  round(((non_ent_sam)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
-                      ['3. Cefepime',non_ent_fep,str(  round(((non_ent_fep)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
-                      ['4. Ceftazidime',non_ent_caz,str(  round(((non_ent_caz)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
-                      ['5. Cefotaxime',non_ent_ctx,str(  round(((non_ent_ctx)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
-                      ['6. Ceftriaxone',non_ent_cro,str(  round(((non_ent_cro)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
-                      ['7. Ciprofloxacin',non_ent_cip,str(  round(((non_ent_cip)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
-                      ['8. Colistin',non_ent_col,str(  round(((non_ent_col)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
+                      ['1. Amipicillin-Sulbactam',non_ent_sam,str(  round(((non_ent_sam)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
+                      ['2. Cefepime',non_ent_fep,str(  round(((non_ent_fep)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
+                      ['3. Ceftazidime',non_ent_caz,str(  round(((non_ent_caz)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
+                      ['4. Ciprofloxacin',non_ent_cip,str(  round(((non_ent_cip)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
+                      ['5. Gentamicin',non_ent_gen,str(  round(((non_ent_gen)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
+                      ['6. Levofloxacin',non_ent_lvx,str(  round(((non_ent_lvx)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
+                      ['7. Tobramycin',non_ent_tob,str(  round(((non_ent_tob)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
+                      ['8. Amikacin',non_ent_amk,str(  round(((non_ent_amk)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
                       ['9. Imipenem',non_ent_ipm,str(  round(((non_ent_ipm)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
                       ['10. Meropenem',non_ent_mem,str(  round(((non_ent_mem)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
                       ['11. Minocycline',non_ent_mno,str(  round(((non_ent_mno)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
-                      ['12. Gentamicin',non_ent_gen,str(  round(((non_ent_gen)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
-                      ['13. Piperacillin-tazobactam',non_ent_tzp,str(  round(((non_ent_tzp)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
-                      ['14. Tobramycin',non_ent_tob,str(  round(((non_ent_tob)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
-                      ['15. Trimethoprim-Sulfamethoxazole',non_ent_sxt,str(  round(((non_ent_sxt)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
+                      ['12. Piperacillin-tazobactam',non_ent_tzp,str(  round(((non_ent_tzp)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
+                      ['13. Trimethoprim-Sulfamethoxazole',non_ent_sxt,str(  round(((non_ent_sxt)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
+                      ['14. Cefiderocol',non_ent_fdc,str(  round(((non_ent_fdc)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
+                      ['15. Cefotaxime',non_ent_ctx,str(  round(((non_ent_ctx)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
+                      ['16. Ceftriaxone',non_ent_cro,str(  round(((non_ent_cro)/(non_ent_all))*100,2) ) + "%" if non_ent_all > 0 else '0%'],
                       ['','Additional for Urine',non_ent_ur],
-                      ['1. Tetracycline',non_ent_tet,str(  round(((non_ent_tet)/(non_ent_ur))*100,2) ) + "%" if non_ent_ur > 0 else '0%']
+                      ['1. Tetracycline',non_ent_tet,str(  round(((non_ent_tet)/(non_ent_ur))*100,2) ) + "%" if non_ent_ur > 0 else '0%'],
+                      ['','Additional Antibiotic/s',non_ent_add_abx],
+                      ['1. Colistin or Polymyxin B',non_ent_col,str(  round(((non_ent_col)/(non_ent_add_abx))*100,2) ) + "%" if non_ent_add_abx > 0 else '0%'],
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
                       ]
     
     ret = []
+
+    add_to_compute_if_greater_0 = 0
+    if non_ent_fdc > 0:
+        add_to_compute_if_greater_0 += 1
+    div = 17 + add_to_compute_if_greater_0
     
     df = pd.DataFrame(data=non_ent_data, columns=['Acinetobacter sp.','Number', non_ent_all])
     
     tmp_non_ent =  round(((round(((non_ent_amk)/(non_ent_all))*100,2) + round(((non_ent_sam)/(non_ent_all))*100,2) + round(((non_ent_fep)/(non_ent_all))*100,2) + round(((non_ent_caz)/(non_ent_all))*100,2) \
-                     + round(((non_ent_cip)/(non_ent_all))*100,2) + round(((non_ent_col)/(non_ent_all))*100,2) + round(((non_ent_ipm)/(non_ent_all))*100,2) + round(((non_ent_mem)/(non_ent_all))*100,2) \
+                     + round(((non_ent_cip)/(non_ent_all))*100,2) + round(((non_ent_col)/(non_ent_all))*100,2) + round(((non_ent_ipm)/(non_ent_all))*100,2) + round(((non_ent_mem)/(non_ent_all))*100,2) + round(((non_ent_lvx)/(non_ent_all))*100,2) + round(((non_ent_fdc)/(non_ent_all))*100,2) \
                      + round(((non_ent_mno)/(non_ent_all))*100,2) + round(((non_ent_ctx)/(non_ent_all))*100,2) + round(((non_ent_cro)/(non_ent_all))*100,2) + round(((non_ent_tob)/(non_ent_all))*100,2) + round(((non_ent_gen)/(non_ent_all))*100,2) + round(((non_ent_tzp)/(non_ent_all))*100,2) + round(((non_ent_sxt)/(non_ent_all))*100,2) \
-                     +  round(((non_ent_tet)/(non_ent_ur) if non_ent_ur > 0 else 0)*100,2)) / 16),2) if non_ent_all > 0 else 0
+                     +  round(((non_ent_tet)/(non_ent_ur) if non_ent_ur > 0 else 0)*100,2)) / div),2) if non_ent_all > 0 else 0
       
     non_ent_summary = ['Acinetobacter sp.',non_ent_all,str(tmp_non_ent) + '%']
     
@@ -1711,11 +1978,17 @@ def get_data_sal_shi(file_id,config = 'raw'):
     df = concat_all_df(file_id,config)
     comp = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','sal_shi')
     comp_add = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','sal_shi_add')
+    comp_sal = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','salmonella')
+    comp_shi = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','shigella')
     df_list = pd.DataFrame(comp, columns=['ORG'])
     df_list_add = pd.DataFrame(comp_add, columns=['ORG'])
+    df_list_sal = pd.DataFrame(comp_sal, columns=['ORG'])
+    df_list_shi = pd.DataFrame(comp_shi, columns=['ORG'])
     
     cmp = df_list.to_numpy()
     cmp_add = df_list_add.to_numpy()
+    cmp_sal = df_list_sal.to_numpy()
+    cmp_shi = df_list_shi.to_numpy()
     
     df = df[ df['spec_type'].str.lower() != 'qc' ]
     df = df[ df['spec_type'].str.lower() != 'en' ]
@@ -1744,6 +2017,8 @@ def get_data_sal_shi(file_id,config = 'raw'):
     ent_azm = 0
     ent_azm_all = 0
     ent_all = 0
+    ent_col = 0
+    ent_add_abx = 0
     
     for index,row in df.iterrows():
              if row['organism'] in cmp:
@@ -1772,38 +2047,54 @@ def get_data_sal_shi(file_id,config = 'raw'):
                         ent_ipm += 1
                   if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '' or row['sxt_ne'] != '':
                         ent_sxt += 1
-    
-    for index,row in df.iterrows():
-            if row['organism'] in cmp_add:
-                  ent_azm_all += 1
                   if row['azm_nd15'] != '' or row['azm_nm'] or row['azm_ne']:
                         ent_azm += 1
+                  if row['col_nd10'] != '' or row['col_nm'] != '' or row['col_ne'] != '' or row['pol_nd300'] != '' or row['pol_nm'] != '' or row['pol_ne'] != '':
+                        ent_col += 1
+                        ent_add_abx += 1
+    
+    # for index,row in df.iterrows():
+    #         if row['organism'] in cmp_add:
+    #               ent_azm_all += 1
+    #               if row['azm_nd15'] != '' or row['azm_nm'] or row['azm_ne']:
+    #                     ent_azm += 1
+
     
     ent_data_sal_shi = [['Antibiotic','Number tested','Percentage'],
-                          ['1. Amoxicillin-Clavulanate',ent_amc, str(  round(((ent_amc)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
-                          ['2. Ampicillin',ent_amp,str(  round(((ent_amp)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
-                          ['3. Aztreonam',ent_atm,str(  round(((ent_atm)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
-                          ['4. Cefepime',ent_fep,str(  round(((ent_fep)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
-                          ['5. Cefotaxime',ent_ctx,str(  round(((ent_ctx)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
-                          ['6. Cefoxitin',ent_fox,str(  round(((ent_fox)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
-                          ['7. Ceftriaxone',ent_cro,str(  round(((ent_cro)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
-                          ['8. Chloramphenicol',ent_chl,str(  round(((ent_chl)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
-                          ['9. Ciprofloxacin',ent_cip,str(  round(((ent_cip)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
-                          ['10. Ertapenem',ent_etp,str(  round(((ent_etp)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
-                          ['11. Imipenem',ent_ipm,str(  round(((ent_ipm)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
-                          ['12. Trimethoprim-sulfamethoxazole',ent_sxt,str(  round(((ent_sxt)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
-                          ['','Additional Antibiotics',''],
-                          ['1. Azithromycin',ent_azm,str(  round(((ent_azm)/(ent_azm_all))*100,2) ) + "%" if ent_azm_all > 0 else '0%']
+                          ['1. Ampicillin',ent_amp,str(  round(((ent_amp)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
+                          ['2. Cefotaxime',ent_ctx,str(  round(((ent_ctx)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
+                          ['3. Ceftriaxone',ent_cro,str(  round(((ent_cro)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
+                          ['4. Ciprofloxacin',ent_cip,str(  round(((ent_cip)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
+                          ['5. Trimethoprim-sulfamethoxazole',ent_sxt,str(  round(((ent_sxt)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
+                          ['6. Azithromycin',ent_azm,str(  round(((ent_azm)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
+                          ['7. Chloramphenicol',ent_chl,str(  round(((ent_chl)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
+                          ['','Additional Antibiotics',ent_add_abx],
+                          ['1. Colistin or Polymyxin B',ent_col,str(  round(((ent_col)/(ent_all))*100,2) ) + "%"],
+                        #   ['7. Ceftriaxone',ent_cro,str(  round(((ent_cro)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
+                        #   ['1. Amoxicillin-Clavulanate',ent_amc, str(  round(((ent_amc)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
+                          
+                        #   ['3. Aztreonam',ent_atm,str(  round(((ent_atm)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
+                        #   ['4. Cefepime',ent_fep,str(  round(((ent_fep)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
+                          
+                        #   ['6. Cefoxitin',ent_fox,str(  round(((ent_fox)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
+                          
+                          
+                          
+                        #   ['10. Ertapenem',ent_etp,str(  round(((ent_etp)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
+                        #   ['11. Imipenem',ent_ipm,str(  round(((ent_ipm)/(ent_all))*100,2) ) + "%" if ent_all > 0 else '0%'],
+                          
+                          
+                         
                           ]
 
     ret = []
     
     df = pd.DataFrame(data=ent_data_sal_shi, columns=['Salmonella & Shigella sp.','Number',ent_all])
     
-    tmp_ent_data_summary = round(((round(((ent_amc)/(ent_all))*100,2)   + round(((ent_amp)/(ent_all))*100,2) +  round(((ent_atm)/(ent_all))*100,2) + round(((ent_fep)/(ent_all))*100,2) \
-                            + round(((ent_ctx)/(ent_all))*100,2) + round(((ent_fox)/(ent_all))*100,2) +  round(((ent_cro)/(ent_all))*100,2) + round(((ent_chl)/(ent_all))*100,2) \
-                            + round(((ent_cip)/(ent_all))*100,2) + round(((ent_etp)/(ent_all))*100,2) +  round(((ent_ipm)/(ent_all))*100,2) + round(((ent_sxt)/(ent_all))*100,2) \
-                            + round(((ent_azm)/(ent_azm_all) if ent_azm_all > 0 else 0) *100,2)) / 13) ,2) if ent_all > 0 else 0
+    tmp_ent_data_summary = round((( round(((ent_amp)/(ent_all))*100,2) \
+                            + round(((ent_ctx)/(ent_all))*100,2) +  round(((ent_cro)/(ent_all))*100,2) + round(((ent_chl)/(ent_all))*100,2) \
+                            + round(((ent_cip)/(ent_all))*100,2) + round(((ent_col)/(ent_all))*100,2)  + round(((ent_sxt)/(ent_all))*100,2) \
+                            + round(((ent_azm)/(ent_all)) *100,2)) / 8) ,2) if ent_all > 0 else 0
     
     ent_data_summary = ['Salmonella & Shigella sp.',ent_all,str(tmp_ent_data_summary) + '%']
     
@@ -1923,12 +2214,18 @@ def get_data_pae(file_id,config = 'raw'):
     pae_gen = 0
     pae_tzp = 0
     pae_tob = 0
+    pae_add_abx = 0
+    pae_ur = 0
+    pae_fdc = 0
+    pae_cza = 0
+    pae_czt = 0
+    pae_imr = 0
     
     
     for index,row in df.iterrows():
         if row['organism'] == 'pae':
                 pae_all += 1
-                if row['amk_nd30'] != '' or row['amk_nm'] != '' or row['amk_ne'] != '':
+                if (row['amk_nd30'] != '' or row['amk_nm'] != '' or row['amk_ne'] != '') and row['spec_type'] == 'ur':
                     pae_amk += 1
                 if row['atm_nd30'] != '' or row['atm_nm'] != '' or row['atm_ne'] != '':
                     pae_atm += 1
@@ -1938,8 +2235,9 @@ def get_data_pae(file_id,config = 'raw'):
                     pae_caz += 1
                 if row['cip_nd5'] != '' or row['cip_nm'] != '' or row['cip_ne'] != '':
                     pae_cip += 1
-                if row['col_nd10'] != '' or row['col_nm'] != '' or row['col_ne'] != '':
+                if row['col_nd10'] != '' or row['col_nm'] != '' or row['col_ne'] != '' or row['pol_nd300'] != '' or row['pol_nm'] != '' or row['pol_ne'] != '':
                     pae_col += 1
+                    pae_add_abx += 1
                 if row['ipm_nd10'] != '' or row['ipm_nm'] != '' or row['ipm_ne'] != '':
                     pae_ipm += 1
                 if row['lvx_nd5'] != '' or row['lvx_nm'] != '' or row['lvx_ne'] != '':
@@ -1952,31 +2250,86 @@ def get_data_pae(file_id,config = 'raw'):
                     pae_tzp += 1
                 if row['tob_nd10'] != '' or row['tob_nm'] != '' or row['tob_ne'] != '':
                     pae_tob += 1
-    
+                if row['spec_type'] == 'ur':
+                    pae_ur += 1
+                if row['fdc_nd'] != '' or row['fdc_nm'] != '' or row['fdc_ne'] != '':
+                    pae_fdc += 1
+                if row['cza_nd30'] != '' or row['cza_nm'] != '' or row['cza_nm'] != '':
+                    pae_cza += 1
+                if row['czt_nd30'] != '' or row['czt_nm'] != '' or row['czt_ne'] != '':
+                    pae_czt += 1
+                if row['imr_nd10'] != '' or row['imr_nm'] != '' or row['imr_ne'] != '':
+                    pae_imr += 1
+
+               
+    avg_pae_fep = round(((pae_fep)/(pae_all))*100,2) if pae_all > 0 else 0
+    avg_pae_caz = round(((pae_caz)/(pae_all))*100,2) if pae_all > 0 else 0
+    avg_pae_cip = round(((pae_cip)/(pae_all))*100,2) if pae_all > 0 else 0
+    avg_pae_lev = round(((pae_lev)/(pae_all))*100,2) if pae_all > 0 else 0
+    avg_pae_tzp = round(((pae_tzp)/(pae_all))*100,2) if pae_all > 0 else 0
+    avg_pae_tob = round(((pae_tob)/(pae_all))*100,2) if pae_all > 0 else 0
+    avg_pae_ipm = round(((pae_ipm)/(pae_all))*100,2) if pae_all > 0 else 0
+    avg_pae_mem = round(((pae_mem)/(pae_all))*100,2) if pae_all > 0 else 0
+    avg_pae_fdc = round(((pae_fdc)/(pae_all))*100,2) if pae_all > 0 else 0
+    avg_pae_cza = round(((pae_cza)/(pae_all))*100,2) if pae_all > 0 else 0
+    avg_pae_czt = round(((pae_czt)/(pae_all))*100,2) if pae_all > 0 else 0
+    avg_pae_imr = round(((pae_imr)/(pae_all))*100,2) if pae_all > 0 else 0
+    avg_pae_atm = round(((pae_atm)/(pae_all))*100,2) if pae_all > 0 else 0
+    avg_pae_amk = round(((pae_amk)/(pae_ur))*100,2) if pae_ur > 0 else 0
+    avg_pae_col = round(((pae_col)/(pae_add_abx))*100,2) if pae_add_abx > 0 else 0
     
     pae_ent_data = [['Antibiotic','Number tested','Percentage'],
-                      ['1. Amikacin',pae_amk,str(  round(((pae_amk)/(pae_all))*100,2) ) + "%" if pae_all > 0 else '0%'],
-                      ['2. Aztreonam',pae_atm,str(  round(((pae_atm)/(pae_all))*100,2) ) + "%" if pae_all > 0 else '0%'],
-                      ['3. Cefepime',pae_fep,str(  round(((pae_fep)/(pae_all))*100,2) ) + "%" if pae_all > 0 else '0%'],
-                      ['4. Ceftazidime',pae_caz,str(  round(((pae_caz)/(pae_all))*100,2) ) + "%" if pae_all > 0 else '0%'],
-                      ['5. Ciprofloxacin',pae_cip,str(  round(((pae_cip)/(pae_all))*100,2) ) + "%" if pae_all > 0 else '0%'],
-                      ['6. Colistin',pae_col,str(  round(((pae_col)/(pae_all))*100,2) ) + "%" if pae_all > 0 else '0%'],
+                      ['1. Cefepime',pae_fep,str(  round(((pae_fep)/(pae_all))*100,2) ) + "%" if pae_all > 0 else '0%'],
+                      ['2. Ceftazidime',pae_caz,str(  round(((pae_caz)/(pae_all))*100,2) ) + "%" if pae_all > 0 else '0%'],
+                      ['3. Ciprofloxacin',pae_cip,str(  round(((pae_cip)/(pae_all))*100,2) ) + "%" if pae_all > 0 else '0%'],
+                      ['4. Levofloxacin',pae_lev,str(  round(((pae_lev)/(pae_all))*100,2) ) + "%" if pae_all > 0 else '0%'],
+                      ['5. Piperacillin-tazobactam',pae_tzp,str(  round(((pae_tzp)/(pae_all))*100,2) ) + "%" if pae_all > 0 else '0%'],
+                      ['6. Tobramycin',pae_tob,str(  round(((pae_tob)/(pae_all))*100,2) ) + "%" if pae_all > 0 else '0%'],
                       ['7. Imipenem',pae_ipm,str(  round(((pae_ipm)/(pae_all))*100,2) ) + "%" if pae_all > 0 else '0%'],
-                      ['8. Levofloxacin',pae_lev,str(  round(((pae_lev)/(pae_all))*100,2) ) + "%" if pae_all > 0 else '0%'],
-                      ['9. Meropenem',pae_mem,str(  round(((pae_mem)/(pae_all))*100,2) ) + "%" if pae_all > 0 else '0%'],
-                      ['10. Gentamicin',pae_gen,str(  round(((pae_gen)/(pae_all))*100,2) ) + "%" if pae_all > 0 else '0%'],
-                      ['11. Piperacillin-tazobactam',pae_tzp,str(  round(((pae_tzp)/(pae_all))*100,2) ) + "%" if pae_all > 0 else '0%'],
-                      ['12. Tobramycin',pae_tob,str(  round(((pae_tob)/(pae_all))*100,2) ) + "%" if pae_all > 0 else '0%']
+                      ['8. Meropenem',pae_mem,str(  round(((pae_mem)/(pae_all))*100,2) ) + "%" if pae_all > 0 else '0%'],
+                      ['9. Cefiderocol',pae_fdc,str(  round(((pae_fdc)/(pae_all))*100,2) ) + "%" if pae_all > 0 else '0%'],
+                      ['10. Ceftazidime-avibactam',pae_cza,str(  round(((pae_cza)/(pae_all))*100,2) ) + "%" if pae_all > 0 else '0%'],
+                      ['11. Ceftolozane-tazobactam',pae_czt,str(  round(((pae_czt)/(pae_all))*100,2) ) + "%" if pae_all > 0 else '0%'],
+                      ['12. Imipenem-relebactam',pae_imr,str(  round(((pae_imr)/(pae_all))*100,2) ) + "%" if pae_all > 0 else '0%'],
+                      ['13. Aztreonam',pae_atm,str(  round(((pae_atm)/(pae_all))*100,2) ) + "%" if pae_all > 0 else '0%'],
+                      ['','Additional for Urine',pae_ur],
+                      ['1. Amikacin',pae_amk,str(  round(((pae_amk)/(pae_ur))*100,2) ) + "%" if pae_ur > 0 else '0%'],
+                      ['','Additional Antibiotic/s',pae_add_abx],
+                      ['1. Colistin or Polymyxin B',pae_col,str(  round(((pae_col)/(pae_add_abx))*100,2) ) + "%" if pae_add_abx > 0 else '0%'],                     
+                     # ['10. Gentamicin',pae_gen,str(  round(((pae_gen)/(pae_all))*100,2) ) + "%" if pae_all > 0 else '0%'],
+                      
+                      
                      ]
     
     ret = []
+    add_to_compute_if_greater_0 = 0
+    if pae_fdc > 0:
+        add_to_compute_if_greater_0 += 1
+    if pae_cza > 0:
+        add_to_compute_if_greater_0 += 1
+    if pae_imr > 0:
+        add_to_compute_if_greater_0 += 1
+    if pae_czt > 0:
+        add_to_compute_if_greater_0 += 1
+    
+    div = 11 + add_to_compute_if_greater_0
+
+
     df = pd.DataFrame(data=pae_ent_data, columns=['Pseudomonas aeruginosa','Number',pae_all])
+
+    pae_avg_all =  avg_pae_fep + avg_pae_caz + avg_pae_cip + avg_pae_lev + \
+                   avg_pae_tzp + avg_pae_tob + avg_pae_ipm + avg_pae_mem + \
+                   avg_pae_fdc + avg_pae_cza + avg_pae_czt + avg_pae_imr + \
+                   avg_pae_atm + avg_pae_amk + avg_pae_col
+
+
+    tmp_pae_ent_data  = round((pae_avg_all / div),2)
     
     
-    tmp_pae_ent_data = round(((round(((pae_amk)/(pae_all))*100,2) +  round(((pae_atm)/(pae_all))*100,2) + round(((pae_fep)/(pae_all))*100,2) + round(((pae_caz)/(pae_all))*100,2) \
-                         + round(((pae_cip)/(pae_all))*100,2) + round(((pae_col)/(pae_all))*100,2) + round(((pae_ipm)/(pae_all))*100,2) + round(((pae_mem)/(pae_all))*100,2) \
-                         + round(((pae_gen)/(pae_all))*100,2) + round(((pae_tzp)/(pae_all))*100,2) + round(((pae_tob)/(pae_all))*100,2) \
-                         + round(((pae_lev)/(pae_all))*100,2)) / 12), 2) if pae_all > 0 else 0
+    # tmp_pae_ent_data = round(((round(((pae_amk)/(pae_ur))*100,2) if pae_ur > 0 else 0 +  round(((pae_atm)/(pae_all))*100,2) + round(((pae_fep)/(pae_all))*100,2) + round(((pae_caz)/(pae_all))*100,2) \
+    #                      + round(((pae_cip)/(pae_all))*100,2) + round(((pae_col)/(pae_add_abx))*100,2) if pae_add_abx > 0 else 0 + round(((pae_ipm)/(pae_all))*100,2) + round(((pae_mem)/(pae_all))*100,2) \
+    #                      + round(((pae_tzp)/(pae_all))*100,2) + round(((pae_tob)/(pae_all))*100,2) + round(((pae_fdc)/(pae_all))*100,2) + round(((pae_cza)/(pae_all))*100,2) \
+    #                      + round(((pae_lev)/(pae_all))*100,2)) + round(((pae_czt)/(pae_all))*100,2) + round(((pae_imr)/(pae_all))*100,2) / div), 2) if pae_all > 0 else 0
       
     pae_ent_summary = ['Pseudomonas aeruginosa',pae_all, str(tmp_pae_ent_data) + '%']
     
@@ -2016,6 +2369,9 @@ def get_data_hin(file_id,config = 'raw'):
     hin_mem = 0
     hin_tet = 0
     hin_sxt = 0
+    hin_atm = 0
+    hin_rif = 0
+    hin_cxa = 0
     
     for index,row in df.iterrows():
             if row['organism'].lower() == 'hin' or row['organism'].lower()  == 'hxt' or row['organism'].lower()  == 'hxb' or row['organism'].lower()  == 'hib' or row['organism'].lower()  == 'hpi':
@@ -2028,7 +2384,7 @@ def get_data_hin(file_id,config = 'raw'):
                         hin_sam += 1
                   if row['azm_nd15'] != '' or row['azm_nm'] != '' or row['azm_ne'] != '':
                         hin_azm += 1
-                  if row['cro_nd30'] != '' or row['cro_nm'] != '' or row['cro_ne'] != '':
+                  if row['cro_nd30'] != '' or row['cro_nm'] != '' or row['cro_ne'] != '' or row['ctx_nd30'] != '' or row['ctx_nm'] != '' or row['ctx_ne'] != '':
                         hin_cro += 1
                   if (row['cip_nd5'] != '' or row['cip_nm'] != '' or row['cip_ne'] != '') or (row['lvx_nd5'] != '' or row['lvx_nm'] != '' or row['lvx_ne'] != ''):
                         hin_cip_lev += 1
@@ -2038,24 +2394,35 @@ def get_data_hin(file_id,config = 'raw'):
                         hin_tet += 1
                   if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '' or row['sxt_ne'] != '':
                         hin_sxt += 1
+                  if row['atm_nd30'] != '' or row['atm_nm'] != '' or row['atm_nm'] != '':
+                        hin_atm += 1
+                  if row['rif_nd5'] != '' or row['rif_nm'] != '' or row['rif_ne'] != '':
+                        hin_rif += 1
+                  if row['cxa_nd30'] != '' or row['cxa_nm'] != '' or row['cxa_ne'] != '':
+                        hin_cxa += 1
 
     hin_fast_data = [['Antibiotic','Number tested','Percentage'],
-                       ['1. Amoxicillin-clavulanate',hin_amc,str(  round(((hin_amc)/(hin_all))*100,2) ) + "%" if hin_all > 0 else '0%'],
-                       ['2. Ampicillin',hin_amp,str(  round(((hin_amp)/(hin_all))*100,2) ) + "%" if hin_all > 0 else '0%'],
+                       ['1. Ampicillin',hin_amp,str(  round(((hin_amp)/(hin_all))*100,2) ) + "%" if hin_all > 0 else '0%'],
+                       ['2. Amoxicillin-clavulanate',hin_amc,str(  round(((hin_amc)/(hin_all))*100,2) ) + "%" if hin_all > 0 else '0%'],
                        ['3. Ampicillin/Sulbactam',hin_sam,str(  round(((hin_sam)/(hin_all))*100,2) ) + "%" if hin_all > 0 else '0%'],
-                       ['4. Azithromycin',hin_azm,str(  round(((hin_azm)/(hin_all))*100,2) ) + "%" if hin_all > 0 else '0%'] ,
-                       ['5. Ceftriaxone',hin_cro,str(  round(((hin_cro)/(hin_all))*100,2) ) + "%" if hin_all > 0 else '0%'],
-                       ['6. Ciprofloxacin or Levofloxacin',hin_cip_lev,str(  round(((hin_cip_lev)/(hin_all))*100,2) ) + "%" if hin_all > 0 else '0%'],
+                       ['4. Ceftriaxone or Cefotaxime',hin_cro,str(  round(((hin_cro)/(hin_all))*100,2) ) + "%" if hin_all > 0 else '0%'],
+                       ['5. Ciprofloxacin or Levofloxacin',hin_cip_lev,str(  round(((hin_cip_lev)/(hin_all))*100,2) ) + "%" if hin_all > 0 else '0%'],
+                       ['6. Trimethoprim-Sulfamethoxazole',hin_sxt,str(  round(((hin_sxt)/(hin_all))*100,2) ) + "%" if hin_all > 0 else '0%'],
                        ['7. Meropenem',hin_mem,str(  round(((hin_mem)/(hin_all))*100,2) ) + "%" if hin_all > 0 else '0%'],
-                       ['8. Tetracycline',hin_tet,str(  round(((hin_tet)/(hin_all))*100,2) ) + "%" if hin_all > 0 else '0%'],
-                       ['9. Trimethoprim-Sulfamethoxazole',hin_sxt,str(  round(((hin_sxt)/(hin_all))*100,2) ) + "%" if hin_all > 0 else '0%']
+                       ['8. Azithromycin',hin_azm,str(  round(((hin_azm)/(hin_all))*100,2) ) + "%" if hin_all > 0 else '0%'] ,
+                       ['9. Aztreonam',hin_atm,str(  round(((hin_atm)/(hin_all))*100,2) ) + "%" if hin_all > 0 else '0%'] ,
+                       ['10. Cefuroxime',hin_cxa,str(  round(((hin_cxa)/(hin_all))*100,2) ) + "%" if hin_all > 0 else '0%'] ,
+                       ['11. Rifampin',hin_rif,str(  round(((hin_rif)/(hin_all))*100,2) ) + "%" if hin_all > 0 else '0%'] ,
+                       ['12. Tetracycline',hin_tet,str(  round(((hin_tet)/(hin_all))*100,2) ) + "%" if hin_all > 0 else '0%'],
+                      
                        ]
 
     ret = []
     df = pd.DataFrame(data=hin_fast_data, columns=['Haemophilus influenza and Haemophilus parainfluenzae','Number',hin_all])
     
     tmp_hin_fast_data = round(((round(((hin_amc)/(hin_all))*100,2) + round(((hin_amp)/(hin_all))*100,2) + round(((hin_sam)/(hin_all))*100,2) + round(((hin_azm)/(hin_all))*100,2) + round(((hin_cro)/(hin_all))*100,2) \
-                          + round(((hin_cip_lev)/(hin_all))*100,2) + round(((hin_mem)/(hin_all))*100,2) +  round(((hin_tet)/(hin_all))*100,2) + round(((hin_sxt)/(hin_all))*100,2)) / 9),2) if hin_all > 0 else 0
+                          + round(((hin_atm)/(hin_all))*100,2) + round(((hin_cxa)/(hin_all))*100,2) +  round(((hin_rif)/(hin_all))*100,2) \
+                          + round(((hin_cip_lev)/(hin_all))*100,2) + round(((hin_mem)/(hin_all))*100,2) +  round(((hin_tet)/(hin_all))*100,2) + round(((hin_sxt)/(hin_all))*100,2)) / 12),2) if hin_all > 0 else 0
       
     hin_fast_summary = ['Haemophilus influenza and Haemophilus parainfluenzae',hin_all,str(tmp_hin_fast_data) + '%']
     
@@ -2098,7 +2465,7 @@ def get_data_bca(file_id,config = 'raw'):
                     
     mox_fast_data = [['Antibiotic','Number tested','Percentage'],
                     ['1. Amoxicillin-clavulanate',mox_amc,str(  round(((mox_amc)/(mox_all))*100,2) ) + "%" if mox_all > 0 else '0%'],
-                    ['2. Cefuroxime',mox_cxa,str(  round(((mox_cxa)/(mox_all))*100,2) ) + "%" if mox_all > 0 else '0%'],
+                    ['2. Cefuroxime (oral)',mox_cxa,str(  round(((mox_cxa)/(mox_all))*100,2) ) + "%" if mox_all > 0 else '0%'],
                     ['3. Trimethoprim-Sulfamethoxazole',mox_sxt,str(  round(((mox_sxt)/(mox_all))*100,2) ) + "%" if mox_all > 0 else '0%']
                     ]
     ret = []
@@ -2281,6 +2648,7 @@ def get_data_spn(file_id,config = 'raw'):
     spn_imp = 0
     spn_rif = 0
     spn_lnz = 0
+    spn_amx = 0
     
     for index,row in df.iterrows():
         if row['organism'] == 'spn':
@@ -2311,28 +2679,36 @@ def get_data_spn(file_id,config = 'raw'):
                     spn_rif += 1
                 if row['lnz_nd30'] != '' or row['lnz_nm'] != '' or row['lnz_ne'] != '':
                     spn_lnz += 1
+                if row['amx_nd30'] != '' or row['amx_nm'] != '' or row['amx_ne'] != '':
+                    spn_amx += 1
     
     spn_fast_data = [['Antibiotic','Number tested','Percentage'],
                     ['1. Ceftriaxone non-meningitis or Ceftriaxone meningitis',spn_cro,str(  round(((spn_cro)/(spn_all))*100,2) ) + "%" if spn_all > 0 else '0%'],
-                    ['2. Clindamycin',spn_cli,str(  round(((spn_cli)/(spn_all))*100,2) ) + "%" if spn_all > 0 else '0%'],
-                    ['3. Erythromycin',spn_ery,str(  round(((spn_ery)/(spn_all))*100,2) ) + "%" if spn_all > 0 else '0%'],
-                    ['4. Imipenem',spn_imp,str(  round(((spn_imp)/(spn_all))*100,2) ) + "%" if spn_all > 0 else '0%'],
-                    ['5. Levofloxacin',spn_lev,str(  round(((spn_lev)/(spn_all))*100,2) ) + "%" if spn_all > 0 else '0%'],
-                    ['6. Linezolid',spn_lnz,str(  round(((spn_lnz)/(spn_all))*100,2) ) + "%" if spn_all > 0 else '0%'],
+                    ['2. Erythromycin',spn_ery,str(  round(((spn_ery)/(spn_all))*100,2) ) + "%" if spn_all > 0 else '0%'],
+                    ['3. Penicillin',spn_pen,str(  round(((spn_pen)/(spn_all))*100,2) ) + "%" if spn_all > 0 else '0%'],
+                    ['4. Trimethoprim-Sulfamethoxazole',spn_sxt,str(  round(((spn_sxt)/(spn_all))*100,2) ) + "%" if spn_all > 0 else '0%'],
+                    ['5. Clindamycin',spn_cli,str(  round(((spn_cli)/(spn_all))*100,2) ) + "%" if spn_all > 0 else '0%'],
+                    ['6. Levofloxacin',spn_lev,str(  round(((spn_lev)/(spn_all))*100,2) ) + "%" if spn_all > 0 else '0%'],
                     ['7. Meropenem',spn_mem,str(  round(((spn_mem)/(spn_all))*100,2) ) + "%" if spn_all > 0 else '0%'],
-                    ['8. Oxacillin',spn_oxa,str(  round(((spn_oxa)/(spn_all))*100,2) ) + "%" if spn_all > 0 else '0%'],
-                    ['9. Penicillin',spn_pen,str(  round(((spn_pen)/(spn_all))*100,2) ) + "%" if spn_all > 0 else '0%'],
-                    ['10. Rifampin',spn_rif,str(  round(((spn_rif)/(spn_all))*100,2) ) + "%" if spn_all > 0 else '0%'],
-                    ['11. Tetracycline',spn_tet,str(  round(((spn_tet)/(spn_all))*100,2) ) + "%" if spn_all > 0 else '0%'],
-                    ['12. Trimethoprim-Sulfamethoxazole',spn_sxt,str(  round(((spn_sxt)/(spn_all))*100,2) ) + "%" if spn_all > 0 else '0%'],
-                    ['13. Vancomycin',spn_van,str(  round(((spn_van)/(spn_all))*100,2) ) + "%" if spn_all > 0 else '0%']
+                    ['8. Tetracycline',spn_tet,str(  round(((spn_tet)/(spn_all))*100,2) ) + "%" if spn_all > 0 else '0%'],
+                    ['9. Vancomycin',spn_van,str(  round(((spn_van)/(spn_all))*100,2) ) + "%" if spn_all > 0 else '0%'],
+                    ['10. Amoxicillin',spn_amx,str(  round(((spn_amx)/(spn_all))*100,2) ) + "%" if spn_all > 0 else '0%'],
+                    ['11. Imipenem',spn_imp,str(  round(((spn_imp)/(spn_all))*100,2) ) + "%" if spn_all > 0 else '0%'],
+                    ['12. Linezolid',spn_lnz,str(  round(((spn_lnz)/(spn_all))*100,2) ) + "%" if spn_all > 0 else '0%'],
+                    ['13. Rifampin',spn_rif,str(  round(((spn_rif)/(spn_all))*100,2) ) + "%" if spn_all > 0 else '0%'],
+                    ['14. Oxacillin',spn_oxa,str(  round(((spn_oxa)/(spn_all))*100,2) ) + "%" if spn_all > 0 else '0%'],
+                    
+                    
+                    
+                    
+                    
                     ]
      
     ret = []
     df = pd.DataFrame(data=spn_fast_data, columns=['Streptococcus pneumoniae','Number',spn_all])
     
-    tmp_spn_fast = round(((round(((spn_cro)/(spn_all))*100,2) + round(((spn_cli)/(spn_all))*100,2) + round(((spn_ery)/(spn_all))*100,2) + round(((spn_lev)/(spn_all))*100,2) + round(((spn_mem)/(spn_all))*100,2) \
-                     + round(((spn_oxa)/(spn_all))*100,2) + round(((spn_lnz)/(spn_all))*100,2) + round(((spn_rif)/(spn_all))*100,2) + round(((spn_imp)/(spn_all))*100,2) + round(((spn_pen)/(spn_all))*100,2) + round(((spn_tet)/(spn_all))*100,2) + round(((spn_sxt)/(spn_all))*100,2) + round(((spn_van)/(spn_all))*100,2)) / 13) , 2) if spn_all > 0 else 0
+    tmp_spn_fast = round(((round(((spn_cro)/(spn_all))*100,2) + round(((spn_cli)/(spn_all))*100,2) + round(((spn_amx)/(spn_all))*100,2) + round(((spn_ery)/(spn_all))*100,2) + round(((spn_lev)/(spn_all))*100,2) + round(((spn_mem)/(spn_all))*100,2) \
+                     + round(((spn_oxa)/(spn_all))*100,2) + round(((spn_lnz)/(spn_all))*100,2) + round(((spn_rif)/(spn_all))*100,2) + round(((spn_imp)/(spn_all))*100,2) + round(((spn_pen)/(spn_all))*100,2) + round(((spn_tet)/(spn_all))*100,2) + round(((spn_sxt)/(spn_all))*100,2) + round(((spn_van)/(spn_all))*100,2)) / 14) , 2) if spn_all > 0 else 0
       
     spn_fast_summary = ['Streptococcus pneumoniae',spn_all,str(tmp_spn_fast) + '%']
     ret.append(df)
@@ -2408,16 +2784,17 @@ def get_data_ent_positive(file_id,config = 'raw'):
                     ent_positive_nit += 1
     ent_positive_data = [['Antibiotic','Number tested','Percentage'],
                         ['1. Ampicillin',ent_positive_amp,str(  round(((ent_positive_amp)/(ent_positive_all))*100,2) ) + "%" if ent_positive_all > 0 else '0%'],
-                        ['2. Daptomycin',ent_positive_dap,str(  round(((ent_positive_dap)/(ent_positive_all))*100,2) ) + "%" if ent_positive_all > 0 else '0%'],
-                        ['3. Gentamicin High Level',ent_positive_geh,str(  round(((ent_positive_geh)/(ent_positive_all))*100,2) ) + "%" if ent_positive_all > 0 else '0%'],
-                        ['4. Linezolid',ent_positive_lnz,str(  round(((ent_positive_lnz)/(ent_positive_all))*100,2) ) + "%" if ent_positive_all > 0 else '0%'],
-                        ['5. Penicillin',ent_positive_pen,str(  round(((ent_positive_pen)/(ent_positive_all))*100,2) ) + "%" if ent_positive_all > 0 else '0%'],
-                        ['6. Streptomycin High Level',ent_positive_sth,str(  round(((ent_positive_sth)/(ent_positive_all))*100,2) ) + "%" if ent_positive_all > 0 else '0%'],
-                        ['7. Vancomycin',ent_positive_van,str(  round(((ent_positive_van)/(ent_positive_all))*100,2) ) + "%" if ent_positive_all > 0 else '0%'],
+                        ['2. Penicillin',ent_positive_pen,str(  round(((ent_positive_pen)/(ent_positive_all))*100,2) ) + "%" if ent_positive_all > 0 else '0%'],
+                        ['3. Daptomycin',ent_positive_dap,str(  round(((ent_positive_dap)/(ent_positive_all))*100,2) ) + "%" if ent_positive_all > 0 else '0%'],
+                        ['4. Gentamicin High Level',ent_positive_geh,str(  round(((ent_positive_geh)/(ent_positive_all))*100,2) ) + "%" if ent_positive_all > 0 else '0%'],
+                        ['5. Linezolid',ent_positive_lnz,str(  round(((ent_positive_lnz)/(ent_positive_all))*100,2) ) + "%" if ent_positive_all > 0 else '0%'],
+                        ['6. Vancomycin',ent_positive_van,str(  round(((ent_positive_van)/(ent_positive_all))*100,2) ) + "%" if ent_positive_all > 0 else '0%'],
+                        ['7. Streptomycin High Level',ent_positive_sth,str(  round(((ent_positive_sth)/(ent_positive_all))*100,2) ) + "%" if ent_positive_all > 0 else '0%'],
+                        
                         ['','Additional for Urine',ent_positive_ur],
-                        ['1. Ciprofloxacin',ent_positive_cip,str(  round(((ent_positive_cip)/(ent_positive_ur))*100,2) ) + "%" if ent_positive_ur > 0 else '0%'],
-                        ['2. Levofloxacin',ent_positive_lvx,str(  round(((ent_positive_lvx)/(ent_positive_ur))*100,2) ) + "%" if ent_positive_ur > 0 else '0%'],
-                        ['3. Nitrofurantoin',ent_positive_nit,str(  round(((ent_positive_nit)/(ent_positive_ur))*100,2) ) + "%" if ent_positive_ur > 0 else '0%'],
+                        ['1. Nitrofurantoin',ent_positive_nit,str(  round(((ent_positive_nit)/(ent_positive_ur))*100,2) ) + "%" if ent_positive_ur > 0 else '0%'],
+                        ['2. Ciprofloxacin',ent_positive_cip,str(  round(((ent_positive_cip)/(ent_positive_ur))*100,2) ) + "%" if ent_positive_ur > 0 else '0%'],
+                        ['3. Levofloxacin',ent_positive_lvx,str(  round(((ent_positive_lvx)/(ent_positive_ur))*100,2) ) + "%" if ent_positive_ur > 0 else '0%'],
                         ['4. Tetracycline',ent_positive_tcy,str(  round(((ent_positive_tcy)/(ent_positive_ur))*100,2) ) + "%" if ent_positive_ur > 0 else '0%']
                         ]
     
@@ -2511,17 +2888,17 @@ def get_data_sta(file_id,config = 'raw'):
                     
     sta_data = [['Antibiotic','Number tested','Percentage'],
                 ['1. Cefoxitin',sta_fox,str(  round(((sta_fox)/(sta_all))*100,2) ) + "%" if sta_all > 0 else '0%'],
-                ['2. Ciprofloxacin',sta_cip,str(  round(((sta_cip)/(sta_all))*100,2) ) + "%" if sta_all > 0 else '0%'],
-                ['3. Clindamycin',sta_cli,str(  round(((sta_cli)/(sta_all))*100,2) ) + "%" if sta_all > 0 else '0%'],
-                ['4. Daptomycin',sta_dap,str(  round(((sta_dap)/(sta_all))*100,2) ) + "%" if sta_all > 0 else '0%'],
-                ['5. Erythromycin',sta_ery,str(  round(((sta_ery)/(sta_all))*100,2) ) + "%" if sta_all > 0 else '0%'],
-                ['6. Linezolid',sta_lnz,str(  round(((sta_lnz)/(sta_all))*100,2) ) + "%" if sta_all > 0 else '0%'],
-                ['7. Oxacillin',sta_oxa,str(  round(((sta_oxa)/(sta_all))*100,2) ) + "%" if sta_all > 0 else '0%'],
-                ['8. Penicillin',sta_pen,str(  round(((sta_pen)/(sta_all))*100,2) ) + "%" if sta_all > 0 else '0%'],
-                ['9. Rifampin',sta_rif,str(  round(((sta_rif)/(sta_all))*100,2) ) + "%" if sta_all > 0 else '0%'],
-                ['10. Tetracycline',sta_tet,str(  round(((sta_tet)/(sta_all))*100,2) ) + "%" if sta_all > 0 else '0%'],
-                ['11. Trimethoprim-Sulfamethoxazole',sta_sxt,str(  round(((sta_sxt)/(sta_all))*100,2) ) + "%" if sta_all > 0 else '0%'],
-                ['12. Vancomycin',sta_van,str(  round(((sta_van)/(sta_all))*100,2) ) + "%" if sta_all > 0 else '0%'],
+                ['2. Clindamycin',sta_cli,str(  round(((sta_cli)/(sta_all))*100,2) ) + "%" if sta_all > 0 else '0%'],
+                ['3. Erythromycin',sta_ery,str(  round(((sta_ery)/(sta_all))*100,2) ) + "%" if sta_all > 0 else '0%'],
+                ['4. Oxacillin',sta_oxa,str(  round(((sta_oxa)/(sta_all))*100,2) ) + "%" if sta_all > 0 else '0%'],
+                ['5. Tetracycline',sta_tet,str(  round(((sta_tet)/(sta_all))*100,2) ) + "%" if sta_all > 0 else '0%'],
+                ['6. Trimethoprim-Sulfamethoxazole',sta_sxt,str(  round(((sta_sxt)/(sta_all))*100,2) ) + "%" if sta_all > 0 else '0%'],
+                ['7. Vancomycin',sta_van,str(  round(((sta_van)/(sta_all))*100,2) ) + "%" if sta_all > 0 else '0%'],
+                ['8. Daptomycin',sta_dap,str(  round(((sta_dap)/(sta_all))*100,2) ) + "%" if sta_all > 0 else '0%'],
+                ['9. Linezolid',sta_lnz,str(  round(((sta_lnz)/(sta_all))*100,2) ) + "%" if sta_all > 0 else '0%'],
+                ['10. Penicillin',sta_pen,str(  round(((sta_pen)/(sta_all))*100,2) ) + "%" if sta_all > 0 else '0%'],
+                ['11. Rifampin',sta_rif,str(  round(((sta_rif)/(sta_all))*100,2) ) + "%" if sta_all > 0 else '0%'],
+                ['12. Ciprofloxacin',sta_cip,str(  round(((sta_cip)/(sta_all))*100,2) ) + "%" if sta_all > 0 else '0%'],           
                 ['','Additional for Urine',sta_ur],
                 ['1. Nitrofurantoin',sta_nit,str(  round(((sta_nit)/(sta_ur))*100,2) ) + "%" if sta_ur > 0 else '0%'],
                 ]
@@ -2586,19 +2963,21 @@ def get_data_pce(file_id,config = 'raw'):
     
     pce_data = [['Antibiotic','Number tested','Percentage'],
                 ['1. Ceftazidime',pce_caz,str(  round(((pce_caz)/(pce_all))*100,2) ) + "%" if pce_all > 0 else '0%'],
-                ['2. Chloramphenicol',pce_chl,str(  round(((pce_chl)/(pce_all))*100,2) ) + "%" if pce_all > 0 else '0%'],
-                ['3. Levofloxacin',pce_lev,str(  round(((pce_lev)/(pce_all))*100,2) ) + "%" if pce_all > 0 else '0%'],
-                ['4. Meropenem',pce_mem,str(  round(((pce_mem)/(pce_all))*100,2) ) + "%" if pce_all > 0 else '0%'],
-                ['5. Minocycline',pce_mno,str(  round(((pce_mno)/(pce_all))*100,2) ) + "%" if pce_all > 0 else '0%'],
-                ['6. Trimethoprim-Sulfamethoxazole',pce_sxt,str(  round(((pce_sxt)/(pce_all))*100,2) ) + "%" if pce_all > 0 else '0%']
+                ['2. Levofloxacin',pce_lev,str(  round(((pce_lev)/(pce_all))*100,2) ) + "%" if pce_all > 0 else '0%'],
+                ['3. Meropenem',pce_mem,str(  round(((pce_mem)/(pce_all))*100,2) ) + "%" if pce_all > 0 else '0%'],
+                ['4. Minocycline',pce_mno,str(  round(((pce_mno)/(pce_all))*100,2) ) + "%" if pce_all > 0 else '0%'],
+                ['5. Trimethoprim-Sulfamethoxazole',pce_sxt,str(  round(((pce_sxt)/(pce_all))*100,2) ) + "%" if pce_all > 0 else '0%']
+                # ['2. Chloramphenicol',pce_chl,str(  round(((pce_chl)/(pce_all))*100,2) ) + "%" if pce_all > 0 else '0%'],
+                
+                
                 ]
     
     ret = []
     df = pd.DataFrame(data=pce_data, columns=['Burkholderia cepacia complex','Number',pce_all])
     
     
-    tmp_pce = round(((round(((pce_caz)/(pce_all))*100,2) + round(((pce_chl)/(pce_all))*100,2) + round(((pce_lev)/(pce_all))*100,2) + round(((pce_mem)/(pce_all))*100,2) \
-                + round(((pce_mno)/(pce_all))*100,2) + round(((pce_sxt)/(pce_all))*100,2)) / 6),2) if pce_all > 0 else 0
+    tmp_pce = round(((round(((pce_caz)/(pce_all))*100,2)  + round(((pce_lev)/(pce_all))*100,2) + round(((pce_mem)/(pce_all))*100,2) \
+                + round(((pce_mno)/(pce_all))*100,2) + round(((pce_sxt)/(pce_all))*100,2)) / 5),2) if pce_all > 0 else 0
       
     pce_summary = ['Burkholderia cepacia',pce_all,str(tmp_pce) + '%']
     
@@ -2631,6 +3010,7 @@ def get_data_pma(file_id,config = 'raw'):
     pma_lev = 0
     pma_mno = 0
     pma_sxt = 0
+    pma_fdc = 0
     
     for index,row in df.iterrows():
         if row['organism'] == 'pma':
@@ -2645,19 +3025,40 @@ def get_data_pma(file_id,config = 'raw'):
                     pma_mno += 1
                 if row['sxt_nd1_2'] != '' or row['sxt_nm'] != '' or row['sxt_ne'] != '':
                     pma_sxt += 1 
-    
+                if row['fdc_nd'] != '' or row['fdc_nm'] != '' or row['fdc_ne'] != '':
+                    pma_fdc += 1
+
+    avg_pma_lev = round(((pma_lev)/(pma_all))*100,2) if pma_all > 0 else 0
+    avg_pma_mno = round(((pma_mno)/(pma_all))*100,2) if pma_all > 0 else 0
+    avg_pma_sxt = round(((pma_sxt)/(pma_all))*100,2) if pma_all > 0 else 0
+    avg_pma_fdc = round(((pma_fdc)/(pma_all))*100,2) if pma_all > 0 else 0
+    avg_pma_caz = round(((pma_caz)/(pma_all))*100,2) if pma_all > 0 else 0
+    avg_pma_chl = round(((pma_chl)/(pma_all))*100,2) if pma_all > 0 else 0
+
+
     pma_data = [['Antibiotic','Number tested','Percentage'],
-                  ['1. Ceftazidime',pma_caz,str(  round(((pma_caz)/(pma_all))*100,2) ) + "%" if pma_all > 0 else '0%'],
-                  ['2. Chloramphenicol',pma_chl,str(  round(((pma_chl)/(pma_all))*100,2) ) + "%" if pma_all > 0 else '0%'],
-                  ['3. Levofloxacin',pma_lev,str(  round(((pma_lev)/(pma_all))*100,2) ) + "%" if pma_all > 0 else '0%'],
-                  ['4. Minocycline',pma_mno,str(  round(((pma_mno)/(pma_all))*100,2) ) + "%" if pma_all > 0 else '0%'],
-                  ['5. Trimethoprim-Sulfamethoxazole',pma_sxt,str(  round(((pma_sxt)/(pma_all))*100,2) ) + "%" if pma_all > 0 else '0%']
+                  ['1. Levofloxacin',pma_lev,str(  round(((pma_lev)/(pma_all))*100,2) ) + "%" if pma_all > 0 else '0%'],
+                  ['2. Minocycline',pma_mno,str(  round(((pma_mno)/(pma_all))*100,2) ) + "%" if pma_all > 0 else '0%'],
+                  ['3. Trimethoprim-Sulfamethoxazole',pma_sxt,str(  round(((pma_sxt)/(pma_all))*100,2) ) + "%" if pma_all > 0 else '0%'],
+                  ['4. Cefiderocol',pma_fdc,str(  round(((pma_fdc)/(pma_all))*100,2) ) + "%" if pma_all > 0 else '0%'],
+                  ['5. Ceftazidime',pma_caz,str(  round(((pma_caz)/(pma_all))*100,2) ) + "%" if pma_all > 0 else '0%'],
+                  ['6. Chloramphenicol',pma_chl,str(  round(((pma_chl)/(pma_all))*100,2) ) + "%" if pma_all > 0 else '0%'],
+                 
                   ]
     
+    
+
+    avg_pma_all = avg_pma_lev + avg_pma_mno + avg_pma_sxt + avg_pma_fdc + avg_pma_caz + avg_pma_chl
+    
     ret = []
+    add_to_compute_if_greater_0 = 0
+    if pma_fdc > 0:
+        add_to_compute_if_greater_0 += 1
+    div = 5 + add_to_compute_if_greater_0
     df = pd.DataFrame(data=pma_data, columns=['Stenotrophomonas maltophilia','Number',pma_all])
     
-    tmp_pma = round(((round(((pma_caz)/(pma_all))*100,2) + round(((pma_chl)/(pma_all))*100,2) + round(((pma_lev)/(pma_all))*100,2) + round(((pma_mno)/(pma_all))*100,2) + round(((pma_sxt)/(pma_all))*100,2)) / 5),2) if pma_all > 0 else 0
+    tmp_pma = round((avg_pma_all / div),2)
+    # tmp_pma = round(((round(((pma_caz)/(pma_all))*100,2) + round(((pma_chl)/(pma_all))*100,2) + round(((pma_chl)/(pma_all))*100,2) + round(((pma_lev)/(pma_all))*100,2) + round(((pma_mno)/(pma_all))*100,2) + round(((pma_sxt)/(pma_all))*100,2)) / div),2) if pma_all > 0 else 0
       
     pma_summary = ['Stenotrophomonas maltophilia',pma_all,str(tmp_pma) + '%']
     
@@ -2670,8 +3071,8 @@ def get_data_pma(file_id,config = 'raw'):
 
 
 
-def get_data_other_non_ent(file_id):
-    df = concat_all_df(file_id)
+def get_data_other_non_ent(file_id, config = 'raw'):
+    df = concat_all_df(file_id,config)
     comp = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_org_list.xlsx','other_non_ent')
     df_list = pd.DataFrame(comp, columns=['ORG'])
   
@@ -2703,6 +3104,16 @@ def get_data_other_non_ent(file_id):
     other_sxt = 0
     other_tet = 0
     other_ur = 0
+    other_caz = 0
+    other_cro = 0
+    other_ctx = 0
+    other_cip = 0
+    other_lev = 0
+    other_gen = 0
+    other_tob = 0
+    other_imp = 0
+    other_mem = 0
+
     
     for index,row in df.iterrows():
         if row['organism'] in cmp:
@@ -2731,26 +3142,83 @@ def get_data_other_non_ent(file_id):
                     other_tet += 1 
                 if row['spec_type'] == 'ur':  
                     other_ur += 1
+                if row['caz_nd30'] != '' or row['caz_nm'] != '' or row['caz_ne'] != '':
+                    other_caz += 1
+                if row['gen_nd10'] != '' or row['gen_nm'] != '' or row['gen_ne'] != '':
+                    other_gen += 1
+                if row['tob_nd10'] != '' or row['tob_nm'] != '' or row['tob_ne'] != '':
+                    other_tob += 1
+                if row['cip_nd5'] != '' or row['cip_nm'] != '' or row['cip_ne'] != '':
+                    other_cip += 1
+                if row['lvx_nd5'] != '' or row['lvx_nm'] != '' or row['lvx_ne'] != '':
+                    other_lev += 1
+                if row['ipm_nd10'] != '' or row['ipm_nm'] != '' or row['ipm_ne'] != '':
+                    other_imp += 1
+                if row['mem_nd10'] != '' or row['mem_nm'] != '' or row['mem_ne'] != '':
+                    other_mem += 1
+                if row['ctx_nd30'] != '' or row['ctx_nm'] != '' or row['ctx_ne'] != '':
+                    other_ctx += 1
+                if row['cro_nd30'] != '' or row['cro_nm'] != '' or row['cro_ne'] != '':
+                    other_cro += 1
                     
-                    
+    avg_other_caz = round(((other_caz)/(other_all))*100,2) if other_all > 0 else 0
+    avg_other_gen = round(((other_gen)/(other_all))*100,2) if other_all > 0 else 0
+    avg_other_tob = round(((other_tob)/(other_all))*100,2) if other_all > 0 else 0
+    avg_other_tzp = round(((other_tzp)/(other_all))*100,2) if other_all > 0 else 0
+    avg_other_sxt = round(((other_sxt)/(other_all))*100,2) if other_all > 0 else 0
+    avg_other_amk = round(((other_amk)/(other_all))*100,2) if other_all > 0 else 0
+    avg_other_atm = round(((other_atm)/(other_all))*100,2) if other_all > 0 else 0
+    avg_other_fep = round(((other_fep)/(other_all))*100,2) if other_all > 0 else 0
+    avg_other_cip = round(((other_cip)/(other_all))*100,2) if other_all > 0 else 0
+    avg_other_lev = round(((other_lev)/(other_all))*100,2) if other_all > 0 else 0
+    avg_other_imp = round(((other_imp)/(other_all))*100,2) if other_all > 0 else 0
+    avg_other_mem = round(((other_mem)/(other_all))*100,2) if other_all > 0 else 0
+    avg_other_ctx = round(((other_ctx)/(other_all))*100,2) if other_all > 0 else 0
+    avg_other_cro = round(((other_cro)/(other_all))*100,2) if other_all > 0 else 0
+    avg_other_tet = round(((other_tet)/(other_ur))*100,2) if other_ur > 0 else 0
+
     other_data = [['Antibiotic','Number tested','Percentage'],
-                    ['1. Amikacin',other_amk,str(  round(((other_amk)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
-                    ['2. Aztreonam',other_atm,str(  round(((other_atm)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
-                    ['3. Cefepime',other_fep,str(  round(((other_fep)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
-                    ['4. Cefotaxime or Cefriaxone or Ceftazidime',other_ctx_cro_caz,str(  round(((other_ctx_cro_caz)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
-                    ['5. Chloramphenicol',other_chl,str(  round(((other_chl)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
-                    ['6. Ciprofloxacin or Levofloxacin',other_cip_lev,str(  round(((other_cip_lev)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
-                    ['7. Gentamicin or Tobramycin',other_gen_tob,str(  round(((other_gen_tob)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
-                    ['8. Imipenem or Meropenem',other_imp_mem,str(  round(((other_imp_mem)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
-                    ['9. Piperacillin-sulfamethoxazole',other_tzp,str(  round(((other_tzp)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
-                    ['10. Trimethoprim-sulfamethoxazole',other_sxt,str(  round(((other_sxt)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
+                    ['1. Ceftazidime',other_caz,str(  round(((other_caz)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
+                    ['2. Gentamicin',other_gen,str(  round(((other_gen)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
+                    ['3. Tobramycin',other_tob,str(  round(((other_tob)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
+                    ['4. Piperacillin-tazobactam',other_tzp,str(  round(((other_tzp)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
+                    ['5. Trimethoprim-sulfamethoxazole',other_sxt,str(  round(((other_sxt)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
+                    ['6. Amikacin',other_amk,str(  round(((other_amk)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
+                    ['7. Aztreonam',other_atm,str(  round(((other_atm)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
+                    ['8. Cefepime',other_fep,str(  round(((other_fep)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
+                    ['9. Ciprofloxacin',other_cip,str(  round(((other_cip)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
+                    ['10. Levofloxacin',other_lev,str(  round(((other_lev)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
+                    ['11. Imipenem',other_imp,str(  round(((other_imp)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
+                    ['12. Meroponem',other_mem,str(  round(((other_mem)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
+                    ['13. Cefotaxime',other_ctx,str(  round(((other_ctx)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
+                    ['14. Ceftriaxone',other_cro,str(  round(((other_cro)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
+                    # ['4. Cefotaxime or Cefriaxone or Ceftazidime',other_ctx_cro_caz,str(  round(((other_ctx_cro_caz)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
+                    # ['5. Chloramphenicol',other_chl,str(  round(((other_chl)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
+                    # ['6. Ciprofloxacin or Levofloxacin',other_cip_lev,str(  round(((other_cip_lev)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
+                    # ['7. Gentamicin or Tobramycin',other_gen_tob,str(  round(((other_gen_tob)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
+                    # ['8. Imipenem or Meropenem',other_imp_mem,str(  round(((other_imp_mem)/(other_all))*100,2) ) + "%" if other_all > 0 else '0%'],
+                    
+                    
                     ['','Additional for Urine',other_ur],
                     ['1. Tetracycline',other_tet,str(  round(((other_tet)/(other_ur))*100,2) ) + "%" if other_ur > 0 else '0%']
                     ]
     
-    df = pd.DataFrame(data=other_data, columns=['Other Non-Enterobacteriaceae','Number',other_all])
+    avg_other_all = avg_other_caz + avg_other_gen + avg_other_tob + avg_other_tzp + avg_other_sxt + \
+    avg_other_amk + avg_other_atm + avg_other_fep + avg_other_cip + avg_other_lev + avg_other_imp + \
+    avg_other_mem + avg_other_ctx + avg_other_cro + avg_other_tet
+    ret = []
     
-    return df
+    df = pd.DataFrame(data=other_data, columns=['Other Non-Enterobacteriaceae','Number',other_all])
+    tmp_other = round((avg_other_all / 15),2)
+    other_summary = ['Other Non-Enterobacteriaceae',other_all,str(tmp_other) + '%']
+
+    ret.append(df)
+    if other_all > 0:
+        ret.append(other_summary)
+        ret.append(tmp_other)
+
+    
+    return ret
 
 def get_data_svi(file_id,config = 'raw'):
     df = concat_all_df(file_id,config)
@@ -2812,22 +3280,27 @@ def get_data_svi(file_id,config = 'raw'):
                     
     svi_data = [['Antibiotic','Number tested','Percentage'],
                   ['1. Ampicillin',svi_amp,str(  round(((svi_amp)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
-                  ['2. Cefepime',svi_fep,str(  round(((svi_fep)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
-                  ['3. Cefotaxime',svi_ctx,str(  round(((svi_ctx)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
-                  ['4. Cefriaxone',svi_cro,str(  round(((svi_cro)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
-                  ['5. Chloramphenicol',svi_chl,str(  round(((svi_chl)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
-                  ['6. Clindamycin',svi_cli,str(  round(((svi_cli)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
-                  ['7. Erythromycin',svi_ery,str(  round(((svi_ery)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
-                  ['8. Linezolid',svi_lnz,str(  round(((svi_lnz)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
-                  ['9. Penicillin',svi_pen,str(  round(((svi_pen)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
-                  ['10. Vancomycin',svi_van,str(  round(((svi_van)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%']
+                  ['2. Cefotaxime',svi_ctx,str(  round(((svi_ctx)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
+                  ['3. Cefriaxone',svi_cro,str(  round(((svi_cro)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
+                  ['4. Penicillin',svi_pen,str(  round(((svi_pen)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
+                  ['5. Vancomycin',svi_van,str(  round(((svi_van)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
+                  ['6. Linezolid',svi_lnz,str(  round(((svi_lnz)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
+                  ['7. Cefepime',svi_fep,str(  round(((svi_fep)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
+                  ['8. Clindamycin',svi_cli,str(  round(((svi_cli)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
+                  ['9. Erythromycin',svi_ery,str(  round(((svi_ery)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
+                  
+                #   ['5. Chloramphenicol',svi_chl,str(  round(((svi_chl)/(svi_all))*100,2) ) + "%" if svi_all > 0 else '0%'],
+                  
+                  
+                #   
+                  
                   ]
     
     ret = []
     df = pd.DataFrame(data=svi_data, columns=['Streptococcus Viridans Group','Number',svi_all])
     
-    tmp_svi = round(((round(((svi_amp)/(svi_all))*100,2) + round(((svi_cro)/(svi_all))*100,2) + round(((svi_chl)/(svi_all))*100,2) + round(((svi_cli)/(svi_all))*100,2) + round(((svi_ery)/(svi_all))*100,2) \
-                + round(((svi_lnz)/(svi_all))*100,2)  + round(((svi_fep)/(svi_all))*100,2)  + round(((svi_ctx)/(svi_all))*100,2) + round(((svi_pen)/(svi_all))*100,2) + round(((svi_van)/(svi_all))*100,2)) / 10),2) if svi_all > 0 else 0
+    tmp_svi = round(((round(((svi_amp)/(svi_all))*100,2) + round(((svi_cro)/(svi_all))*100,2) + round(((svi_cli)/(svi_all))*100,2) + round(((svi_ery)/(svi_all))*100,2) \
+                + round(((svi_lnz)/(svi_all))*100,2)  + round(((svi_fep)/(svi_all))*100,2)  + round(((svi_ctx)/(svi_all))*100,2) + round(((svi_pen)/(svi_all))*100,2) + round(((svi_van)/(svi_all))*100,2)) / 9),2) if svi_all > 0 else 0
       
     svi_summary = ['Streptococcus Viridans Group',svi_all,str(tmp_svi) + '%']
     
@@ -2872,6 +3345,10 @@ def get_data_bsn(file_id,config = 'raw'):
     bsn_lev = 0
     bsn_lnz = 0
     bsn_van = 0
+    bsn_ctx = 0
+    bsn_fep = 0
+    bsn_cro = 0
+    bsn_tet = 0
     
     for index,row in df.iterrows():
         if row['organism'] in cmp:
@@ -2893,25 +3370,43 @@ def get_data_bsn(file_id,config = 'raw'):
                 if row['lnz_nd30'] != '' or row['lnz_nm'] != '' or row['lnz_ne'] != '':
                     bsn_lnz += 1
                 if row['van_nd30'] != '' or row['van_nm'] != '' or row['van_ne'] != '':
-                    bsn_van += 1  
+                    bsn_van += 1 
+                if  row['fep_nd30'] != '' or row['fep_nm'] != '' or row['fep_ne'] != '':
+                    bsn_fep += 1
+                if row['ctx_nd30'] != '' or row['ctx_nm'] != '' or row['ctx_ne'] != '':
+                    bsn_ctx += 1
+                if row['cro_nd30'] != '' or row['cro_nm'] != '' or row['cro_ne'] != '':
+                    bsn_cro += 1
+                if row['tcy_nd30'] != '' or row['tcy_nm'] != '' or row['tcy_ne'] != '':
+                    bsn_tet += 1 
+
     
     bsn_data = [['Antibiotic','Number tested','Percentage'],
                   ['1. Ampicillin or Penicillin',bsn_amp_pen,str(  round(((bsn_amp_pen)/(bsn_all))*100,2) ) + "%" if bsn_all > 0 else '0%'],
-                  ['2. Cefepime or Cefotaxime or Cetriaxone',bsn_fep_ctx_cro,str(  round(((bsn_fep_ctx_cro)/(bsn_all))*100,2) ) + "%" if bsn_all > 0 else '0%'],
-                  ['3. Chloramphenicol',bsn_chl,str(  round(((bsn_chl)/(bsn_all))*100,2) ) + "%" if bsn_all > 0 else '0%'],
-                  ['4. Clindamycin',bsn_cli,str(  round(((bsn_cli)/(bsn_all))*100,2) ) + "%" if bsn_all > 0 else '0%'],
-                  ['5. Daptomycin',bsn_dap,str(  round(((bsn_dap)/(bsn_all))*100,2) ) + "%" if bsn_all > 0 else '0%'],
-                  ['6. Erythromycin',bsn_ery,str(  round(((bsn_ery)/(bsn_all))*100,2) ) + "%" if bsn_all > 0 else '0%'],
-                  ['7. Levofloxacin',bsn_lev,str(  round(((bsn_lev)/(bsn_all))*100,2) ) + "%" if bsn_all > 0 else '0%'],
-                  ['8. Linezolid',bsn_lnz,str(  round(((bsn_lnz)/(bsn_all))*100,2) ) + "%" if bsn_all > 0 else '0%'],
-                  ['9. Vancomycin',bsn_van,str(  round(((bsn_van)/(bsn_all))*100,2) ) + "%" if bsn_all > 0 else '0%']
+                  ['2. Clindamycin',bsn_cli,str(  round(((bsn_cli)/(bsn_all))*100,2) ) + "%" if bsn_all > 0 else '0%'],
+                  ['3. Erythromycin',bsn_ery,str(  round(((bsn_ery)/(bsn_all))*100,2) ) + "%" if bsn_all > 0 else '0%'],
+                  ['4. Cefotaxime',bsn_ctx,str(  round(((bsn_ctx)/(bsn_all))*100,2) ) + "%" if bsn_all > 0 else '0%'],
+                  ['5. Cetriaxone',bsn_cro,str(  round(((bsn_cro)/(bsn_all))*100,2) ) + "%" if bsn_all > 0 else '0%'],
+                  ['6. Vancomycin',bsn_van,str(  round(((bsn_van)/(bsn_all))*100,2) ) + "%" if bsn_all > 0 else '0%'],
+                  ['7. Cefepime',bsn_fep,str(  round(((bsn_fep)/(bsn_all))*100,2) ) + "%" if bsn_all > 0 else '0%'],
+                  ['8. Daptomycin',bsn_dap,str(  round(((bsn_dap)/(bsn_all))*100,2) ) + "%" if bsn_all > 0 else '0%'],
+                  ['9. Levofloxacin',bsn_lev,str(  round(((bsn_lev)/(bsn_all))*100,2) ) + "%" if bsn_all > 0 else '0%'],
+                  ['10. Linezolid',bsn_lnz,str(  round(((bsn_lnz)/(bsn_all))*100,2) ) + "%" if bsn_all > 0 else '0%'],
+                #   ['2. Cefepime or Cefotaxime or Cetriaxone',bsn_fep_ctx_cro,str(  round(((bsn_fep_ctx_cro)/(bsn_all))*100,2) ) + "%" if bsn_all > 0 else '0%'],
+                  ['11. Tetracycline',bsn_tet,str(  round(((bsn_tet)/(bsn_all))*100,2) ) + "%" if bsn_all > 0 else '0%'],
+                  
+                  
+                  
+                  
+                  
+                  
                   ]
     
     ret = []
     df = pd.DataFrame(data=bsn_data, columns=['Beta-Hemolytic Streptococci','Number',bsn_all])
     
-    tmp_bsn = round(((round(((bsn_amp_pen)/(bsn_all))*100,2) +  round(((bsn_fep_ctx_cro)/(bsn_all))*100,2) + round(((bsn_chl)/(bsn_all))*100,2) + round(((bsn_cli)/(bsn_all))*100,2) + round(((bsn_dap)/(bsn_all))*100,2) \
-                + round(((bsn_ery)/(bsn_all))*100,2) + round(((bsn_lev)/(bsn_all))*100,2) + round(((bsn_lnz)/(bsn_all))*100,2) + round(((bsn_van)/(bsn_all))*100,2)) / 9),2) if bsn_all > 0 else 0
+    tmp_bsn = round(((round(((bsn_amp_pen)/(bsn_all))*100,2) +  round(((bsn_ctx)/(bsn_all))*100,2) +  round(((bsn_cro)/(bsn_all))*100,2) +  round(((bsn_fep)/(bsn_all))*100,2) + round(((bsn_tet)/(bsn_all))*100,2) + round(((bsn_cli)/(bsn_all))*100,2) + round(((bsn_dap)/(bsn_all))*100,2) \
+                + round(((bsn_ery)/(bsn_all))*100,2) + round(((bsn_lev)/(bsn_all))*100,2) + round(((bsn_lnz)/(bsn_all))*100,2) + round(((bsn_van)/(bsn_all))*100,2)) / 11),2) if bsn_all > 0 else 0
       
     bsn_summary = ['Beta-Hemolytic Streptococci',bsn_all,str(tmp_bsn) + '%']
     
@@ -3600,10 +4095,21 @@ def date_birth_2_digit_to_4(date,age):
         return ''
     
 # lambda function for origin
-def origin_transform(row,lab_chk,whonet_region_island):
+def origin_transform(row,lab_chk,whonet_region_island,sentinel_site_esbl,esbl_site):
     if  row['laboratory'].upper() in lab_chk:
         row['region'] = whonet_region_island['REGION'][lab_chk.index(row['laboratory'].upper() )]
         row['island'] = whonet_region_island['ISLAND'][lab_chk.index(row['laboratory'].upper() )]
+        # print(esbl_site.index(row['laboratory'].upper() ))
+        # print([lab_chk.index(row['laboratory'].upper() )])
+        if (pd.isna(row['esbl']) == True or row['esbl'] == '') and sentinel_site_esbl['ESBL_RESULT'][esbl_site.index(row['laboratory'].upper() )] == 'YES':
+            row['esbl'] = '-'
+
+        if row['esbl'] == 'P' or row['esbl'] == 'p':
+            row['esbl'] = '+'
+        
+        if row['esbl'] == 'N' or row['esbl'] == 'n':
+            row['esbl'] = '-'
+    
     else:
         if  row['institut'].upper() in lab_chk:
             row['region'] = whonet_region_island['REGION'][lab_chk.index(row['institut'].upper() )]
@@ -3611,8 +4117,11 @@ def origin_transform(row,lab_chk,whonet_region_island):
         else:
             row['region'] = ''
             row['island'] = ''
+
+    if 'nb' in str(row['age']) or 'NB' in str(row['age']):
+                row['age'] = '0d'
     
-    if pd.isna(row['age']) == True or row['age'] == '':
+    if pd.isna(row['age']) == True or row['age'] == '' or row['age'].isdigit() == False:
             # age.append('U')
             row['age_grp'] = 'U'
         
@@ -4721,11 +5230,11 @@ def clean_pat_type(row):
     # row['age'] = row['age'].apply(str)
     # print(row['age'])
     if  row['age'] != 'nan' or pd.isna(row['age']) == False or row['age'] != '':
-        if  'd' in row['age']:
+        if  'd' in row['age'] or 'nb' in row['age']:
             row['pat_type'] = 'new'
         elif 'm' in row['age']:
             row['pat_type'] = 'ped'
-        elif row['age'].isdigit() == True and (int(row['age']) >= 1 and int(row['age']) <= 18):
+        elif row['age'].isdigit() == True and (int(row['age']) >= 0 and int(row['age']) <= 18):
             row['pat_type'] = 'ped'
         elif row['age'].isdigit() == True and int(row['age']) >= 19 and int(row['age']) <= 64:
             row['pat_type'] = 'adu'
