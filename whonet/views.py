@@ -771,6 +771,8 @@ def bigwork(file_id,search_file_name,options, year = '', referred = False):
         'tcc_nm', 'tcy_nm', 'tgc_nm', 'tic_nm', 'tob_nm', 'tzd_nm', 'tzp_nm', 'van_nm'
     ]
 
+    disk_to_check = ["amk_nd30", "amc_nd20", "amp_nd10", "sam_nd10", "azm_nd15", "atm_nd30", "cec_nd30", "man_nd30", "czo_nd30", "fep_nd30", "cfm_nd5", "cfp_nd75", "ctx_nd30", "fox_nd30", "caz_nd30", "cro_nd30", "cxm_nd30", "cxa_nd30", "cep_nd30", "chl_nd30", "cip_nd5", "clr_nd15", "cli_nd2", "col_nd10", "sxt_nd1_2", "dap_nd30", "dor_nd10", "etp_nd10", "ery_nd15", "gen_nd10", "geh_nd120", "ipm_nd10", "kan_nd30", "lvx_nd5", "lnz_nd30", "mem_nd10", "mno_nd30", "mfx_nd5", "nal_nd30", "net_nd30", "nit_nd300", "nor_nd10", "nov_nd5", "ofx_nd5", "pip_nd100", "tzp_nd100", "pol_nd300", "qda_nd15", "rif_nd5", "spt_nd100", "str_nd10", "sth_nd300", "tcy_nd30", "tic_nd75", "tcc_nd75", "tgc_nd15", "tob_nd10", "van_nd30", "fos_nd200", "dox_nd30", "sss_nd200", "fdc_nd", "cza_nd30", "imr_nd10", "plz_nd", "czt_nd30", "mev_nd20", "tzd_nd", "amx_nd30"]
+
     numbers = [
     0.001, 0.002, 0.004, 0.008, 0.016, 0.032, 0.064,
     0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128, 256
@@ -789,7 +791,7 @@ def bigwork(file_id,search_file_name,options, year = '', referred = False):
         return value
 
     # Applying the function to each column in the list
-    for col in columns_to_check:
+    for col in columns_to_check + disk_to_check:
         df[col] = df[col].apply(lambda x: transform_value(x, col))
 
     
