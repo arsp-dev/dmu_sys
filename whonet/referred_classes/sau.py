@@ -16,6 +16,9 @@ class Sau:
 
     def process(self) -> pd.DataFrame:
         df = self.df
+        df_referred = df[df['X_REFERRED'] == '1']
+        df_referred['Test'] = ''
+        df = df[df['X_REFERRED'] != '1']
         frames = []
         df = self.calc_RIS(df)
         df = self.calc_RIS_MIC(df)
@@ -33,15 +36,15 @@ class Sau:
         df = self.concat_df(frames)
         df = df[df['SPEC_TYPE'].isin(["bl", "ti", "sf", "ab", "ga", "dr", "fl", "am", "at", "fn", "se", "pf", "di", "pd", "dn", "hf", "jf", "kf", "pu", "su", "ur", "wd", "ul", "as", "ta"])]
         # df = df.loc[df['Test'] == 'R']
-        
+        df = pd.concat([df, df_referred])
         if len(df) > 0:
             df.dropna(how = 'all',inplace = True)
-            df =  df[df['Test'].isin(['R'])]
+            df =  df[df['Test'].isin(['R']) | (df['X_REFERRED'] == '1')]
             df = df.drop_duplicates(subset=['PATIENT_ID','SPEC_DATE','ORGANISM'])
             # df = df.drop(columns=['ORIGIN_REF','FILE_REF','ID','comp','ent_fast'])
             df = df.drop(columns=['ORIGIN_REF','FILE_REF','ID','comp','ent_fast','Test'])
             df['SPEC_DATE'] = df['SPEC_DATE'].dt.strftime('%m/%d/%Y')
-            df, cols = remove_null_cols(df,['Test','PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','X_REFERRED','ESBL','INDUC_CLI','FOX_ND30','FOX_NM','FOX_RIS','OXA_NM','OXA10.10_RIS','LNZ_ND30','LNZ_NM','LNZ_RIS','DAP_NM','DAP_RIS','OXA_NM','OXA_RIS','VAN_NM','VAN_RIS','TZD_ND','TZD_NM','TZD_RIS'])
+            df, cols = remove_null_cols(df,['Test','INSTITUT','LABORATORY','STOCK_NUM','PATIENT_ID','FIRST_NAME','LAST_NAME','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE','ORGANISM','X_REFERRED','ESBL','INDUC_CLI','FOX_ND30','FOX_NM','FOX_RIS','OXA_NM','OXA10.10_RIS','LNZ_ND30','LNZ_NM','LNZ_RIS','DAP_NM','DAP_RIS','OXA_NM','OXA_RIS','VAN_NM','VAN_RIS','TZD_ND','TZD_NM','TZD_RIS'])
             df = df[cols]
             return df
         return df

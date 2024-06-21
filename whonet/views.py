@@ -25,6 +25,7 @@ from whonet.bacterial_pathogens.blood_positive_grams import BloodPositive
 from whonet.bacterial_pathogens.blood_others import BloodPositiveOthers
 from whonet.bacterial_pathogens.blood_negative_grams import BloodNegative
 from whonet.bacterial_pathogens.combine_df import CombineDataFrame
+from dateutil import parser
 
 # import datetime
 
@@ -144,13 +145,13 @@ def whonet_data_summary_report(request,file_id):
     response = HttpResponse(content_type='application/zip')
     zf = zipfile.ZipFile(response, 'w')
     
-    summary_report = compute_summary_report(file_name,file_id)
-    summary_review = xl_for_review(file_id,file_name.file_name,getYearInt(file_name.file_name))
+   # summary_report = compute_summary_report(file_name,file_id)
+   # summary_review = xl_for_review(file_id,file_name.file_name,getYearInt(file_name.file_name))
     summary_referred = summary_report_referred(file_id,file_name)
     # summary_ent_fast = get_ent_fast(file_id,file_name)
     
-    zf.write(summary_report)
-    zf.write(summary_review)
+ #  zf.write(summary_report)
+  # zf.write(summary_review)
     zf.write(summary_referred)
     # zf.write(potential_pathogens.create_dataframe())
     # zf.write(summary_ent_fast)
@@ -160,8 +161,8 @@ def whonet_data_summary_report(request,file_id):
     
     response['Content-Disposition'] = 'attachment; filename=SUMMARY_REPORT_{}.zip'.format(file_name)
     
-    os.remove('DATA_SUMMARY_{}.xlsx'.format(file_name))
-    os.remove('INVALID_CODES_FOR_REVIEW_{}.xlsx'.format(file_name))
+  #  os.remove('DATA_SUMMARY_{}.xlsx'.format(file_name))
+  #  os.remove('INVALID_CODES_FOR_REVIEW_{}.xlsx'.format(file_name))
     os.remove('REFERRED_FOR_REVIEW_{}.xlsx'.format(file_name))
     # os.remove('POTENTIAL_PATHOGENS_{}.xlsx'.format(file_name))
     # os.remove('ENTERIC_PATHOGENS_FASTIDIOUS_ORGANISM_{}.xlsx'.format(file_name))
@@ -392,7 +393,7 @@ def whonet_transform_year(request):
         # con_df.append(df[df.LOCAL_SPEC != 'qc'])
         # qc_df.append(df[df.LOCAL_SPEC == 'qc'])
         # print(len(df[df.LOCAL_SPEC != 'qc']))
-        df.to_excel(writer, sheet_name=val.file_name,index=False)
+        # df.to_excel(writer, sheet_name=val.file_name,index=False)
         
     concat_df = pd.concat(con_df)
     # qc_df = concat_df[concat_df['LOCAL_SPEC'] == 'qc']
@@ -420,7 +421,7 @@ def whonet_transform_year(request):
         df['DATE_DATA'] = df['DATE_DATA'].dt.date
         df['DATE_BIRTH'] = df['DATE_BIRTH'].dt.date
        
-        df_year.to_excel(writer,sheet_name='INCORRECT_DATE',index=False)
+        # df_year.to_excel(writer,sheet_name='INCORRECT_DATE',index=False)
     
     if 'DUPLICATES' in options:
         concat_df['PATIENT_ID'] = concat_df['PATIENT_ID'].astype(str).str.lower()
@@ -439,10 +440,10 @@ def whonet_transform_year(request):
     # concat_df = pd.concat([concat_df,qc_df])
     concat_df.to_excel(writer, sheet_name=site + '_' + year,index=False)
 
-    if 'X_REFERRED' in options:
-        referred_concat = concat_df[concat_df['X_REFERRED'] == '1']
+    # if 'X_REFERRED' in options:
+    #     referred_concat = concat_df[concat_df['X_REFERRED'] == '1']
     
-        referred_concat.to_excel(writer, sheet_name=site + '_' + year + '-REFERRED',index=False)
+    #     referred_concat.to_excel(writer, sheet_name=site + '_' + year + '-REFERRED',index=False)
     
     writer.save()
     
@@ -688,7 +689,7 @@ def getYearInt(file_name):
 
 def bigwork(file_id,search_file_name,options, year = '', referred = False):
     start_time = datetime.now()
-    # if referred:
+    # if referred == True:
     #     df = concat_all_df_referred(file_id)
     # else:
     df = concat_all_df(file_id)
@@ -768,7 +769,8 @@ def bigwork(file_id,search_file_name,options, year = '', referred = False):
         'mfx_nm', 'mno_nm', 'nal_nm', 'net_nm', 'nit_nm', 'nor_nm', 'nov_nm',
         'ofx_nm', 'oxa_nm', 'pen_nm', 'pip_nm', 'plz_nm', 'pol_nm', 'qda_nm',
         'rif_nm', 'sam_nm', 'spt_nm', 'sss_nm', 'sth_nm', 'str_nm', 'sxt_nm',
-        'tcc_nm', 'tcy_nm', 'tgc_nm', 'tic_nm', 'tob_nm', 'tzd_nm', 'tzp_nm', 'van_nm'
+        'tcc_nm', 'tcy_nm', 'tgc_nm', 'tic_nm', 'tob_nm', 'tzd_nm', 'tzp_nm', 
+        'van_nm',
     ]
 
     disk_to_check = ["amk_nd30", "amc_nd20", "amp_nd10", "sam_nd10", "azm_nd15", "atm_nd30", "cec_nd30", "man_nd30", "czo_nd30", "fep_nd30", "cfm_nd5", "cfp_nd75", "ctx_nd30", "fox_nd30", "caz_nd30", "cro_nd30", "cxm_nd30", "cxa_nd30", "cep_nd30", "chl_nd30", "cip_nd5", "clr_nd15", "cli_nd2", "col_nd10", "sxt_nd1_2", "dap_nd30", "dor_nd10", "etp_nd10", "ery_nd15", "gen_nd10", "geh_nd120", "ipm_nd10", "kan_nd30", "lvx_nd5", "lnz_nd30", "mem_nd10", "mno_nd30", "mfx_nd5", "nal_nd30", "net_nd30", "nit_nd300", "nor_nd10", "nov_nd5", "ofx_nd5", "pip_nd100", "tzp_nd100", "pol_nd300", "qda_nd15", "rif_nd5", "spt_nd100", "str_nd10", "sth_nd300", "tcy_nd30", "tic_nd75", "tcc_nd75", "tgc_nd15", "tob_nd10", "van_nd30", "fos_nd200", "dox_nd30", "sss_nd200", "fdc_nd", "cza_nd30", "imr_nd10", "plz_nd", "czt_nd30", "mev_nd20", "tzd_nd", "amx_nd30"]
@@ -784,9 +786,11 @@ def bigwork(file_id,search_file_name,options, year = '', referred = False):
             return ''
         # Remove '.0' from the end of strings and transform '*/' or '.' to ''
         elif isinstance(value, str):
+            value = value.replace(' ', '')
+            value = re.sub(r'^\.', '0.', value)
             if value.endswith('.0'):
                 return value[:-2]
-            elif value == '*/' or value == '.':
+            elif value in ['*/', '.', '*','>=']:
                 return ''
         return value
 
@@ -832,15 +836,14 @@ def bigwork(file_id,search_file_name,options, year = '', referred = False):
 
 
 
-    if 'Origin' in options:
-        df = df.apply(lambda row: origin_transform(row,lab_chk,whonet_region_island,sentinel_site_esbl,esbl_site), axis = 1)
+    
         
     if 'Nosocomial' in options:
         df['ward_type'] = df['ward_type'].str.lower()
         df['date_admis']  = df['date_admis'].apply(str)
         df['spec_date']  = df['spec_date'].apply(str)
-        # df['date_admis'] = pd.to_datetime(df.date_admis)
-        # df['spec_date'] = pd.to_datetime(df.spec_date)
+        # pd.to_datetime(df['date_admis'], errors='coerce')
+        # pd.to_datetime(df['spec_date'], errors='coerce')
         
         # df['date_admis'] = df['date_admis'].dt.strftime('%m/%d/%Y')
         # df['spec_date'] = df['spec_date'].dt.strftime('%m/%d/%Y')
@@ -869,6 +872,9 @@ def bigwork(file_id,search_file_name,options, year = '', referred = False):
     df['country_a'] = new_country
     df['laboratory'] = new_lab
     df['institut'] = new_institut
+
+    if 'Origin' in options:
+        df = df.apply(lambda row: origin_transform(row,lab_chk,whonet_region_island,sentinel_site_esbl,esbl_site), axis = 1)
     
     for index,row in df.iterrows():
         
@@ -1051,23 +1057,48 @@ def bigwork(file_id,search_file_name,options, year = '', referred = False):
         
         
         
-        if 'Nosocomial' in options:         
-                if row['ward_type'] == 'in' or row['ward_type'] == 'eme' or row['ward_type'] == 'mix':
-                    if (row['date_admis'] != '' and row['spec_date'] != '') and ('/' in row['date_admis'] and '/' in row['spec_date']):
-                        x = datetime.strptime(row['spec_date'],'%m/%d/%Y') - datetime.strptime(row['date_admis'],'%m/%d/%Y')
-                        if x.days > 2:
-                            new_noso.append('Y')
-                        else:
-                            new_noso.append('N')  
-                    else:
-                        if row['ward_type'] == 'in':
-                            new_noso.append('X')
-                        else:
-                            new_noso.append('O')
-                elif row['ward_type'] == 'out':
+        if 'Nosocomial' in options: 
+                if row['ward_type'].upper() == 'OUT':
                     new_noso.append('O')
+                elif row['ward_type'].upper() == 'EME':
+                    if (not pd.isna(pd.to_datetime(row['date_admis'], errors='coerce')) and not pd.isna(pd.to_datetime(row['spec_date'], errors='coerce'))):
+                            days_noso = nosocomial_days(row['date_admis'],row['spec_date'])
+                            if days_noso > 2:
+                                new_noso.append('Y')
+                            if days_noso <= 2:
+                                new_noso.append('N')
+
+                    elif pd.isna(pd.to_datetime(row['date_admis'], errors='coerce')):
+                        new_noso.append('O')
+                    else:
+                        new_noso.append('U')
+                elif row['ward_type'].upper() == 'IN' or row['ward_type'].upper() == 'MIX':
+                     if (not pd.isna(pd.to_datetime(row['date_admis'], errors='coerce')) and not pd.isna(pd.to_datetime(row['spec_date'], errors='coerce'))):
+                            days_noso = nosocomial_days(row['date_admis'],row['spec_date'])
+                            if days_noso > 2:
+                                new_noso.append('Y')
+                            if days_noso <= 2:
+                                new_noso.append('N')
+
+                     elif pd.isna(pd.to_datetime(row['date_admis'], errors='coerce')):
+                         new_noso.append('X')
+                     else:
+                         new_noso.append('U')
+                elif row['ward_type'] == '' or row['ward_type'].upper() == 'UNK':
+                    new_noso.append('U')
                 else:
                     new_noso.append('U')
+
+                # Convert the dates to datetime if they're not already
+                df['date_admis'] = pd.to_datetime(df['date_admis'], errors='coerce')
+                df['spec_date'] = pd.to_datetime(df['spec_date'], errors='coerce')
+
+                # Replace NaT with '' in 'date_admis' column
+                df['date_admis'] = df['date_admis'].fillna('')
+                df['spec_date'] = df['spec_date'].fillna('')
+
+
+
                 # row['spec_date'] = row['spec_date'].strftime('%m/%d/%Y')
                 # row['date_admis'] = row['date_admis'].strftime('%m/%d/%Y')
                 
@@ -4119,34 +4150,68 @@ def origin_transform(row,lab_chk,whonet_region_island,sentinel_site_esbl,esbl_si
         else:
             row['region'] = ''
             row['island'] = ''
+    
+    if row['beta_lact'] in ['1.0','1','Y','yes','YES','+']:
+        row['beta_lact'] = '+'
+    elif row['beta_lact'] in ['0','N','n','NO','no','-']:
+        row['beta_lact'] = '-'
+    else:
+        row['beta_lact'] = ''
+
+    
+    if row['carbapenem'] in ['1.0','1','Y','yes','YES','+']:
+        row['carbapenem'] = '+'
+    elif row['carbapenem'] in ['0','N','n','NO','no','-']:
+        row['carbapenem'] = '-'
+    else:
+        row['carbapenem'] = ''
 
     if 'nb' in str(row['age']) or 'NB' in str(row['age']):
                 row['age'] = '0d'
     
-    if pd.isna(row['age']) == True or row['age'] == '' or row['age'].isdigit() == False:
-            # age.append('U')
-            row['age_grp'] = 'U'
-        
-    elif 'w' in str(row['age']) or 'W' in str(row['age']) or 'd' in str(row['age']) or 'D' in str(row['age']) or 'm' in str(row['age']) or 'M' in str(row['age']) or 'nb' in str(row['age']) or 'NB' in str(row['age']) or 'y' in str(row['age']):
-            # age.append('A')
-            row['age_grp'] = 'A'
-    elif row['age'] == 'nan':
-            row['age_grp'] = 'U'  
-        
-    elif float(row['age']) >= 0 and float(row['age']) < 5:
-            row['age_grp'] = 'A'
-        
-    elif float(row['age']) >= 5 and float(row['age']) <= 19:
-            row['age_grp'] = 'B'
-        
-    elif float(row['age']) > 19 and float(row['age']) <= 64:
-            row['age_grp'] = 'C'
-        
-    elif float(row['age']) > 64:
-            row['age_grp'] = 'D'
-        
+    age = str(row['age']).strip().upper()  # Convert age to string, trim, and make uppercase for uniformity
+
+    # Check for 'nan', empty, or non-digit (excluding known abbreviations) values
+    if pd.isna(age) or age == '' or (not age.isdigit() and all(x not in age for x in ['W', 'D', 'M', 'NB', 'Y'])):
+        row['age_grp'] = 'U'
+    # Check for known age-related abbreviations
+    elif any(x in age for x in ['W', 'D', 'M', 'NB', 'Y']):
+        row['age_grp'] = 'A'
     else:
+        # Convert age to float and categorize
+        age_value = float(age)
+        if 0 <= age_value < 5:
+            row['age_grp'] = 'A'
+        elif 5 <= age_value <= 19:
+            row['age_grp'] = 'B'
+        elif 19 < age_value <= 64:
+            row['age_grp'] = 'C'
+        elif age_value > 64:
+            row['age_grp'] = 'D'
+        else:
             row['age_grp'] = 'U'
+
+    # Parse dates and calculate difference
+    # if not pd.isna(row['date_admis']) and not pd.isna(row['spec_date']):
+    date_admis = pd.to_datetime(row['date_admis'], errors='coerce', format='%d/%b/%y')
+    spec_date = pd.to_datetime(row['spec_date'], errors='coerce', format='%d/%b/%y')
+    
+    # Calculate the year difference and month difference
+    year_difference = abs(spec_date.year - date_admis.year)
+    # print(year_difference)
+    month_difference = abs((spec_date.year - date_admis.year) * 12 + spec_date.month - date_admis.month)
+    
+    # Check if the admission date is within 3 years AND difference is more than 1 month
+    # print(str(year_difference) + ' ' + str(row['date_admis']))
+    if year_difference >= 3:
+        row['date_admis'] = ''
+
+    if year_difference == 1:
+        if month_difference > 1:
+            row['date_admis'] = ''
+    
+    if pd.isnull(row['date_admis']):
+        row['date_admis'] = ''
     
     
     return row
@@ -5250,7 +5315,14 @@ def clean_pat_type(row):
     
     return row
 
-
+def nosocomial_days(date_admis,spec_date):
+    # x = datetime.strptime(spec_date.replace('-','/'),'%m/%d/%Y') - datetime.strptime(date_admis.replace('-','/'),'%m/%d/%Y')
+    # x = datetime.strptime(spec_date.replace('-','/'),'%Y/%m/%d') - datetime.strptime(date_admis.replace('-','/'),'%Y/%m/%d')
+    parsed_spec_date = parser.parse(spec_date)
+    parsed_date_admis = parser.parse(date_admis)
+    # x = datetime.strptime(spec_date, '%d/%b/%y') - datetime.strptime(date_admis, '%d/%b/%y')
+    x = parsed_spec_date - parsed_date_admis
+    return x.days
 
 
 

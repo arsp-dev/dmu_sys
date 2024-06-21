@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
+from decouple import config
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -28,6 +29,9 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 # ALLOWED_HOSTS = ['10.10.25.178', 'localhost', '127.0.0.1']
 
+DATABASE_PASSWORD = config('DATABASE_PASSWORD')
+DATABASE_NAME = config('DATABASE_NAME')
+DATABASE_USER = config('DATABASE_USER')
 
 # Application definition
 
@@ -78,12 +82,12 @@ WSGI_APPLICATION = 'dmu_sys.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'dmu_whonet',
-        'USER': 'postgres',
-        'PASSWORD': 'secret123',
+        'NAME': DATABASE_NAME,
+        'USER': DATABASE_USER,
+        'PASSWORD': DATABASE_PASSWORD,
         ## Change depending on what environment is used : if server use ip if localhost use localhost
-        'HOST': '10.10.25.163',
-        #'HOST' : 'localhost',
+        'HOST': '10.10.24.163',
+        # 'HOST' : 'localhost',
         'PORT': '5432',
     }
 }

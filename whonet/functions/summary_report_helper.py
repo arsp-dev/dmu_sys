@@ -513,78 +513,86 @@ def check_R_hin_hpn(row):
 
 
 def calculate_R_S(row,value,frame,org_list):
-        row[value] = row[value].replace('>=','')
-        row[value] = row[value].replace('<=','')
-        row[value] = row[value].replace('>','')
-        row[value] = row[value].replace('<','')
-        if value.split('_')[0] + '_RIS' not in frame.columns:
-            if row[value].replace('.','').isdigit() == True:
-                if frame['R<='][org_list.index(value)] != '':
-                    if float(row[value]) <= float(frame['R<='][org_list.index(value)]):
-                        row[value.split('_')[0] + '_RIS'] = 'R'        
-                        return row
-                    elif float(row[value]) >= float(frame['S>='][org_list.index(value)]):
-                        row[value.split('_')[0] + '_RIS'] = 'S'
-                        return row
-                    elif (float(row[value]) < float(frame['S>='][org_list.index(value)])) and (float(row[value]) > float(frame['R<='][org_list.index(value)])):
-                        row[value.split('_')[0] + '_RIS'] = 'I'
-                        return row
-                    else:
-                        return row
-                elif frame['S>='][org_list.index(value)] != '':
-                    if float(row[value]) <= float(frame['S>='][org_list.index(value)]):
-                        row[value.split('_')[0] + '_RIS'] = 'R'
-                        return row
-                    elif float(row[value]) >= float(frame['S>='][org_list.index(value)]):
-                        row[value.split('_')[0] + '_RIS'] = 'S'
-                        return row
-                    elif (float(row[value]) > float(frame['S>='][org_list.index(value)])) and (float(row[value]) < float(frame['R<='][org_list.index(value)])):
-                        row[value.split('_')[0] + '_RIS'] = 'I'
-                        return row
-                    else:
-                        return row
-            else:   
+        if row[value] is not None:
+            row[value] = row[value].replace('>=','')
+            row[value] = row[value].replace('<=','')
+            row[value] = row[value].replace('>','')
+            row[value] = row[value].replace('<','')
+            if value.split('_')[0] + '_RIS' not in frame.columns:
+                if row[value].replace('.','').isdigit() == True:
+                    if frame['R<='][org_list.index(value)] != '':
+                        if float(row[value]) <= float(frame['R<='][org_list.index(value)]):
+                            row[value.split('_')[0] + '_RIS'] = 'R'        
+                            return row
+                        elif float(row[value]) >= float(frame['S>='][org_list.index(value)]):
+                            row[value.split('_')[0] + '_RIS'] = 'S'
+                            return row
+                        elif (float(row[value]) < float(frame['S>='][org_list.index(value)])) and (float(row[value]) > float(frame['R<='][org_list.index(value)])):
+                            row[value.split('_')[0] + '_RIS'] = 'I'
+                            return row
+                        else:
+                            return row
+                    elif frame['S>='][org_list.index(value)] != '':
+                        if float(row[value]) <= float(frame['S>='][org_list.index(value)]):
+                            row[value.split('_')[0] + '_RIS'] = 'R'
+                            return row
+                        elif float(row[value]) >= float(frame['S>='][org_list.index(value)]):
+                            row[value.split('_')[0] + '_RIS'] = 'S'
+                            return row
+                        elif (float(row[value]) > float(frame['S>='][org_list.index(value)])) and (float(row[value]) < float(frame['R<='][org_list.index(value)])):
+                            row[value.split('_')[0] + '_RIS'] = 'I'
+                            return row
+                        else:
+                            return row
+                else:   
+                    return row
+            else: 
                 return row
-        else: 
-            return row
+        else:
+             row[value.split('_')[0] + '_RIS'] = ''
+             return row
 
 
 
 def calculate_R_S_MIC(row,value,frame,org_list):
-    if value.split('_')[0] + '_RIS' not in row:
-        row[value.split('_')[0] + '_RIS'] = ''
-    chk = row[value]
-    tmp_value = row[value]
-    x = 0
-    if '>' in str(chk):
-        x = frame['R>='][org_list.index(value)]
+    if row[value] is not None:
+        if value.split('_')[0] + '_RIS' not in row:
+            row[value.split('_')[0] + '_RIS'] = ''
+        chk = row[value]
+        tmp_value = row[value]
+        x = 0
+        if '>' in str(chk):
+            x = frame['R>='][org_list.index(value)]
 
-    tmp_value = row[value].replace('>=','')
-    tmp_value = tmp_value.replace('<=','')
-    tmp_value = tmp_value.replace('>','')
-    tmp_value = tmp_value.replace('<','')
+        tmp_value = row[value].replace('>=','')
+        tmp_value = tmp_value.replace('<=','')
+        tmp_value = tmp_value.replace('>','')
+        tmp_value = tmp_value.replace('<','')
 
-    if tmp_value.replace('.','').isdigit() == True:
-            tmp_value = float(tmp_value) + float(x)
-            if frame['R>='][org_list.index(value)] != '':
-                if float(tmp_value) >= float(frame['R>='][org_list.index(value)]):
-                    row[value.split('_')[0] + '_RIS'] =  'R' 
-                      
-                    return row
-                elif float(tmp_value) <= float(frame['S<='][org_list.index(value)]):
-                    row[value.split('_')[0] + '_RIS'] = 'S'
-                 
-                    return row
-                elif float(tmp_value) < float(frame['R>='][org_list.index(value)]) and float(tmp_value) > float(frame['S<='][org_list.index(value)]):
-                    row[value.split('_')[0] + '_RIS'] = 'I'
-                
-                    return row
-                else:               
-                    return row
-            # return row             
-    
-    
-    return row
+        if tmp_value.replace('.','').isdigit() == True:
+                tmp_value = float(tmp_value) + float(x)
+                if frame['R>='][org_list.index(value)] != '':
+                    if float(tmp_value) >= float(frame['R>='][org_list.index(value)]):
+                        row[value.split('_')[0] + '_RIS'] =  'R' 
+                        
+                        return row
+                    elif float(tmp_value) <= float(frame['S<='][org_list.index(value)]):
+                        row[value.split('_')[0] + '_RIS'] = 'S'
+                    
+                        return row
+                    elif float(tmp_value) < float(frame['R>='][org_list.index(value)]) and float(tmp_value) > float(frame['S<='][org_list.index(value)]):
+                        row[value.split('_')[0] + '_RIS'] = 'I'
+                    
+                        return row
+                    else:               
+                        return row
+                # return row             
+        
+        
+        return row
+    else:
+         row[value.split('_')[0] + '_RIS'] = ''
+         return row
 
 
 

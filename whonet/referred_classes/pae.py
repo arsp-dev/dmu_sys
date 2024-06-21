@@ -8,7 +8,7 @@ abx_panel = pd.read_excel(dirpath + '/whonet/static/whonet_xl/whonet_data_summar
 class Pae:
 
     def __init__(self, df : pd.DataFrame, num_of_days : int = 3) -> None:
-        self.df = df
+        self.df = df[df['ORGANISM'].isin(['pae'])]
         self.num_of_days = num_of_days
         self.ast_panel = abx_panel['WHON5_CODE'].values.tolist()
         self.ast_panel_mic = abx_panel['WHON5_CODE_MIC'].values.tolist()
@@ -16,6 +16,9 @@ class Pae:
 
     def process(self) -> pd.DataFrame:
         df = self.df
+        df_referred = df[df['X_REFERRED'] == '1']
+        df_referred['Test'] = ''
+        df = df[df['X_REFERRED'] != '1']
         frames = []
         df = self.calc_RIS(df)
         df = self.calc_RIS_MIC(df)
@@ -40,15 +43,15 @@ class Pae:
         df = self.concat_df(frames)
         df = df[df['SPEC_TYPE'].isin(["bl", "ti", "sf", "ab", "ga", "dr", "fl", "am", "at", "fn", "se", "pf", "di", "pd", "dn", "hf", "jf", "kf", "pu", "su", "ur", "wd", "ul", "as", "sp"])]
         # df = df.loc[df['Test'] == 'R']
-        
+        df = pd.concat([df, df_referred])
         if len(df) > 0:
             df.dropna(how = 'all',inplace = True)
-            df =  df[df['Test'].isin(['R'])]
+            df =  df[df['Test'].isin(['R']) | (df['X_REFERRED'] == '1')]
             df = df.drop_duplicates(subset=['PATIENT_ID','SPEC_DATE','ORGANISM'])
             # df = df.drop(columns=['ORIGIN_REF','FILE_REF','ID','comp','ent_fast'])
             df = df.drop(columns=['ORIGIN_REF','FILE_REF','ID','comp','ent_fast','Test'])
             df['SPEC_DATE'] = df['SPEC_DATE'].dt.strftime('%m/%d/%Y')
-            df, cols = remove_null_cols(df,['Test','PATIENT_ID','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE',
+            df, cols = remove_null_cols(df,['Test','INSTITUT','LABORATORY','STOCK_NUM','PATIENT_ID','FIRST_NAME','LAST_NAME','SEX','AGE','DATE_BIRTH','DATE_ADMIS','SPEC_NUM','SPEC_DATE','SPEC_TYPE',
                                             'ORGANISM','X_REFERRED','ESBL','AMK_ND30','AMK_NM','AMK_RIS','GEN_ND10','GEN_NM','GEN_RIS',
                                             'TOB_ND10','TOB_NM','TOB_RIS','IPM_ND10','IPM_NM','IPM_RIS','MEM_ND10','MEM_NM','MEM_RIS',
                                             'CZA_ND30','CZA_NM','CZA_RIS','IMR_ND10','IMR_NM','IMR_RIS','FDC_ND','FDC_NM','FDC_RIS',

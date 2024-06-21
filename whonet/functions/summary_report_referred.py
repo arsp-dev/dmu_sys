@@ -75,87 +75,119 @@ def summary_report_referred(file_id,file_name,config = 'raw'):
     df = df[ df['SPEC_TYPE'].str.lower() != 'mi' ]
     df = df[ df['SPEC_TYPE'].str.lower() != 'un' ]
 
-    df_eco = EColi(df[df['X_REFERRED'] != '1'])
+    df_eco = EColi(df)
     df_eco = df_eco.process()
-    df_eco_referred = EColi(df[df['X_REFERRED'] == '1'])
-    df_eco_referred = df_eco_referred.process()
+    # if len(df_eco) > 0:
+    #     df_eco.insert(0,'LABORATORY',file_name.file_name.split('_')[1])
+    # df_eco_referred = EColi(df[df['X_REFERRED'] == '1'])
+    # df_eco_referred = df_eco_referred.process()
 
-    df_pma = Pme(df[df['X_REFERRED'] != '1'])
+
+
+    df_pma = Pme(df)
     df_pma = df_pma.process()
-    df_pma_referred = Pme(df[df['X_REFERRED'] == '1'])
-    df_pma_referred = df_pma_referred.process()
+    # if len(df_pma) > 0:
+    #     df_pma.insert(0,'LABORATORY',file_name.file_name.split('_')[1])
+    # df_pma_referred = Pme(df[df['X_REFERRED'] == '1'])
+    # df_pma_referred = df_pma_referred.process()
 
 
-    df_kpn = Kpn(df[df['X_REFERRED'] != '1'])
+    df_kpn = Kpn(df)
     df_kpn = df_kpn.process()
-    df_kpn_referred = Kpn(df[df['X_REFERRED'] == '1'])
-    df_kpn_referred = df_kpn_referred.process()
+    # if len(df_kpn) > 0:
+    #     df_kpn.insert(0,'LABORATORY',file_name.file_name.split('_')[1])
+    # df_kpn_referred = Kpn(df[df['X_REFERRED'] == '1'])
+    # df_kpn_referred = df_kpn_referred.process()
 
 
-    df_aba = Aba(df[df['X_REFERRED'] != '1'])
+    df_aba = Aba(df)
     df_aba = df_aba.process()
-    df_aba_referred = Aba(df[df['X_REFERRED'] == '1'])
-    df_aba_referred = df_aba_referred.process()
+    # if len(df_aba) > 0:
+    #     df_aba.insert(0,'LABORATORY',file_name.file_name.split('_')[1])
+    # df_aba_referred = Aba(df[df['X_REFERRED'] == '1'])
+    # df_aba_referred = df_aba_referred.process()
 
 
-    df_pae = Pae(df[df['X_REFERRED'] != '1'])
+    df_pae = Pae(df)
     df_pae = df_pae.process()
-    df_pae_referred = Pae(df[df['X_REFERRED'] == '1'])
-    df_pae_referred = df_pae_referred.process()
+    # if len(df_pae) > 0:
+    #     df_pae.insert(0,'LABORATORY',file_name.file_name.split('_')[1])
+    # df_pae_referred = Pae(df[df['X_REFERRED'] == '1'])
+    # df_pae_referred = df_pae_referred.process()
 
-    df_efa_efm = EfaEfm(df[df['X_REFERRED'] != '1'])
+    df_efa_efm = EfaEfm(df)
     df_efa_efm = df_efa_efm.process()
-    df_efa_efm_referred = EfaEfm(df[df['X_REFERRED'] == '1'])
-    df_efa_efm_referred = df_efa_efm_referred.process()
+    # if len(df_efa_efm) > 0:
+    #     df_efa_efm.insert(0,'LABORATORY',file_name.file_name.split('_')[1])
+    # df_efa_efm_referred = EfaEfm(df[df['X_REFERRED'] == '1'])
+    # df_efa_efm_referred = df_efa_efm_referred.process()
 
-    df_sau = Sau(df[df['X_REFERRED'] != '1'])
+    df_sau = Sau(df)
     df_sau = df_sau.process()
-    df_sau_referred = Sau(df[df['X_REFERRED'] == '1'])
-    df_sau_referred = df_sau_referred.process()
+    # if len(df_sau) > 0:
+    #     df_sau.insert(0,'LABORATORY',file_name.file_name.split('_')[1])
+    # df_sau_referred = Sau(df[df['X_REFERRED'] == '1'])
+    # df_sau_referred = df_sau_referred.process()
 
-    df_sal_shi = SalShi(df[df['X_REFERRED'] != '1'])
+    df_sal_shi = SalShi(df)
     df_sal_shi = df_sal_shi.process()
-    df_sal_shi_referred = SalShi(df[df['X_REFERRED'] == '1'])
-    df_sal_shi_referred = df_sal_shi_referred.process()
+    # if len(df_sal_shi) > 0:
+    #     df_sal_shi.insert(0,'LABORATORY',file_name.file_name.split('_')[1])
+    # df_sal_shi_referred = SalShi(df[df['X_REFERRED'] == '1'])
+    # df_sal_shi_referred = df_sal_shi_referred.process()
 
-    df_vic_eco = Vic157(df[df['X_REFERRED'] != '1'])
+    df_vic_eco = Vic157(df)
     df_vic_eco = df_vic_eco.process()
-    df_vic_eco_referred = Vic157(df[df['X_REFERRED'] == '1'])
-    df_vic_eco_referred = df_vic_eco_referred.process()
+    # if len(df_vic_eco) > 0:
+    #     df_vic_eco.insert(0,'LABORATORY',file_name.file_name.split('_')[1])
+    # df_vic_eco_referred = Vic157(df[df['X_REFERRED'] == '1'])
+    # df_vic_eco_referred = df_vic_eco_referred.process()
 
-    df_hin_hpi = HinHpi(df[df['X_REFERRED'] != '1'])
+    df_hin_hpi = HinHpi(df)
     df_hin_hpi = df_hin_hpi.process()
-    df_hin_hpi_referred = HinHpi(df[df['X_REFERRED'] == '1'])
-    df_hin_hpi_referred = df_hin_hpi_referred.process()
+    # if len(df_hin_hpi) > 0:
+    #     df_hin_hpi.insert(0,'LABORATORY',file_name.file_name.split('_')[1])
+    # df_hin_hpi_referred = HinHpi(df[df['X_REFERRED'] == '1'])
+    # df_hin_hpi_referred = df_hin_hpi_referred.process()
 
 
-    df_ngo = Ngo(df[df['X_REFERRED'] != '1'])
+    df_ngo = Ngo(df)
     df_ngo = df_ngo.process()
-    df_ngo_referred = Ngo(df[df['X_REFERRED'] == '1'])
-    df_ngo_referred = df_ngo_referred.process()
+    # if len(df_ngo) > 0:
+    #     df_ngo.insert(0,'LABORATORY',file_name.file_name.split('_')[1])
+    # df_ngo_referred = Ngo(df[df['X_REFERRED'] == '1'])
+    # df_ngo_referred = df_ngo_referred.process()
 
 
-    df_nme = Nme(df[df['X_REFERRED'] != '1'])
+    df_nme = Nme(df)
     df_nme = df_nme.process()
-    df_nme_referred = Nme(df[df['X_REFERRED'] == '1'])
-    df_nme_referred = df_nme_referred.process()
+    # if len(df_nme) > 0:
+    #     df_nme.insert(0,'LABORATORY',file_name.file_name.split('_')[1])
+    # df_nme_referred = Nme(df[df['X_REFERRED'] == '1'])
+    # df_nme_referred = df_nme_referred.process()
 
 
-    df_spn = Spn(df[df['X_REFERRED'] != '1'])
+    df_spn = Spn(df)
     df_spn = df_spn.process()
-    df_spn_referred = Spn(df[df['X_REFERRED'] == '1'])
-    df_spn_referred = df_spn_referred.process()
+    # if len(df_spn) > 0:
+    #     df_spn.insert(0,'LABORATORY',file_name.file_name.split('_')[1])
+    # df_spn_referred = Spn(df[df['X_REFERRED'] == '1'])
+    # df_spn_referred = df_spn_referred.process()
 
-    df_str = Str(df[df['X_REFERRED'] != '1'])
+    df_str = Str(df)
     df_str = df_str.process()
-    df_str_referred = Str(df[df['X_REFERRED'] == '1'])
-    df_str_referred = df_str_referred.process()
+    # if len(df_str) > 0:
+    #     df_str.insert(0,'LABORATORY',file_name.file_name.split('_')[1])
+    # df_str_referred = Str(df[df['X_REFERRED'] == '1'])
+    # df_str_referred = df_str_referred.process()
 
 
-    df_sau_oth = SauOthers(df[df['X_REFERRED'] != '1'])
+    df_sau_oth = SauOthers(df)
     df_sau_oth = df_sau_oth.process()
-    df_sau_oth_referred = SauOthers(df[df['X_REFERRED'] == '1'])
-    df_sau_oth_referred = df_sau_oth_referred.process()
+    # if len(df_sau_oth) > 0:
+    #     df_sau_oth.insert(0,'LABORATORY',file_name.file_name.split('_')[1])
+    # df_sau_oth_referred = SauOthers(df[df['X_REFERRED'] == '1'])
+    # df_sau_oth_referred = df_sau_oth_referred.process()
 
 
 
@@ -167,87 +199,87 @@ def summary_report_referred(file_id,file_name,config = 'raw'):
     writer = pd.ExcelWriter('REFERRED_FOR_REVIEW_{}.xlsx'.format(file_name), engine='xlsxwriter')
     if len(df_eco) > 0:
         df_eco.to_excel(writer,sheet_name='eco',index=False)
-    if len(df_eco_referred) > 0:
-        df_eco_referred.to_excel(writer,sheet_name='eco_referred',index=False)
+    # if len(df_eco_referred) > 0:
+    #     df_eco_referred.to_excel(writer,sheet_name='eco_referred',index=False)
 
     if len(df_kpn) > 0:
         df_kpn.to_excel(writer,sheet_name='kpn',index=False)
-    if len(df_kpn_referred) > 0:
-        df_kpn_referred.to_excel(writer,sheet_name='kpn_referred',index=False)
+    # if len(df_kpn_referred) > 0:
+    #     df_kpn_referred.to_excel(writer,sheet_name='kpn_referred',index=False)
     
 
     if len(df_aba) > 0:
         df_aba.to_excel(writer,sheet_name='aba',index=False)
-    if len(df_aba_referred) > 0:
-        df_aba_referred.to_excel(writer,sheet_name='aba_referred',index=False)
+    # if len(df_aba_referred) > 0:
+    #     df_aba_referred.to_excel(writer,sheet_name='aba_referred',index=False)
 
 
     if len(df_pae) > 0:
         df_pae.to_excel(writer,sheet_name='pae',index=False)
-    if len(df_pae_referred) > 0:
-        df_pae_referred.to_excel(writer,sheet_name='pae_referred',index=False)
+    # if len(df_pae_referred) > 0:
+    #     df_pae_referred.to_excel(writer,sheet_name='pae_referred',index=False)
 
     if len(df_pma) > 0:
         df_pma.to_excel(writer,sheet_name='pma',index=False)
-    if len(df_pma_referred) > 0:
-        df_pma_referred.to_excel(writer,sheet_name='pma_referred',index=False)
+    # if len(df_pma_referred) > 0:
+    #     df_pma_referred.to_excel(writer,sheet_name='pma_referred',index=False)
 
 
     if len(df_efa_efm) > 0:
         df_efa_efm.to_excel(writer,sheet_name='efa_efm',index=False)
-    if len(df_efa_efm_referred) > 0:
-        df_efa_efm_referred.to_excel(writer,sheet_name='efa_efm_referred',index=False)
+    # if len(df_efa_efm_referred) > 0:
+    #     df_efa_efm_referred.to_excel(writer,sheet_name='efa_efm_referred',index=False)
     
 
     if len(df_sau) > 0:
         df_sau.to_excel(writer,sheet_name='sau',index=False)
-    if len(df_sau_referred) > 0:
-        df_sau_referred.to_excel(writer,sheet_name='sau_referred',index=False)
+    # if len(df_sau_referred) > 0:
+    #     df_sau_referred.to_excel(writer,sheet_name='sau_referred',index=False)
     
     if len(df_sau_oth) > 0:
         df_sau_oth.to_excel(writer,sheet_name='sau_others',index=False)
-    if len(df_sau_oth_referred) > 0:
-        df_sau_oth_referred.to_excel(writer,sheet_name='sau_others_referred',index=False)
+    # if len(df_sau_oth_referred) > 0:
+    #     df_sau_oth_referred.to_excel(writer,sheet_name='sau_others_referred',index=False)
     
 
     if len(df_sal_shi) > 0:
         df_sal_shi.to_excel(writer,sheet_name='sal_shi',index=False)
-    if len(df_sal_shi_referred) > 0:
-        df_sal_shi_referred.to_excel(writer,sheet_name='sal_shi_referred',index=False)
+    # if len(df_sal_shi_referred) > 0:
+    #     df_sal_shi_referred.to_excel(writer,sheet_name='sal_shi_referred',index=False)
 
 
     if len(df_vic_eco) > 0:
         df_vic_eco.to_excel(writer,sheet_name='vic_eco157',index=False)
-    if len(df_vic_eco_referred) > 0:
-        df_vic_eco_referred.to_excel(writer,sheet_name='vic_eco157_referred',index=False)
+    # if len(df_vic_eco_referred) > 0:
+    #     df_vic_eco_referred.to_excel(writer,sheet_name='vic_eco157_referred',index=False)
         
         
     if len(df_hin_hpi) > 0:
         df_hin_hpi.to_excel(writer,sheet_name='hin_hpi',index=False)
-    if len(df_hin_hpi_referred) > 0:
-        df_hin_hpi_referred.to_excel(writer,sheet_name='hin_hpi_referred',index=False)
+    # if len(df_hin_hpi_referred) > 0:
+    #     df_hin_hpi_referred.to_excel(writer,sheet_name='hin_hpi_referred',index=False)
 
     if len(df_ngo) > 0:
         df_ngo.to_excel(writer,sheet_name='ngo',index=False)
-    if len(df_ngo_referred) > 0:
-        df_ngo_referred.to_excel(writer,sheet_name='ngo_referred',index=False)
+    # if len(df_ngo_referred) > 0:
+    #     df_ngo_referred.to_excel(writer,sheet_name='ngo_referred',index=False)
 
 
     if len(df_nme) > 0:
         df_nme.to_excel(writer,sheet_name='nme',index=False)
-    if len(df_nme_referred) > 0:
-        df_nme_referred.to_excel(writer,sheet_name='nme_referred',index=False)
+    # if len(df_nme_referred) > 0:
+    #     df_nme_referred.to_excel(writer,sheet_name='nme_referred',index=False)
 
     if len(df_spn) > 0:
         df_spn.to_excel(writer,sheet_name='spn',index=False)
-    if len(df_spn_referred) > 0:
-        df_spn_referred.to_excel(writer,sheet_name='spn_referred',index=False)
+    # if len(df_spn_referred) > 0:
+    #     df_spn_referred.to_excel(writer,sheet_name='spn_referred',index=False)
 
 
     if len(df_str) > 0:
         df_str.to_excel(writer,sheet_name='str',index=False)
-    if len(df_str_referred) > 0:
-        df_str_referred.to_excel(writer,sheet_name='str_referred',index=False)
+    # if len(df_str_referred) > 0:
+    #     df_str_referred.to_excel(writer,sheet_name='str_referred',index=False)
 
     ## for creation all vic and eco 157
 
